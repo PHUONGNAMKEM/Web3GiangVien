@@ -13,16 +13,17 @@ exports.uploadBaoCao = async (req, res) => {
         if (existing) {
             return res.status(400).json({ error: 'Bạn đã nộp báo cáo cho đề tài này rồi.' });
         }
-
-        let ipfsCid = 'QmMockHash_' + Date.now();
-        
+        let ipfsCid;
         if (req.file) {
             try {
                 const ipfsResult = await ipfsService.uploadFile(req.file.path, req.file.originalname);
                 ipfsCid = ipfsResult.IpfsHash;
             } catch (e) {
-                console.warn('IPFS upload failed, using mock CID:', e.message);
+                console.error('Lỗi khi tải lên IPFS:', e.message);
+                return res.status(500).json({ error: 'Không thể tải file lên IPFS (Pinata). Vui lòng kiểm tra API Key.' });
             }
+        } else {
+            return res.status(400).json({ error: 'Bạn chưa đính kèm file báo cáo.' });
         }
         
         const baoCao = new BaoCao({
