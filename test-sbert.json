@@ -1,0 +1,7 @@
+{
+  "studentProfile": { "gpa": 3.4 },
+  "topics": [
+    { "_id": "dt1", "title": "NLP cho tieng Viet", "description": "Phan tich van ban va tom tat" },
+    { "_id": "dt2", "title": "Blockchain audit", "description": "Kiem thu smart contract" }
+  ]
+}
