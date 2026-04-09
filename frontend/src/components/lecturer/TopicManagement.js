@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider, Descriptions } from 'antd';
 import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
@@ -256,6 +256,41 @@ const TopicManagement = () => {
         rowKey="_id"
         loading={loading}
         pagination={{ pageSize: 5 }}
+        expandable={{
+          expandedRowRender: record => (
+            <div style={{ padding: '8px 24px', background: '#fafafa', borderRadius: 8 }}>
+              <Descriptions size="small" column={1} bordered>
+                <Descriptions.Item label={<strong style={{ color: '#1677ff' }}>Mô tả chi tiết</strong>}>
+                  {record.MoTaChiTiet ? (
+                    <Typography.Paragraph style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
+                      {record.MoTaChiTiet}
+                    </Typography.Paragraph>
+                  ) : <span style={{ color: '#aaa' }}>Không có.</span>}
+                </Descriptions.Item>
+                {record.Deadline && (
+                  <Descriptions.Item label={<strong style={{ color: '#1677ff' }}>Hạn chót đăng ký</strong>}>
+                    {new Date(record.Deadline).toLocaleString('vi-VN')}
+                  </Descriptions.Item>
+                )}
+                {record.ChiTietBoSung && record.ChiTietBoSung.length > 0 && (
+                  <Descriptions.Item label={<strong style={{ color: '#1677ff' }}>Thông tin bổ sung</strong>}>
+                    <List
+                      size="small"
+                      dataSource={record.ChiTietBoSung}
+                      renderItem={item => (
+                        <List.Item style={{ padding: '4px 0', borderBottom: 'none' }}>
+                          <Typography.Text strong>{item.TieuDe}: </Typography.Text>
+                          <Typography.Text>{item.NoiDung}</Typography.Text>
+                        </List.Item>
+                      )}
+                    />
+                  </Descriptions.Item>
+                )}
+              </Descriptions>
+            </div>
+          ),
+          rowExpandable: record => true,
+        }}
       />
 
       {/* Modal Tạo Đề Tài - MỞ RỘNG */}

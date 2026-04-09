@@ -21,7 +21,7 @@ const StudentDashboard = () => {
     if (!user) return;
     try {
       setLoading(true);
-      
+
       // Lấy thông tin hồ sơ sinh viên
       try {
         const profile = await aiApiService.getStudentProfile(user.id);
@@ -42,12 +42,12 @@ const StudentDashboard = () => {
       const regData = await aiApiService.getMyRegistration(user.id);
       if (regData && regData.registration) {
         setRegistration(regData.registration);
-        
+
         if (regData.registration.TrangThai === 'DaDuyet') {
           try {
             const gradeData = await aiApiService.getDiemBySinhVien(user.id);
             if (Array.isArray(gradeData) && gradeData.length > 0) {
-              const topicGrade = gradeData.find(g => 
+              const topicGrade = gradeData.find(g =>
                 g.DeTai?._id === (regData.registration.DeTai?._id || regData.registration.DeTai)
               );
               setGrade(topicGrade);
@@ -123,8 +123,10 @@ const StudentDashboard = () => {
 
   return (
     <div>
-      <Title level={2}>Dashboard Sinh Viên</Title>
-      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={2} style={{ margin: 0 }}>Dashboard Sinh Viên</Title>
+      </div>
+
       {/* Cảnh báo cập nhật hồ sơ lần đầu */}
       {needsProfileUpdate ? (
         <Alert
@@ -174,7 +176,7 @@ const StudentDashboard = () => {
       <Row gutter={16}>
         {/* Card 1: Hồ sơ cá nhân */}
         <Col span={8}>
-          <Card 
+          <Card
             title={<span><User size={18} style={{ marginRight: 8, color: '#1677ff' }} />Hồ Sơ Cá Nhân</span>}
             bordered={false}
             extra={<Button type="link" size="small" icon={<Edit2 size={14} />} onClick={openEditProfile}>Sửa</Button>}
@@ -214,14 +216,14 @@ const StudentDashboard = () => {
 
         {/* Card 2: Trạng thái đồ án */}
         <Col span={8}>
-          <Card 
+          <Card
             title={<span><BookOpen size={18} style={{ marginRight: 8, color: '#52c41a' }} />Trạng Thái Đồ Án</span>}
             bordered={false}
           >
-            <Statistic 
-              title="Đề Tài Hiện Tại" 
-              value={registration ? (registration.TrangThai === 'DaDuyet' ? 'Đã Nhận Đề Tài' : 'Chờ Duyệt') : "Chưa Đăng Ký Đề Tài"} 
-              valueStyle={{ color: registration?.TrangThai === 'DaDuyet' ? '#52c41a' : '#faad14', fontSize: 18, fontWeight: 'bold' }} 
+            <Statistic
+              title="Đề Tài Hiện Tại"
+              value={registration ? (registration.TrangThai === 'DaDuyet' ? 'Đã Nhận Đề Tài' : 'Chờ Duyệt') : "Chưa Đăng Ký Đề Tài"}
+              valueStyle={{ color: registration?.TrangThai === 'DaDuyet' ? '#52c41a' : '#faad14', fontSize: 18, fontWeight: 'bold' }}
             />
             {registration && registration.DeTai && (
               <Paragraph style={{ marginTop: 12 }} ellipsis={{ rows: 2, tooltip: true }}>
@@ -233,14 +235,14 @@ const StudentDashboard = () => {
 
         {/* Card 3: Điểm số */}
         <Col span={8}>
-          <Card 
+          <Card
             title={<span><Award size={18} style={{ marginRight: 8, color: '#eb2f96' }} />Tiến Độ & Điểm</span>}
             bordered={false}
           >
             {grade ? (
               <div>
                 <Statistic title="Điểm Giảng Viên (On-chain)" value={grade.Diem} precision={1} suffix="/ 10" valueStyle={{ color: '#eb2f96', fontWeight: 'bold' }} />
-                
+
                 {grade.AI_Score != null && (
                   <div style={{ marginTop: 8 }}>
                     <Text type="secondary"><BrainCircuit size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />Điểm AI gợi ý: </Text>
@@ -258,8 +260,8 @@ const StudentDashboard = () => {
                 {grade.TxHash && (
                   <div style={{ marginTop: 8 }}>
                     <Tooltip title={`Xem giao dịch trên Sepolia Etherscan: ${grade.TxHash}`}>
-                      <Tag 
-                        icon={<ShieldCheck size={12} style={{ marginRight: 4 }} />} 
+                      <Tag
+                        icon={<ShieldCheck size={12} style={{ marginRight: 4 }} />}
                         color="green"
                         style={{ cursor: 'pointer', marginTop: 4 }}
                         onClick={() => {

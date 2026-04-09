@@ -73,6 +73,8 @@ const MainLayout = () => {
             items: [
               { key: 'wallet', label: `Ví: ${currentUser?.walletAddress?.substring(0, 6)}...` },
               { type: 'divider' },
+              { key: 'profile', icon: <UserIcon size={16} />, label: 'Hồ sơ cá nhân', onClick: () => navigate(isLecturer ? '/lecturer' : '/student') },
+              { type: 'divider' },
               { key: 'logout', danger: true, icon: <LogOut size={16} />, label: 'Đăng xuất', onClick: handleLogout }
             ]
           }} placement="bottomRight">
