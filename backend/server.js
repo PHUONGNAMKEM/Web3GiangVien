@@ -48,7 +48,7 @@ const upload = multer({
       cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);  
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
       const ext = path.extname(file.originalname);
       cb(null, `report-${uniqueSuffix}${ext}`);
     }
@@ -64,6 +64,7 @@ const deTaiController = require('./controllers/deTaiController');
 const baoCaoController = require('./controllers/baoCaoController');
 const diemSoController = require('./controllers/diemSoController');
 const aiController = require('./controllers/aiController');
+const tienDoController = require('./controllers/tienDoController');
 
 
 // 1. Root verify
@@ -81,6 +82,8 @@ app.get('/api/sinhvien', sinhVienController.getAll);
 app.get('/api/sinhvien/:id', sinhVienController.getById);
 app.post('/api/sinhvien', sinhVienController.create);
 app.put('/api/sinhvien/:id', sinhVienController.update);
+app.put('/api/sinhvien/:id/profile', sinhVienController.updateProfile);
+app.get('/api/sinhvien/masv/:maSV', sinhVienController.findByMaSV);
 app.delete('/api/sinhvien/:id', sinhVienController.delete);
 
 // 4. Giảng Viên
@@ -102,23 +105,34 @@ app.post('/api/detai/:id/register', deTaiController.registerTopic);
 app.get('/api/dangky/sinhvien/:svId', deTaiController.getMyRegistration);
 app.get('/api/dangky/giangvien/:gvId', deTaiController.getRegistrationsByLecturer);
 app.put('/api/dangky/:id/approve', deTaiController.approveRegistration);
+app.delete('/api/dangky/:id', deTaiController.cancelRegistration);
+
+// 5c. Nhóm sinh viên
+app.post('/api/detai/:id/invite', authController.authenticateToken, deTaiController.inviteMember);
+app.get('/api/detai/invitations/:svId', deTaiController.getMyInvitations);
+app.post('/api/detai/invitation/:id/respond', authController.authenticateToken, deTaiController.respondToInvitation);
 
 // 6. Báo Cáo
-app.post('/api/baocao/upload', upload.single('file'), baoCaoController.uploadBaoCao);
+app.post('/api/baocao/upload', authController.authenticateToken, upload.single('file'), baoCaoController.uploadBaoCao);
 app.get('/api/baocao/detai/:deTaiId', baoCaoController.getBaoCaoByDeTai);
 app.get('/api/baocao/sinhvien/:svId', baoCaoController.getMyBaoCao);
-app.delete('/api/baocao/:id', baoCaoController.deleteBaoCao);
+app.delete('/api/baocao/:id', authController.authenticateToken, baoCaoController.deleteBaoCao);
 app.get('/api/baocao/giangvien/:gvId', baoCaoController.getBaoCaoByLecturer);
 
 // 7. Điểm Số
 app.post('/api/diemso', diemSoController.chamDiem);
 app.get('/api/diemso/sinhvien/:svId', diemSoController.getDiemBySinhVien);
 
-// 8. AI / ML Services
+// 8. Tiến Độ
+app.post('/api/tiendo', tienDoController.createProgressEntry);
+app.get('/api/tiendo/:svId', tienDoController.getProgressBySV);
+app.get('/api/tiendo/detai/:deTaiId', tienDoController.getProgressByTopic);
+app.put('/api/tiendo/:id/nhanxet', tienDoController.commentProgress);
+
+// 9. AI / ML Services
 app.post('/api/ai/analyze-report', aiController.analyzeReport);
 app.post('/api/ai/match-student', aiController.matchStudent);
 
-// Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

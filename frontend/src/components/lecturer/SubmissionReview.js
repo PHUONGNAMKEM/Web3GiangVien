@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Badge, Drawer, Alert, Typography, InputNumber, Space, message, Tag, Steps, Spin, Skeleton, Empty, Tooltip, Descriptions } from 'antd';
-import { CheckSquare, ShieldCheck, BrainCircuit, ScanSearch, Fingerprint, ExternalLink } from 'lucide-react';
+import { Table, Button, Badge, Drawer, Alert, Typography, InputNumber, Space, message, Tag, Steps, Spin, Skeleton, Empty, Tooltip, Descriptions, List, Divider, Input } from 'antd';
+import { CheckSquare, ShieldCheck, BrainCircuit, ScanSearch, Fingerprint, ExternalLink, Download, Clock } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 
@@ -10,7 +10,43 @@ const SubmissionReview = () => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [progressDrawerVisible, setProgressDrawerVisible] = useState(false);
+  const [progressLogs, setProgressLogs] = useState([]);
+  const [commentingId, setCommentingId] = useState(null);
+  const [commentText, setCommentText] = useState("");
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+
+  const viewProgress = async (record) => {
+    setSelectedSubmission(record);
+    setProgressDrawerVisible(true);
+    setLoading(true);
+    try {
+      const svId = record.student._id;
+      const res = await aiApiService.getProgressBySV(svId);
+      // Lọc progress của riêng đề tài sinh viên đang đăng ký nếu cần
+      setProgressLogs(res.data || []);
+    } catch (e) {
+      console.error(e);
+      message.error("Lỗi lấy nhật ký tiến độ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCommentProgress = async (logId) => {
+    try {
+      setCommentingId(logId);
+      await aiApiService.commentProgress(logId, commentText);
+      message.success("Thêm nhận xét thành công");
+      // Cập nhật lại logs
+      setProgressLogs(prev => prev.map(log => log._id === logId ? { ...log, NhanXetGV: commentText } : log));
+      setCommentText("");
+    } catch (e) {
+      message.error("Lỗi nhận xét tiến độ");
+    } finally {
+      setCommentingId(null);
+    }
+  };
   const [isMinting, setIsMinting] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
@@ -82,8 +118,8 @@ const SubmissionReview = () => {
     setIsMinting(true);
     try {
       if (!selectedSubmission?.submission) {
-          message.error("Sinh viên chưa nộp bài, không thể chấm điểm!");
-          return;
+        message.error("Sinh viên chưa nộp bài, không thể chấm điểm!");
+        return;
       }
 
       const response = await aiApiService.chamDiem({
@@ -98,9 +134,9 @@ const SubmissionReview = () => {
       });
 
       // Capture the full grade data from API response (includes TxHash)
-      const gradeData = response?.data || { 
-        Diem: score, 
-        NhanXet: aiAnalysis?.feedback || "", 
+      const gradeData = response?.data || {
+        Diem: score,
+        NhanXet: aiAnalysis?.feedback || "",
         AI_Score: aiAnalysis?.score || 0,
         TxHash: response?.data?.TxHash || null
       };
@@ -108,10 +144,10 @@ const SubmissionReview = () => {
       // Update state locally so the modal shows as "graded"
       const updatedSubmission = { ...selectedSubmission, status: 'DaCham', grade: gradeData };
       setSelectedSubmission(updatedSubmission);
-      
+
       // Update the main submissions array
-      setSubmissions(prev => prev.map(s => 
-          s.submission?._id === selectedSubmission.submission._id ? updatedSubmission : s
+      setSubmissions(prev => prev.map(s =>
+        s.submission?._id === selectedSubmission.submission._id ? updatedSubmission : s
       ));
 
       message.success({
@@ -120,10 +156,10 @@ const SubmissionReview = () => {
         icon: <ShieldCheck color="#52c41a" />,
       });
     } catch (error) {
-        console.error('Lệnh lỗi khi chấm điểm:', error);
-        message.error(error.response?.data?.error || "Có lỗi xảy ra khi gọi hàm chấm điểm.");
+      console.error('Lệnh lỗi khi chấm điểm:', error);
+      message.error(error.response?.data?.error || "Có lỗi xảy ra khi gọi hàm chấm điểm.");
     } finally {
-        setIsMinting(false);
+      setIsMinting(false);
     }
   };
 
@@ -147,7 +183,7 @@ const SubmissionReview = () => {
       key: 'status',
       render: (_, record) => {
         if (record.status === 'DaCham') {
-            return <Badge status="success" text={<Text strong style={{ color: '#eb2f96' }}>Đã chấm điểm</Text>} />
+          return <Badge status="success" text={<Text strong style={{ color: '#eb2f96' }}>Đã chấm điểm</Text>} />
         }
         return record.submission ? (
           <Badge status="processing" text={<Text strong style={{ color: '#1677ff' }}>Đã nộp bài</Text>} />
@@ -166,20 +202,53 @@ const SubmissionReview = () => {
       ),
     },
     {
+      title: 'Điểm Số',
+      key: 'scoreDetail',
+      render: (_, record) => {
+        if (record.status !== 'DaCham' || !record.grade) return <Text type="secondary">—</Text>;
+        const gvScore = record.grade.Diem;
+        const aiScore = record.grade.AI_Score;
+        if (aiScore != null) {
+          const diff = gvScore - aiScore;
+          return (
+            <Space direction="vertical" size={0}>
+              <Text strong style={{ color: '#eb2f96' }}>GV: {gvScore}</Text>
+              <Space size={4}>
+                <Text type="secondary" style={{ fontSize: 12 }}>AI: {aiScore}</Text>
+                {Math.abs(diff) < 0.1 ? (
+                  <Tag color="green" style={{ margin: 0, fontSize: 10, lineHeight: '16px', padding: '0 4px' }}>Khớp</Tag>
+                ) : (
+                  <Tag color={diff > 0 ? 'blue' : 'warning'} style={{ margin: 0, fontSize: 10, lineHeight: '16px', padding: '0 4px' }}>
+                    {diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1)}
+                  </Tag>
+                )}
+              </Space>
+            </Space>
+          );
+        }
+        return <Text strong style={{ color: '#eb2f96', fontSize: 16 }}>{gvScore}</Text>;
+      },
+    },
+    {
       title: 'Thao Tác',
       key: 'action',
       render: (_, record) => (
-        record.status === 'DaCham' ? (
-           <Button type="default" icon={<ShieldCheck size={16} />} onClick={() => viewDetails(record)}>
-             Xem Điểm & Review
-           </Button>
-        ) : record.submission ? (
-          <Button type="primary" icon={<ScanSearch size={16} />} onClick={() => viewDetails(record)}>
-            Chấm Điểm & Review
+        <Space>
+          <Button type="default" icon={<Clock size={16} />} onClick={() => viewProgress(record)}>
+            Tiến Độ
           </Button>
-        ) : (
-          <Tag color="default">Chờ SV nộp bài</Tag>
-        )
+          {record.status === 'DaCham' ? (
+            <Button type="default" icon={<ShieldCheck size={16} />} onClick={() => viewDetails(record)}>
+              Xem Điểm & Review
+            </Button>
+          ) : record.submission ? (
+            <Button type="primary" icon={<ScanSearch size={16} />} onClick={() => viewDetails(record)}>
+              Chấm Điểm & Review
+            </Button>
+          ) : (
+            <Tag color="default">Chờ SV nộp bài</Tag>
+          )}
+        </Space>
       ),
     },
   ];
@@ -225,6 +294,23 @@ const SubmissionReview = () => {
             <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
               Nộp lúc: {new Date(selectedSubmission.submission?.NgayNop || selectedSubmission.submission?.createdAt).toLocaleString('vi-VN')}
             </Text>
+
+            {/* Nút Download / Xem file IPFS */}
+            {selectedSubmission.submission?.IPFS_CID && (
+              <div style={{ marginBottom: 16, padding: 12, background: '#e6f7ff', borderRadius: 8, border: '1px solid #91d5ff' }}>
+                <Space>
+                  <Button
+                    type="primary"
+                    icon={<Download size={16} />}
+                    href={`https://gateway.pinata.cloud/ipfs/${selectedSubmission.submission.IPFS_CID}`}
+                    target="_blank"
+                  >
+                    Tải xuống báo cáo (IPFS)
+                  </Button>
+                  <Tag color="cyan">CID: {selectedSubmission.submission.IPFS_CID.substring(0, 16)}...</Tag>
+                </Space>
+              </div>
+            )}
 
             <div style={{ padding: 16, background: '#f8f9fa', borderRadius: 8, marginBottom: 24, borderLeft: '4px solid #1677ff' }}>
               <Space style={{ marginBottom: 8 }}>
@@ -282,50 +368,59 @@ const SubmissionReview = () => {
 
                       <div style={{ marginTop: 24 }}>
                         {selectedSubmission.status === 'DaCham' ? (
-                            <div>
-                              <Alert 
-                                  type="success" 
-                                  message={`Sinh viên đã được chấm điểm trên Blockchain: ${selectedSubmission.grade?.Diem || score}`} 
-                                  showIcon 
-                                  style={{ marginBottom: 12 }}
-                              />
-                              <Descriptions column={1} size="small" bordered style={{ background: '#f6ffed', borderRadius: 8 }}>
-                                <Descriptions.Item label="Điểm GV chấm">
-                                  <Text strong style={{ color: '#eb2f96', fontSize: 16 }}>{selectedSubmission.grade?.Diem || score}</Text>
-                                </Descriptions.Item>
-                                {selectedSubmission.grade?.AI_Score != null && (
-                                  <Descriptions.Item label="Điểm AI gợi ý">
+                          <div>
+                            <Alert
+                              type="success"
+                              message={`Sinh viên đã được chấm điểm trên Blockchain: ${selectedSubmission.grade?.Diem || score}`}
+                              showIcon
+                              style={{ marginBottom: 12 }}
+                            />
+                            <Descriptions column={1} size="small" bordered style={{ background: '#f6ffed', borderRadius: 8 }}>
+                              <Descriptions.Item label="Điểm GV chấm">
+                                <Text strong style={{ color: '#eb2f96', fontSize: 16 }}>{selectedSubmission.grade?.Diem || score}</Text>
+                              </Descriptions.Item>
+                              {selectedSubmission.grade?.AI_Score != null && (
+                                <Descriptions.Item label="Điểm AI gợi ý">
+                                  <Space>
                                     <Text style={{ color: '#1677ff' }}>{selectedSubmission.grade.AI_Score}</Text>
-                                  </Descriptions.Item>
-                                )}
-                                {selectedSubmission.grade?.NhanXet && (
-                                  <Descriptions.Item label="Nhận xét">
-                                    <Text>{selectedSubmission.grade.NhanXet}</Text>
-                                  </Descriptions.Item>
-                                )}
-                                {selectedSubmission.grade?.TxHash && (
-                                  <Descriptions.Item label="Blockchain TxHash">
-                                    <Tooltip title="Xem trên Sepolia Etherscan">
-                                      <Tag 
-                                        icon={<ShieldCheck size={12} style={{ marginRight: 4 }} />} 
-                                        color="green" 
-                                        style={{ cursor: 'pointer' }}
-                                        onClick={() => {
-                                          if (selectedSubmission.grade.TxHash && !selectedSubmission.grade.TxHash.startsWith('0xMock')) {
-                                            window.open(`https://sepolia.etherscan.io/tx/${selectedSubmission.grade.TxHash}`, '_blank');
-                                          }
-                                        }}
-                                      >
-                                        {selectedSubmission.grade.TxHash.substring(0, 18)}...
-                                        <ExternalLink size={10} style={{ marginLeft: 4 }} />
-                                      </Tag>
-                                    </Tooltip>
-                                  </Descriptions.Item>
-                                )}
-                              </Descriptions>
-                            </div>
+                                    {selectedSubmission.grade?.Diem !== undefined && selectedSubmission.grade.AI_Score !== undefined && (
+                                      (() => {
+                                        const diff = selectedSubmission.grade.Diem - selectedSubmission.grade.AI_Score;
+                                        if (Math.abs(diff) < 0.1) return <Tag color="green">Khớp gợi ý AI</Tag>;
+                                        return <Tag color={diff > 0 ? 'blue' : 'warning'}>{diff > 0 ? '+' : ''}{diff.toFixed(1)} so với AI</Tag>;
+                                      })()
+                                    )}
+                                  </Space>
+                                </Descriptions.Item>
+                              )}
+                              {selectedSubmission.grade?.NhanXet && (
+                                <Descriptions.Item label="Nhận xét">
+                                  <Text>{selectedSubmission.grade.NhanXet}</Text>
+                                </Descriptions.Item>
+                              )}
+                              {selectedSubmission.grade?.TxHash && (
+                                <Descriptions.Item label="Blockchain TxHash">
+                                  <Tooltip title="Xem trên Sepolia Etherscan">
+                                    <Tag
+                                      icon={<ShieldCheck size={12} style={{ marginRight: 4 }} />}
+                                      color="green"
+                                      style={{ cursor: 'pointer' }}
+                                      onClick={() => {
+                                        if (selectedSubmission.grade.TxHash && !selectedSubmission.grade.TxHash.startsWith('0xMock')) {
+                                          window.open(`https://sepolia.etherscan.io/tx/${selectedSubmission.grade.TxHash}`, '_blank');
+                                        }
+                                      }}
+                                    >
+                                      {selectedSubmission.grade.TxHash.substring(0, 18)}...
+                                      <ExternalLink size={10} style={{ marginLeft: 4 }} />
+                                    </Tag>
+                                  </Tooltip>
+                                </Descriptions.Item>
+                              )}
+                            </Descriptions>
+                          </div>
                         ) : (
-                            <Button
+                          <Button
                             type="primary"
                             size="large"
                             icon={isMinting ? <Spin size="small" /> : <Fingerprint />}
@@ -333,9 +428,9 @@ const SubmissionReview = () => {
                             loading={isMinting}
                             disabled={analyzing}
                             style={{ background: '#f6851b', borderColor: '#f6851b', width: '100%' }}
-                            >
+                          >
                             {isMinting ? 'Đang mở MetaMask Signing...' : 'Ký Số MetaMask & Ghi Blockchain'}
-                            </Button>
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -345,6 +440,66 @@ const SubmissionReview = () => {
             />
           </div>
         )}
+      </Drawer>
+
+      {/* Drawer xem Tiến Độ */}
+      <Drawer
+        title={`Tiến độ của sinh viên: ${selectedSubmission?.student?.HoTen || 'N/A'}`}
+        width={550}
+        placement="right"
+        onClose={() => setProgressDrawerVisible(false)}
+        open={progressDrawerVisible}
+      >
+        <List
+          loading={loading}
+          itemLayout="vertical"
+          dataSource={progressLogs}
+          locale={{ emptyText: 'Chưa có nhật ký tiến độ nào.' }}
+          renderItem={item => (
+            <div style={{ marginBottom: 16, padding: '16px', border: '1px solid #e8e8e8', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                <div>
+                  <Tag color="cyan">{item.LoaiCapNhat}</Tag>
+                  <Tag color={item.PhanTramHoanThanh === 100 ? 'success' : 'processing'}>
+                    {item.PhanTramHoanThanh}% Hoàn thành
+                  </Tag>
+                </div>
+                <Text type="secondary" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Clock size={14} /> {new Date(item.createdAt).toLocaleString('vi-VN')}
+                </Text>
+              </div>
+
+              <Paragraph style={{ fontSize: 15 }}>{item.NoiDung}</Paragraph>
+
+              {item.FileDinhKem && (
+                <Paragraph>Link đính kèm: <a href={item.FileDinhKem} target="_blank" rel="noreferrer">Xem file</a></Paragraph>
+              )}
+
+              <Divider style={{ margin: '12px 0' }} />
+
+              {item.NhanXetGV ? (
+                <div style={{ padding: 8, background: '#f6ffed', borderRadius: 4 }}>
+                  <Text strong style={{ color: '#389e0d' }}>Đã nhận xét: </Text>
+                  <Text>{item.NhanXetGV}</Text>
+                </div>
+              ) : (
+                <Space.Compact style={{ width: '100%' }}>
+                  <Input
+                    placeholder="Nhập nhận xét..."
+                    onChange={e => setCommentText(e.target.value)}
+                  />
+                  <Button
+                    type="primary"
+                    onClick={() => handleCommentProgress(item._id)}
+                    loading={commentingId === item._id}
+                  >
+                    Gửi
+                  </Button>
+                </Space.Compact>
+              )}
+            </div>
+          )}
+        />
       </Drawer>
     </div>
   );

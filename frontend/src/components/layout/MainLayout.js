@@ -33,7 +33,8 @@ const MainLayout = () => {
     { key: '/student', icon: <Monitor size={18} />, label: 'Dashboard Sinh Viên' },
     { key: '/student/register', icon: <BookOpen size={18} />, label: 'Đăng Ký Đề Tài' },
     { key: '/student/upload', icon: <FileText size={18} />, label: 'Nộp Báo Cáo' },
-    { key: '/student/progress', icon: <CheckCircle size={18} />, label: 'Tiến Độ & Điểm' }
+    { key: '/student/progress-log', icon: <CheckCircle size={18} />, label: 'Nhật Ký Tiến Độ' },
+    { key: '/student/progress', icon: <Award size={18} />, label: 'Kết Quả & Điểm' }
   ];
 
   const lecturerMenuItems = [
@@ -58,12 +59,12 @@ const MainLayout = () => {
         <div style={{ height: 64, margin: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: collapsed ? 12 : 18, color: '#1677ff' }}>
           {collapsed ? 'W3GV' : 'Web3 Giảng Viên'}
         </div>
-        <Menu 
-          theme="light" 
-          mode="inline" 
-          selectedKeys={[location.pathname]} 
+        <Menu
+          theme="light"
+          mode="inline"
+          selectedKeys={[location.pathname]}
           items={menuItems}
-          onClick={(e) => navigate(e.key)} 
+          onClick={(e) => navigate(e.key)}
         />
       </Sider>
       <Layout>

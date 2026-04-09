@@ -45,6 +45,11 @@ const aiApiService = {
         return response.data;
     },
 
+    cancelRegistration: async (registrationId) => {
+        const response = await axios.delete(`${API_URL}/dangky/${registrationId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
     // SV đăng ký đề tài
     registerTopic: async (topicId, sinhVienId) => {
         const response = await axios.post(`${API_URL}/detai/${topicId}/register`, {
@@ -116,6 +121,47 @@ const aiApiService = {
     // SV xem điểm
     getDiemBySinhVien: async (svId) => {
         const response = await axios.get(`${API_URL}/diemso/sinhvien/${svId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // === HỒ SƠ SINH VIÊN ===
+
+    // SV cập nhật hồ sơ cá nhân
+    updateStudentProfile: async (svId, profileData) => {
+        const response = await axios.put(`${API_URL}/sinhvien/${svId}/profile`, profileData, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // Tìm SV theo MaSV (cho chức năng mời vào nhóm)
+    // Nhóm Sinh Viên
+    inviteMember: async (deTaiId, maSV) => {
+        const response = await axios.post(`${API_URL}/detai/${deTaiId}/invite`, { maSV }, { headers: getAuthHeaders() });
+        return response.data;
+    },
+    respondToInvitation: async (deTaiId, accept) => {
+        const response = await axios.post(`${API_URL}/detai/invitation/${deTaiId}/respond`, { accept }, { headers: getAuthHeaders() });
+        return response.data;
+    },
+    getMyInvitations: async (svId) => {
+        const response = await axios.get(`${API_URL}/detai/invitations/${svId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // Nhật ký Tiến độ
+    createProgressEntry: async (data) => {
+        const response = await axios.post(`${API_URL}/tiendo`, data, { headers: getAuthHeaders() });
+        return response.data;
+    },
+    getProgressBySV: async (svId) => {
+        const response = await axios.get(`${API_URL}/tiendo/${svId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+    getProgressByTopic: async (deTaiId) => {
+        const response = await axios.get(`${API_URL}/tiendo/detai/${deTaiId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+    commentProgress: async (tienDoId, nhanXet) => {
+        const response = await axios.put(`${API_URL}/tiendo/${tienDoId}/nhanxet`, { nhanXet }, { headers: getAuthHeaders() });
         return response.data;
     }
 };

@@ -10,12 +10,13 @@ import StudentDashboard from './components/student/StudentDashboard';
 import TopicRegistration from './components/student/TopicRegistration';
 import ReportUpload from './components/student/ReportUpload';
 import ProgressTracking from './components/student/ProgressTracking';
+import ProgressLog from './components/student/ProgressLog';
 
 // Protected Route component
 function ProtectedRoute({ children, allowedRoles }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => authService.isAuthenticated());
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
-  
+
   useEffect(() => {
     setIsAuthenticated(authService.isAuthenticated());
     setCurrentUser(authService.getCurrentUser());
@@ -36,7 +37,7 @@ function ProtectedRoute({ children, allowedRoles }) {
 function PublicRoute({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => authService.isAuthenticated());
   const [currentUser, setCurrentUser] = useState(() => authService.getCurrentUser());
-  
+
   useEffect(() => {
     setIsAuthenticated(authService.isAuthenticated());
     setCurrentUser(authService.getCurrentUser());
@@ -66,9 +67,9 @@ function App() {
 
         {/* Nested User Routes under MainLayout */}
         <Route path="/lecturer" element={
-            <ProtectedRoute allowedRoles={['LECTURER_ROLE']}>
-              <MainLayout />
-            </ProtectedRoute>
+          <ProtectedRoute allowedRoles={['LECTURER_ROLE']}>
+            <MainLayout />
+          </ProtectedRoute>
         }>
           <Route index element={<LecturerDashboard />} />
           <Route path="topics" element={<TopicManagement />} />
@@ -76,13 +77,14 @@ function App() {
         </Route>
 
         <Route path="/student" element={
-            <ProtectedRoute allowedRoles={['STUDENT_ROLE']}>
-              <MainLayout />
-            </ProtectedRoute>
+          <ProtectedRoute allowedRoles={['STUDENT_ROLE']}>
+            <MainLayout />
+          </ProtectedRoute>
         }>
           <Route index element={<StudentDashboard />} />
           <Route path="register" element={<TopicRegistration />} />
           <Route path="upload" element={<ReportUpload />} />
+          <Route path="progress-log" element={<ProgressLog />} />
           <Route path="progress" element={<ProgressTracking />} />
         </Route>
 

@@ -40,20 +40,29 @@ const ProgressTracking = () => {
           console.warn('Lỗi lấy điểm sinh viên:', e);
         }
 
-        // Nếu đề tài đã duyệt, gọi PhoBERT để phân tích demo
+        // Nếu đề tài đã duyệt, KHÔNG gọi AI ngay mà phải chờ có bài nộp
         if (regRes.registration?.TrangThai === 'DaDuyet' && regRes.registration?.DeTai) {
-          setAiLoading(true);
           try {
-            const topic = regRes.registration.DeTai;
-            const demoText = `Báo cáo đồ án: ${topic.TenDeTai}. Sinh viên đã triển khai hệ thống sử dụng các công nghệ ${(topic.YeuCau || []).join(', ')}. ${topic.MoTa || ''}`;
+            // Kiểm tra xem sinh viên đã nộp báo cáo chưa
+            const bcRes = await aiApiService.getMyBaoCao(user.id);
+            if (bcRes && bcRes.baocao) {
+              setAiLoading(true);
+              try {
+                const topic = regRes.registration.DeTai;
+                // Nếu đã nộp, tạo text phân tích nội dung
+                const demoText = `Báo cáo: ${bcRes.baocao.TieuDe}. Đề tài đồ án: ${topic.TenDeTai}. Báo cáo hoàn chỉnh.`;
 
-            const aiRes = await aiApiService.analyzeReportAI(demoText, topic.YeuCau || []);
-            setAiResult(aiRes);
-          } catch (e) {
-            console.warn('PhoBERT analysis failed:', e);
-            setAiResult(null);
-          } finally {
-            setAiLoading(false);
+                const aiRes = await aiApiService.analyzeReportAI(demoText, topic.YeuCau || []);
+                setAiResult(aiRes);
+              } catch (e) {
+                console.warn('PhoBERT analysis failed:', e);
+                setAiResult(null);
+              } finally {
+                setAiLoading(false);
+              }
+            }
+          } catch (err) {
+            console.warn('Lỗi kiểm tra báo cáo:', err);
           }
         }
       } catch (e) {

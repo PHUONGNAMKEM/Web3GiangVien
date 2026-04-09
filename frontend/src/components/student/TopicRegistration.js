@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Typography, Tag, Badge, message, Row, Col, Modal, Skeleton, Alert } from 'antd';
+import { Card, Button, Typography, Tag, Badge, message, Row, Col, Modal, Skeleton, Alert, Input, Space, List, Divider } from 'antd';
 import { CheckCircle, Code, Zap, Lock } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
@@ -12,6 +12,10 @@ const TopicRegistration = () => {
   const [loading, setLoading] = useState(true);
   const [registeredTopicId, setRegisteredTopicId] = useState(null); // ID đề tài đã đăng ký
   const [registrationStatus, setRegistrationStatus] = useState(null); // 'ChoDuyet' | 'DaDuyet' | 'TuChoi'
+  const [registrationId, setRegistrationId] = useState(null);
+  const [fullRegistration, setFullRegistration] = useState(null);
+  const [inviteMaSV, setInviteMaSV] = useState('');
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,6 +29,8 @@ const TopicRegistration = () => {
         if (regRes.registration) {
           setRegisteredTopicId(regRes.registration.DeTai?._id || regRes.registration.DeTai);
           setRegistrationStatus(regRes.registration.TrangThai);
+          setRegistrationId(regRes.registration._id);
+          setFullRegistration(regRes.registration);
         }
 
         // 2. Lấy danh sách đề tài từ DB
@@ -115,6 +121,50 @@ const TopicRegistration = () => {
     });
   };
 
+  const handleCancelRegistration = () => {
+    Modal.confirm({
+      title: 'Hủy Đăng Ký Đề Tài',
+      content: 'Bạn có chắc chắn muốn hủy đăng ký đề tài này không?',
+      okText: 'Xác Nhận Hủy',
+      okButtonProps: { danger: true },
+      cancelText: 'Quay lại',
+      onOk: async () => {
+        try {
+          if (!registrationId) return;
+          await aiApiService.cancelRegistration(registrationId);
+          message.success('Đã hủy đăng ký thành công!');
+          setRegisteredTopicId(null);
+          setRegistrationStatus(null);
+          setRegistrationId(null);
+          setFullRegistration(null);
+          setTimeout(() => window.location.reload(), 1000); // Tải lại trang cho chắc ăn
+        } catch (err) {
+          message.error('Hủy đăng ký thất bại');
+        }
+      }
+    });
+  };
+
+  const handleInviteMember = async () => {
+    if (!inviteMaSV) {
+      message.warning('Vui lòng nhập Mã Sinh viên cần mời.');
+      return;
+    }
+    setInviting(true);
+    try {
+      const deTaiId = fullRegistration.DeTai?._id || fullRegistration.DeTai;
+      await aiApiService.inviteMember(deTaiId, inviteMaSV);
+      message.success(`Đã gửi lời mời đến sinh viên có mã ${inviteMaSV}`);
+      setInviteMaSV('');
+      // Refresh thì tải lại or setup function
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err) {
+       message.error(err.response?.data?.error || 'Gửi lời mời thất bại');
+    } finally {
+      setInviting(false);
+    }
+  };
+
   const isRegistered = (topicId) => {
     return registeredTopicId && registeredTopicId.toString() === topicId.toString();
   };
@@ -130,17 +180,74 @@ const TopicRegistration = () => {
         </Paragraph>
       </Typography>
 
-      {hasAnyRegistration && (
-        <Alert
-          message={registrationStatus === 'DaDuyet' ? 'Đề tài đã được Giảng viên Duyệt!' : 'Bạn đã đăng ký đề tài'}
-          description={registrationStatus === 'DaDuyet'
-            ? 'Giảng viên đã phê duyệt đề tài của bạn. Bạn có thể tiến hành Nộp Báo Cáo ở trang bên.'
-            : 'Mỗi sinh viên chỉ được đăng ký 1 đề tài. Đề tài bạn chọn đang chờ Giảng viên duyệt.'
-          }
-          type={registrationStatus === 'DaDuyet' ? 'success' : 'info'}
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
+      {hasAnyRegistration && fullRegistration && (
+        <Card style={{ marginBottom: 24, border: '1px solid #91caff', background: '#e6f4ff' }}>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Alert
+              message={registrationStatus === 'DaDuyet' ? 'Đề tài đã được Giảng viên Duyệt!' : 'Bạn đã đăng ký đề tài'}
+              description={registrationStatus === 'DaDuyet'
+                ? 'Giảng viên đã phê duyệt đề tài của bạn. Bạn có thể tiến hành Nộp Báo Cáo.'
+                : 'Đề tài báo cáo của bạn đang chờ Giảng viên duyệt.'
+              }
+              type={registrationStatus === 'DaDuyet' ? 'success' : 'info'}
+              showIcon
+              action={
+                registrationStatus === 'ChoDuyet' ? (
+                  <Button size="small" type="primary" danger onClick={handleCancelRegistration}>
+                    Hủy Đăng Ký
+                  </Button>
+                ) : null
+              }
+            />
+
+            {/* Thông tin nhóm sinh viên */}
+            {fullRegistration.DeTai?.SoLuongSinhVien > 1 && (
+              <div style={{ marginTop: 16, background: '#fff', padding: 16, borderRadius: 8 }}>
+                 <Title level={5}>Thành Viên Nhóm ({fullRegistration.ThanhVien?.length || 1} / {fullRegistration.DeTai.SoLuongSinhVien})</Title>
+                 <List
+                   itemLayout="horizontal"
+                   dataSource={fullRegistration.ThanhVien || []}
+                   renderItem={item => (
+                     <List.Item>
+                       <List.Item.Meta
+                         avatar={<div style={{ fontSize: 24 }}>{item.VaiTro === 'TruongNhom' ? '👑' : '👤'}</div>}
+                         title={<Text strong>{item.SinhVien?.HoTen || 'Đang tải...'} ({item.SinhVien?.MaSV})</Text>}
+                         description={
+                           <Tag color={
+                             item.TrangThaiTV === 'DaChapNhan' ? 'green' : 
+                             item.TrangThaiTV === 'DaMoi' ? 'orange' : 'red'
+                           }>
+                             {item.TrangThaiTV === 'DaChapNhan' ? 'Đã tham gia' : 
+                              item.TrangThaiTV === 'DaMoi' ? 'Đang chờ xác nhận' : 'Từ chối'}
+                           </Tag>
+                         }
+                       />
+                     </List.Item>
+                   )}
+                 />
+
+                 {/* Form mời thành viên - Chỉ hiển thị nếu chưa full và là Trưởng nhóm */}
+                 {fullRegistration.ThanhVien?.length < fullRegistration.DeTai.SoLuongSinhVien && 
+                  fullRegistration.ThanhVien?.find(tv => tv.SinhVien?._id === authService.getCurrentUser().id)?.VaiTro === 'TruongNhom' && (
+                   <>
+                     <Divider style={{ margin: '12px 0' }} />
+                     <Space>
+                       <Input 
+                         placeholder="Nhập Mã Sinh Viên để mời" 
+                         value={inviteMaSV}
+                         onChange={e => setInviteMaSV(e.target.value)}
+                         style={{ width: 250 }}
+                       />
+                       <Button type="primary" onClick={handleInviteMember} loading={inviting}>
+                         Gửi Lời Mời
+                       </Button>
+                     </Space>
+                   </>
+                 )}
+              </div>
+            )}
+          </Space>
+        </Card>
       )}
 
       {loading ? (
@@ -196,10 +303,36 @@ const TopicRegistration = () => {
                 bodyStyle={{ flexGrow: 1 }}
               >
                 <div style={{ marginBottom: 12 }}>
+                  <Text type="secondary">GV Hướng dẫn:</Text>
+                  <Text strong style={{ marginLeft: 8 }}>{topic.GiangVienHuongDan?.HoTen || 'N/A'}</Text>
+                  <br />
+                  <Text type="secondary">Sinh viên tối đa:</Text>
+                  <Tag color="geekblue" style={{ marginLeft: 8, marginTop: 4 }}>{topic.SoLuongSinhVien || 1} SV</Tag>
+                  <br />
+                  <br />
                   <Text type="secondary">Mô tả cốt lõi:</Text>
                   <Paragraph ellipsis={{ rows: 2, expandable: false }} style={{ marginTop: 4, marginBottom: 12 }}>
                     {topic.MoTa}
                   </Paragraph>
+                  
+                  {topic.MoTaChiTiet && (
+                    <Paragraph ellipsis={{ rows: 2, expandable: true, symbol: 'Xem thêm' }} style={{ marginTop: 4, marginBottom: 12 }}>
+                      <Text type="secondary">Chi tiết: </Text>
+                      {topic.MoTaChiTiet}
+                    </Paragraph>
+                  )}
+
+                  {topic.ChiTietBoSung && topic.ChiTietBoSung.length > 0 && (
+                     <div style={{ marginBottom: 12 }}>
+                       {topic.ChiTietBoSung.map((item, idx) => (
+                         <div key={idx} style={{ marginBottom: 4 }}>
+                           <Text type="secondary">{item.TieuDe}: </Text>
+                           <Text>{item.NoiDung}</Text>
+                         </div>
+                       ))}
+                     </div>
+                  )}
+
                   <Text type="secondary">Yêu cầu công nghệ:</Text>
                   <div style={{ marginTop: 8 }}>
                     {topic.YeuCau && topic.YeuCau.map((tech, idx) => (

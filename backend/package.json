@@ -24,7 +24,8 @@
     "debug:payment": "node scripts/debug-payment.js",
     "transfer:tokens": "node scripts/transfer-tokens-to-contract.js",
     "test:payment": "node scripts/test-payment-direct.js",
-    "deploy:thesis": "hardhat run scripts/deploy-thesis.js --network sepolia"
+    "deploy:thesis": "hardhat run scripts/deploy-thesis.js --network sepolia",
+    "verify:thesis": "hardhat verify --network sepolia"
   },
   "dependencies": {
     "@pinata/sdk": "^2.1.0",

@@ -7,7 +7,8 @@ const sinhVienSchema = new mongoose.Schema({
   GPA: { type: Number, default: 0 },
   ChuyenNganh: { type: String, default: '' },
   KyNang: [{ type: String }],
-  WalletAddress: { type: String, required: true, unique: true }
+  WalletAddress: { type: String, required: true, unique: true },
+  DaCapNhatHoSo: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('SinhVien', sinhVienSchema);
