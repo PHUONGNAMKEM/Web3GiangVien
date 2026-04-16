@@ -1,6 +1,7 @@
 const DeTai = require('../models/DeTai');
 const DangKyDeTai = require('../models/DangKyDeTai');
 const SinhVien = require('../models/SinhVien');
+const logger = require('../config/logger');
 
 exports.getAll = async (req, res) => {
     try {
@@ -23,10 +24,47 @@ exports.getById = async (req, res) => {
 
 exports.create = async (req, res) => {
     try {
-        const newItem = new DeTai(req.body);
+        const body = req.body;
+
+        // Validate Rubrics nếu SuDungRubrics = true
+        if (body.SuDungRubrics) {
+            if (!body.Rubrics || body.Rubrics.length === 0) {
+                return res.status(400).json({ error: 'Khi bật Rubrics, cần ít nhất 1 tiêu chí.' });
+            }
+
+            const tongTrongSo = body.Rubrics.reduce((sum, tc) => sum + (tc.TrongSo || 0), 0);
+            if (tongTrongSo !== 100) {
+                return res.status(400).json({ 
+                    error: `Tổng trọng số Rubrics phải = 100%. Hiện tại = ${tongTrongSo}%.` 
+                });
+            }
+
+            // Kiểm tra mỗi tiêu chí hợp lệ
+            for (const tc of body.Rubrics) {
+                if (!tc.TenTieuChi || tc.TrongSo <= 0) {
+                    return res.status(400).json({ error: 'Mỗi tiêu chí phải có Tên và Trọng số > 0.' });
+                }
+            }
+        }
+
+        // Nếu chọn từ template → update template tracking
+        if (body._templateId) {
+            const RubricsTemplate = require('../models/RubricsTemplate');
+            const template = await RubricsTemplate.findById(body._templateId);
+            if (template) {
+                template.DaApDung = true;
+                template.SoLuotDung = (template.SoLuotDung || 0) + 1;
+                await template.save();
+            }
+            delete body._templateId; // Không lưu vào DeTai
+        }
+
+        const newItem = new DeTai(body);
         await newItem.save();
+        logger.info(`[TOPIC] Created "${body.TenDeTai}" by GV ${body.GiangVienHuongDan} | Rubrics: ${body.SuDungRubrics || false}`);
         res.status(201).json(newItem);
     } catch (err) {
+        logger.error(`[TOPIC] Create failed: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };
@@ -45,8 +83,10 @@ exports.delete = async (req, res) => {
         await DeTai.findByIdAndDelete(req.params.id);
         // Xóa luôn đăng ký liên quan
         await DangKyDeTai.deleteMany({ DeTai: req.params.id });
+        logger.info(`[TOPIC] Deleted topic ${req.params.id}`);
         res.json({ message: 'Deleted successfully' });
     } catch (err) {
+        logger.error(`[TOPIC] Delete failed: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };
@@ -82,8 +122,10 @@ exports.registerTopic = async (req, res) => {
         });
 
         await dangKy.save();
+        logger.info(`[TOPIC] Student ${sinhVienId} registered for topic ${deTaiId}`);
         res.status(201).json({ message: 'Đăng ký đề tài thành công (Trưởng nhóm)!', data: dangKy });
     } catch (err) {
+        logger.error(`[TOPIC] Registration failed: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };
@@ -195,8 +237,10 @@ exports.approveRegistration = async (req, res) => {
             );
         }
 
+        logger.info(`[TOPIC] Registration ${id} ${trangThai === 'DaDuyet' ? 'approved' : 'rejected'} | topic=${updated.DeTai?._id}`);
         res.json({ message: `Đã ${trangThai === 'DaDuyet' ? 'duyệt' : 'từ chối'} thành công`, data: updated });
     } catch (err) {
+        logger.error(`[TOPIC] Approve/Reject failed: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };
@@ -247,8 +291,10 @@ exports.inviteMember = async (req, res) => {
         });
         await dangKy.save();
 
+        logger.info(`[TOPIC] Student ${svMoi.MaSV} invited to topic ${id} by leader ${jwtPayloadId}`);
         res.json({ message: 'Đã gửi lời mời thành công!' });
     } catch (err) {
+        logger.error(`[TOPIC] Invite member failed: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };

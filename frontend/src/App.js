@@ -6,6 +6,7 @@ import MainLayout from './components/layout/MainLayout';
 import LecturerDashboard from './components/lecturer/LecturerDashboard';
 import TopicManagement from './components/lecturer/TopicManagement';
 import SubmissionReview from './components/lecturer/SubmissionReview';
+import RubricsManagement from './components/lecturer/RubricsManagement';
 import StudentDashboard from './components/student/StudentDashboard';
 import TopicRegistration from './components/student/TopicRegistration';
 import ReportUpload from './components/student/ReportUpload';
@@ -74,6 +75,7 @@ function App() {
           <Route index element={<LecturerDashboard />} />
           <Route path="topics" element={<TopicManagement />} />
           <Route path="review" element={<SubmissionReview />} />
+          <Route path="rubrics" element={<RubricsManagement />} />
         </Route>
 
         <Route path="/student" element={

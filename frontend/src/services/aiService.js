@@ -163,6 +163,45 @@ const aiApiService = {
     commentProgress: async (tienDoId, nhanXet) => {
         const response = await axios.put(`${API_URL}/tiendo/${tienDoId}/nhanxet`, { nhanXet }, { headers: getAuthHeaders() });
         return response.data;
+    },
+
+    // === RUBRICS TEMPLATE ===
+
+    getRubricsTemplates: async (gvId) => {
+        const response = await axios.get(`${API_URL}/rubrics/giangvien/${gvId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    createRubricsTemplate: async (data) => {
+        const response = await axios.post(`${API_URL}/rubrics`, data, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    updateRubricsTemplate: async (id, data) => {
+        const response = await axios.put(`${API_URL}/rubrics/${id}`, data, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    deleteRubricsTemplate: async (id) => {
+        const response = await axios.delete(`${API_URL}/rubrics/${id}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    setDefaultRubricsTemplate: async (id) => {
+        const response = await axios.put(`${API_URL}/rubrics/${id}/default`, {}, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    applyTemplate: async (templateId, deTaiId) => {
+        const response = await axios.post(`${API_URL}/rubrics/${templateId}/apply/${deTaiId}`, {}, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // === AI ANALYZE WITH RUBRICS ===
+
+    analyzeReportWithRubrics: async (text, rubrics) => {
+        const response = await axios.post(`${API_URL}/ai/analyze-rubrics`, { text, rubrics }, { headers: getAuthHeaders() });
+        return response.data;
     }
 };
 

@@ -1,6 +1,9 @@
 from typing import Any
+import logging
 import torch
 from sentence_transformers import SentenceTransformer, util
+
+logger = logging.getLogger('ml-service')
 
 
 class SbertMatcher:
@@ -12,8 +15,9 @@ class SbertMatcher:
     def __init__(self) -> None:
         self.model_name = "paraphrase-multilingual-MiniLM-L12-v2"
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Loading SBERT model '{self.model_name}' onto {self.device}...")
+        logger.info(f"[AI] Loading SBERT model '{self.model_name}' onto {self.device}...")
         self.model = SentenceTransformer(self.model_name).to(self.device)
+        logger.info(f"[AI] SBERT model '{self.model_name}' loaded successfully")
 
     def match(self, student: dict[str, Any], topics: list[dict[str, Any]]) -> list[dict[str, Any]]:
         gpa = float(student.get("gpa", 0.0))

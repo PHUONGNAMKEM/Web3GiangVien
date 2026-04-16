@@ -2,6 +2,7 @@ const { ethers } = require('ethers');
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
+const logger = require('../config/logger');
 
 // Đọc ABI từ thư mục artifacts sau khi biên dịch bằng Hardhat (nếu có)
 const getContractABI = () => {
@@ -10,7 +11,7 @@ const getContractABI = () => {
         const fileData = fs.readFileSync(abiPath, 'utf8');
         return JSON.parse(fileData).abi;
     } catch (e) {
-        console.error('Không tìm thấy file ABI cho ThesisManagement. Vui lòng compile contract trước.');
+        logger.error('[BLOCKCHAIN] Không tìm thấy file ABI cho ThesisManagement. Vui lòng compile contract trước.');
         return [];
     }
 };
@@ -34,41 +35,45 @@ const getContractInstance = () => {
 
 exports.registerTopicOnChain = async (topicId, title, advisorDID, deadline, requirements) => {
     try {
-        console.log("Calling contract registerTopic...", { topicId, title, advisorDID });
+        logger.info(`[BLOCKCHAIN] registerTopic | topic=${topicId} | title="${title}" | advisor=${advisorDID}`);
         const contract = getContractInstance();
         // Giả sử: contract.registerTopic(topicId, title, advisorDID, deadline, requirements)
         // Lưu ý: requirements phải là mảng string
         const tx = await contract.registerTopic(topicId, title, advisorDID, deadline, requirements);
         const receipt = await tx.wait();
-        return receipt.hash || receipt.transactionHash;
+        const txHash = receipt.hash || receipt.transactionHash;
+        logger.info(`[BLOCKCHAIN] registerTopic success | txHash=${txHash}`);
+        return txHash;
     } catch (error) {
-        console.error("Lỗi registerTopicOnChain:", error.message);
+        logger.error(`[BLOCKCHAIN] registerTopic failed: ${error.message}`);
         throw error;
     }
 };
 
 exports.submitReportOnChain = async (studentDID, topicId, ipfsCID, timestamp) => {
     try {
-        console.log("Calling contract submitReport...", { studentDID, topicId, ipfsCID });
+        logger.info(`[BLOCKCHAIN] submitReport | student=${studentDID} | topic=${topicId} | cid=${ipfsCID}`);
         const contract = getContractInstance();
         const tx = await contract.submitReport(studentDID, topicId, ipfsCID, timestamp);
         const receipt = await tx.wait();
-        return receipt.hash || receipt.transactionHash;
+        const txHash = receipt.hash || receipt.transactionHash;
+        logger.info(`[BLOCKCHAIN] submitReport success | txHash=${txHash}`);
+        return txHash;
     } catch (error) {
-        console.error("Lỗi submitReportOnChain:", error.message);
+        logger.error(`[BLOCKCHAIN] submitReport failed: ${error.message}`);
         throw error;
     }
 };
 
 exports.finalizeGradeOnChain = async (studentDID, topicId, grade, feedback, idx) => {
     try {
-        console.log("Calling contract finalizeGrade...", { studentDID, topicId, grade, feedback, idx });
+        logger.info(`[BLOCKCHAIN] finalizeGrade | student=${studentDID} | topic=${topicId} | grade=${grade} | idx=${idx}`);
         const contract = getContractInstance();
 
         // 1. Ensure Topic exists
         const topicOnChain = await contract.topics(topicId);
         if (!topicOnChain.exists) {
-            console.log("Topic does not exist on-chain, registering now...");
+            logger.info(`[BLOCKCHAIN] Topic ${topicId} not on-chain, auto-registering...`);
             const DeTai = require('../models/DeTai');
             const dt = await DeTai.findById(topicId);
             if (dt) {
@@ -76,23 +81,23 @@ exports.finalizeGradeOnChain = async (studentDID, topicId, grade, feedback, idx)
                 const reqs = dt.YeuCau && dt.YeuCau.length > 0 ? dt.YeuCau : ["N/A"];
                 const txReg = await contract.registerTopic(topicId, dt.TenDeTai || "Untitled", dt.GiangVienHuongDan.toString(), deadlineUnix, reqs);
                 await txReg.wait();
-                console.log("Topic registered on-chain.");
+                logger.info(`[BLOCKCHAIN] Topic ${topicId} auto-registered on-chain`);
             }
         }
 
         // 2. Ensure Submission exists
         const history = await contract.getSubmissionHistory(studentDID, topicId);
         if (history.length <= idx) {
-            console.log("Submission does not exist on-chain, submitting now...");
+            logger.info(`[BLOCKCHAIN] Submission not on-chain for student=${studentDID}, auto-submitting...`);
             const BaoCao = require('../models/BaoCao');
             const bc = await BaoCao.findOne({ DeTai: topicId, SinhVien: studentDID });
             if (bc) {
                 const timestamp = Math.floor(new Date(bc.NgayNop).getTime() / 1000) || Math.floor(Date.now() / 1000);
                 const txSub = await contract.submitReport(studentDID, topicId, bc.IPFS_CID || "Qm...", timestamp);
                 await txSub.wait();
-                console.log("Report submitted on-chain.");
+                logger.info(`[BLOCKCHAIN] Report auto-submitted on-chain | cid=${bc.IPFS_CID}`);
             } else {
-                console.log("Warning: No BaoCao found in DB to submit on-chain.");
+                logger.warn(`[BLOCKCHAIN] No BaoCao found in DB for student=${studentDID} topic=${topicId}`);
             }
         }
 
@@ -100,9 +105,11 @@ exports.finalizeGradeOnChain = async (studentDID, topicId, grade, feedback, idx)
         const gradeInt = Math.round(parseFloat(grade) * 10); // Ví dụ đổi 8.5 thành 85 để lưu On-chain nếu dùng số nguyên
         const tx = await contract.finalizeGrade(studentDID, topicId, gradeInt, feedback, idx);
         const receipt = await tx.wait();
-        return receipt.hash || receipt.transactionHash;
+        const txHash = receipt.hash || receipt.transactionHash;
+        logger.info(`[BLOCKCHAIN] finalizeGrade success | student=${studentDID} | grade=${grade} | txHash=${txHash}`);
+        return txHash;
     } catch (error) {
-        console.error("Lỗi finalizeGradeOnChain:", error.message);
+        logger.error(`[BLOCKCHAIN] finalizeGrade failed: ${error.message}`);
         throw error;
     }
 };

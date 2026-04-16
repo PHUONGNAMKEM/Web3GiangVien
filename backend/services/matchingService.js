@@ -1,4 +1,5 @@
 const axios = require('axios');
+const logger = require('../config/logger');
 require('dotenv').config();
 
 const FASTAPI_ENDPOINT = 'http://127.0.0.1:8001/match-student';
@@ -6,7 +7,7 @@ const FASTAPI_ENDPOINT = 'http://127.0.0.1:8001/match-student';
 // Sử dụng Sentence Transformers trên FastAPI (SBERT) để tính vector similarity
 exports.matchStudentToTopics = async (studentProfile, topics) => {
     try {
-        console.log("Calling Local FastAPI for SBERT Matching...");
+        logger.info(`[AI] Calling FastAPI /match-student | topics=${topics.length}`);
         
         // FastAPI expects: { student: { gpa, major_scores }, topics: [{ topic_id, requirements: [] }] }
         // Build major_scores from KyNang array (each skill gets score 8.0 to indicate proficiency)
@@ -70,7 +71,7 @@ exports.matchStudentToTopics = async (studentProfile, topics) => {
         };
 
     } catch (error) {
-        console.error("Matching Service Error:", error.response?.data || error.message);
+        logger.error(`[AI] Matching service error: ${error.response?.data ? JSON.stringify(error.response.data) : error.message}`);
         throw error;
     }
 };

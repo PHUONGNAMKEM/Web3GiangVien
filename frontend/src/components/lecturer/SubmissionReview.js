@@ -53,6 +53,10 @@ const SubmissionReview = () => {
   const [existingGrade, setExistingGrade] = useState(null);
   const [score, setScore] = useState(0);
 
+  // === RUBRICS STATE ===
+  const [rubricsResult, setRubricsResult] = useState([]);  // Array: per-criteria results
+  const [gvRubricsScores, setGvRubricsScores] = useState([]); // GV overrides for each criteria
+
   const user = authService.getCurrentUser();
 
   const fetchData = useCallback(async () => {
@@ -70,35 +74,79 @@ const SubmissionReview = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Tính tổng điểm từ GV scores theo trọng số
+  const calcWeightedScore = (scores) => {
+    if (!scores || scores.length === 0) return 0;
+    let total = 0;
+    for (const s of scores) {
+      if (s.DiemToiDa > 0) {
+        total += (s.GV_DiemTieuChi / s.DiemToiDa) * s.TrongSo;
+      }
+    }
+    return Math.round(total / 10 * 100) / 100; // on scale 10
+  };
+
   const viewDetails = async (record) => {
     setSelectedSubmission(record);
     setDrawerVisible(true);
     setAiAnalysis(null);
     setScore(0);
     setExistingGrade(null);
+    setRubricsResult([]);
+    setGvRubricsScores([]);
 
     // Nếu đã chấm điểm rồi, lấy thông tin điểm đã lưu
     if (record.status === 'DaCham' && record.grade) {
       setExistingGrade(record.grade);
       setScore(record.grade.Diem || 0);
+      if (record.grade.RubricsResult && record.grade.RubricsResult.length > 0) {
+        setRubricsResult(record.grade.RubricsResult);
+        setGvRubricsScores(record.grade.RubricsResult);
+      }
     }
 
     if (record.submission) {
-      // Có bài nộp → Gọi PhoBERT phân tích
+      const topic = record.topic;
+      const hasSuDungRubrics = topic?.SuDungRubrics && topic?.Rubrics && topic.Rubrics.length > 0;
+
       setAnalyzing(true);
       try {
-        const topic = record.topic;
-        const textForAI = `Báo cáo Đồ án: ${topic?.TenDeTai || ''}. ${topic?.MoTa || ''}. Sinh viên sử dụng các công nghệ: ${(topic?.YeuCau || []).join(', ')}.`;
-        const topicReqs = topic?.YeuCau || [];
+        if (hasSuDungRubrics) {
+          // === RUBRICS MODE: gọi analyze-with-rubrics ===
+          const textForAI = `Báo cáo Đồ án: ${topic?.TenDeTai || ''}. ${topic?.MoTa || ''}. Sinh viên sử dụng các công nghệ: ${(topic?.YeuCau || []).join(', ')}.`;
+          const aiResult = await aiApiService.analyzeReportWithRubrics(textForAI, topic.Rubrics);
 
-        const aiResult = await aiApiService.analyzeReportAI(textForAI, topicReqs);
-        setAiAnalysis({
-          score: aiResult.score,
-          feedback: aiResult.feedback,
-          issues: aiResult.issues || [],
-          model: aiResult.model || 'vinai/phobert-base'
-        });
-        setScore(aiResult.score);
+          setAiAnalysis({
+            score: aiResult.score,
+            feedback: aiResult.feedback,
+            model: aiResult.model || 'vinai/phobert-base',
+            chunks_info: aiResult.chunks_info || [],
+          });
+          setRubricsResult(aiResult.rubrics_result || []);
+          // Init GV scores from AI suggestions
+          setGvRubricsScores((aiResult.rubrics_result || []).map(r => ({
+            ...r,
+            GV_DiemTieuChi: r.AI_DiemTieuChi,
+          })));
+          // Calculate initial weighted score
+          const initScore = calcWeightedScore((aiResult.rubrics_result || []).map(r => ({
+            ...r,
+            GV_DiemTieuChi: r.AI_DiemTieuChi,
+          })));
+          setScore(initScore);
+        } else {
+          // === LEGACY MODE: chấm tự do ===
+          const textForAI = `Báo cáo Đồ án: ${topic?.TenDeTai || ''}. ${topic?.MoTa || ''}. Sinh viên sử dụng các công nghệ: ${(topic?.YeuCau || []).join(', ')}.`;
+          const topicReqs = topic?.YeuCau || [];
+          const aiResult = await aiApiService.analyzeReportAI(textForAI, topicReqs);
+          setAiAnalysis({
+            score: aiResult.score,
+            feedback: aiResult.feedback,
+            issues: aiResult.issues || [],
+            model: aiResult.model || 'vinai/phobert-base'
+          });
+          setScore(aiResult.score);
+        }
       } catch (err) {
         console.error('AI Analysis failed:', err);
         message.warning('PhoBERT AI chưa phản hồi.');
@@ -130,7 +178,8 @@ const SubmissionReview = () => {
         diem: score,
         nhanXet: aiAnalysis?.feedback || "",
         aiScore: aiAnalysis?.score || 0,
-        aiFeedback: aiAnalysis?.feedback || ""
+        aiFeedback: aiAnalysis?.feedback || "",
+        rubricsResult: gvRubricsScores.length > 0 ? gvRubricsScores : undefined,
       });
 
       // Capture the full grade data from API response (includes TxHash)
@@ -344,6 +393,65 @@ const SubmissionReview = () => {
                 />
               ) : null}
             </div>
+
+            {/* === RUBRICS CHI TIẾT (nếu đề tài có Rubrics) === */}
+            {rubricsResult.length > 0 && (
+              <div style={{ padding: 16, background: '#faf0ff', borderRadius: 8, marginBottom: 24, borderLeft: '4px solid #722ed1' }}>
+                <Space style={{ marginBottom: 12 }}>
+                  <Text strong style={{ color: '#722ed1', fontSize: 15 }}>📋 Chấm Điểm Theo Rubrics ({rubricsResult.length} tiêu chí)</Text>
+                </Space>
+
+                {gvRubricsScores.map((criteria, idx) => (
+                  <div key={idx} style={{
+                    padding: 12, marginBottom: 8, background: '#fff', borderRadius: 6,
+                    border: '1px solid #d3adf7'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <Space>
+                        <Text strong>{criteria.TenTieuChi}</Text>
+                        <Tag color="blue">{criteria.TrongSo}%</Tag>
+                      </Space>
+                      <Space>
+                        <Text type="secondary" style={{ fontSize: 12 }}>AI: {criteria.AI_DiemTieuChi}</Text>
+                        <Text strong>/</Text>
+                        <InputNumber
+                          min={0}
+                          max={criteria.DiemToiDa || 10}
+                          step={0.5}
+                          size="small"
+                          value={criteria.GV_DiemTieuChi}
+                          style={{ width: 70 }}
+                          disabled={selectedSubmission?.status === 'DaCham'}
+                          onChange={v => {
+                            const updated = [...gvRubricsScores];
+                            updated[idx] = { ...updated[idx], GV_DiemTieuChi: v || 0 };
+                            setGvRubricsScores(updated);
+                            setScore(calcWeightedScore(updated));
+                          }}
+                        />
+                        <Text type="secondary">/ {criteria.DiemToiDa || 10}</Text>
+                      </Space>
+                    </div>
+
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
+                      {criteria.AI_NhanXetTieuChi}
+                    </Text>
+
+                    {criteria.MatchedChunk && (
+                      <Tag color="purple" style={{ marginTop: 4, fontSize: 10 }}>
+                        Matched: {criteria.MatchedChunk.heading}
+                      </Tag>
+                    )}
+                  </div>
+                ))}
+
+                <div style={{ textAlign: 'right', marginTop: 8, padding: 8, background: '#f0e6ff', borderRadius: 6 }}>
+                  <Text strong style={{ color: '#722ed1', fontSize: 14 }}>
+                    Tổng điểm (trọng số): {score} / 10
+                  </Text>
+                </div>
+              </div>
+            )}
 
             <Steps
               direction="vertical"

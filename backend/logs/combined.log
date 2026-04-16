@@ -1,0 +1,48 @@
+2026-04-16 11:05:52 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-04-16 11:06:00 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-04-16 11:06:01 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net
+2026-04-16 11:06:21 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-04-16 11:06:22 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net
+2026-04-16 11:06:50 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-04-16 11:06:51 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net
+2026-04-16 11:07:12 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-04-16 11:07:12 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net
+2026-04-16 11:07:24 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-04-16 11:07:25 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-01.2sa07.mongodb.net
+2026-04-16 11:07:44 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-04-16 11:07:45 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net
+2026-04-16 11:08:26 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-04-16 11:08:26 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-01.2sa07.mongodb.net
+2026-04-16 11:18:41 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-04-16 11:18:41 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-01.2sa07.mongodb.net
+2026-04-16 11:18:52 [INFO ] [HTTP] GET /api/tiendo/69d74acd8ff67276cc1d83fa 304 - - 134.635 ms
+2026-04-16 11:18:53 [INFO ] [HTTP] GET /api/dangky/sinhvien/69d74acd8ff67276cc1d83fa 304 - - 143.101 ms
+2026-04-16 11:18:53 [INFO ] [HTTP] GET /api/tiendo/69d74acd8ff67276cc1d83fa 304 - - 98.532 ms
+2026-04-16 11:18:53 [INFO ] [HTTP] GET /api/dangky/sinhvien/69d74acd8ff67276cc1d83fa 304 - - 126.595 ms
+2026-04-16 11:19:03 [INFO ] [HTTP] GET /api/sinhvien/69d74acd8ff67276cc1d83fa 304 - - 49.836 ms
+2026-04-16 11:19:03 [INFO ] [HTTP] GET /api/sinhvien/69d74acd8ff67276cc1d83fa 304 - - 50.716 ms
+2026-04-16 11:19:03 [INFO ] [HTTP] GET /api/detai/invitations/69d74acd8ff67276cc1d83fa 304 - - 50.271 ms
+2026-04-16 11:19:03 [INFO ] [HTTP] GET /api/detai/invitations/69d74acd8ff67276cc1d83fa 304 - - 48.888 ms
+2026-04-16 11:19:03 [INFO ] [HTTP] GET /api/dangky/sinhvien/69d74acd8ff67276cc1d83fa 304 - - 102.652 ms
+2026-04-16 11:19:04 [INFO ] [HTTP] GET /api/diemso/sinhvien/69d74acd8ff67276cc1d83fa 304 - - 46.999 ms
+2026-04-16 11:19:04 [INFO ] [HTTP] GET /api/dangky/sinhvien/69d74acd8ff67276cc1d83fa 304 - - 98.073 ms
+2026-04-16 11:19:04 [INFO ] [HTTP] GET /api/diemso/sinhvien/69d74acd8ff67276cc1d83fa 304 - - 50.415 ms
+2026-04-16 11:19:06 [INFO ] [HTTP] POST /api/auth/challenge 200 312 - 5.336 ms
+2026-04-16 11:19:07 [INFO ] [HTTP] POST /api/auth/verify 200 515 - 118.780 ms
+2026-04-16 11:19:12 [INFO ] [HTTP] GET /api/baocao/giangvien/69cab756026550c0e19d57ac 304 - - 304.817 ms
+2026-04-16 11:19:12 [INFO ] [HTTP] GET /api/baocao/giangvien/69cab756026550c0e19d57ac 304 - - 298.584 ms
+2026-04-16 11:19:13 [INFO ] [HTTP] GET /api/detai 304 - - 112.670 ms
+2026-04-16 11:19:13 [INFO ] [HTTP] GET /api/detai 304 - - 103.656 ms
+2026-04-16 11:19:13 [INFO ] [HTTP] GET /api/dangky/giangvien/69cab756026550c0e19d57ac 304 - - 154.360 ms
+2026-04-16 11:19:13 [INFO ] [HTTP] GET /api/rubrics/giangvien/69cab756026550c0e19d57ac 304 - - 51.723 ms
+2026-04-16 11:19:14 [INFO ] [HTTP] GET /api/dangky/giangvien/69cab756026550c0e19d57ac 304 - - 152.377 ms
+2026-04-16 11:19:14 [INFO ] [HTTP] GET /api/rubrics/giangvien/69cab756026550c0e19d57ac 304 - - 48.639 ms
+2026-04-16 11:19:37 [INFO ] [HTTP] GET /api/detai 304 - - 107.513 ms
+2026-04-16 11:19:37 [INFO ] [HTTP] GET /api/dangky/giangvien/69cab756026550c0e19d57ac 304 - - 159.112 ms
+2026-04-16 11:19:37 [INFO ] [HTTP] GET /api/rubrics/giangvien/69cab756026550c0e19d57ac 304 - - 50.767 ms
+2026-04-16 11:20:32 [INFO ] [HTTP] GET /api/detai 304 - - 126.030 ms
+2026-04-16 11:20:32 [INFO ] [HTTP] GET /api/detai 304 - - 99.694 ms
+2026-04-16 11:20:32 [INFO ] [HTTP] GET /api/dangky/giangvien/69cab756026550c0e19d57ac 304 - - 150.187 ms
+2026-04-16 11:20:32 [INFO ] [HTTP] GET /api/rubrics/giangvien/69cab756026550c0e19d57ac 304 - - 51.910 ms
+2026-04-16 11:20:32 [INFO ] [HTTP] GET /api/dangky/giangvien/69cab756026550c0e19d57ac 304 - - 153.109 ms
+2026-04-16 11:20:32 [INFO ] [HTTP] GET /api/rubrics/giangvien/69cab756026550c0e19d57ac 304 - - 48.739 ms

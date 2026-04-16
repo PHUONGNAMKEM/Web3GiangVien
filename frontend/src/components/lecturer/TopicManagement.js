@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider, Descriptions } from 'antd';
-import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle } from 'lucide-react';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider, Descriptions, Switch, Alert } from 'antd';
+import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle, NotebookText } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import dayjs from 'dayjs';
@@ -18,6 +18,14 @@ const TopicManagement = () => {
   const [approvingId, setApprovingId] = useState(null);
   const [chiTietBoSung, setChiTietBoSung] = useState([]);
   const [form] = Form.useForm();
+
+  // === RUBRICS STATE ===
+  const [suDungRubrics, setSuDungRubrics] = useState(false);
+  const [hienThiChiTietChoSV, setHienThiChiTietChoSV] = useState(false);
+  const [rubricsTieuChi, setRubricsTieuChi] = useState([]);
+  const [rubricsSource, setRubricsSource] = useState('new'); // 'new' | 'template'
+  const [templates, setTemplates] = useState([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
 
   const user = authService.getCurrentUser();
 
@@ -42,6 +50,14 @@ const TopicManagement = () => {
         setRegistrations(Array.isArray(regs) ? regs : []);
       } catch (e) {
         setRegistrations([]);
+      }
+
+      // Fetch Rubrics Templates
+      try {
+        const tpls = await aiApiService.getRubricsTemplates(user.id);
+        setTemplates(Array.isArray(tpls) ? tpls : []);
+      } catch (e) {
+        setTemplates([]);
       }
 
     } catch (err) {
@@ -70,8 +86,57 @@ const TopicManagement = () => {
     });
   };
 
+  // === RUBRICS HELPERS ===
+  const tongTrongSo = rubricsTieuChi.reduce((sum, tc) => sum + (tc.TrongSo || 0), 0);
+
+  const addRubricsTieuChi = () => {
+    setRubricsTieuChi([...rubricsTieuChi, { TenTieuChi: '', MoTa: '', TrongSo: 0, DiemToiDa: 10, GoiYChoAI: [] }]);
+  };
+
+  const removeRubricsTieuChi = (index) => {
+    if (rubricsTieuChi.length <= 1) return;
+    setRubricsTieuChi(rubricsTieuChi.filter((_, i) => i !== index));
+  };
+
+  const updateRubricsTieuChi = (index, field, value) => {
+    const updated = [...rubricsTieuChi];
+    updated[index] = { ...updated[index], [field]: value };
+    setRubricsTieuChi(updated);
+  };
+
+  const handleTemplateSelect = (templateId) => {
+    setSelectedTemplateId(templateId);
+    const tpl = templates.find(t => t._id === templateId);
+    if (tpl) {
+      setRubricsTieuChi(tpl.TieuChi.map(tc => ({
+        TenTieuChi: tc.TenTieuChi,
+        MoTa: tc.MoTa || '',
+        TrongSo: tc.TrongSo,
+        DiemToiDa: tc.DiemToiDa || 10,
+        GoiYChoAI: tc.GoiYChoAI || []
+      })));
+    }
+  };
+
   const handleAddSubmit = async (values) => {
     try {
+      // Validate Rubrics nếu bật
+      if (suDungRubrics) {
+        if (rubricsTieuChi.length === 0) {
+          message.error('Cần ít nhất 1 tiêu chí Rubrics!');
+          return;
+        }
+        if (tongTrongSo !== 100) {
+          message.error(`Tổng trọng số phải = 100%. Hiện tại = ${tongTrongSo}%.`);
+          return;
+        }
+        const invalid = rubricsTieuChi.find(tc => !tc.TenTieuChi || tc.TrongSo <= 0);
+        if (invalid) {
+          message.error('Mỗi tiêu chí phải có Tên và Trọng số > 0.');
+          return;
+        }
+      }
+
       const deadlineDate = values.deadline ? values.deadline.toDate() : new Date(new Date().setMonth(new Date().getMonth() + 2));
 
       const topicData = {
@@ -84,12 +149,21 @@ const TopicManagement = () => {
         SoLuongSinhVien: values.soLuongSV || 1,
         Deadline: deadlineDate,
         GiangVienHuongDan: user.id,
-        TrangThai: 'MoDangKy'
+        TrangThai: 'MoDangKy',
+        // Rubrics
+        SuDungRubrics: suDungRubrics,
+        HienThiChiTietChoSV: hienThiChiTietChoSV,
+        Rubrics: suDungRubrics ? rubricsTieuChi : [],
+        _templateId: (suDungRubrics && rubricsSource === 'template') ? selectedTemplateId : undefined,
       };
+
       await aiApiService.createTopic(topicData);
       setIsModalVisible(false);
       form.resetFields();
       setChiTietBoSung([]);
+      setSuDungRubrics(false);
+      setRubricsTieuChi([]);
+      setSelectedTemplateId(null);
       message.success('Tạo Đề tài thành công! Sinh viên đã có thể thấy trên hệ thống.');
       fetchData();
     } catch (err) {
@@ -154,7 +228,12 @@ const TopicManagement = () => {
       title: 'Tên Đề Tài',
       dataIndex: 'TenDeTai',
       key: 'TenDeTai',
-      render: text => <strong style={{ color: '#1677ff' }}>{text}</strong>,
+      render: (text, record) => (
+        <Space direction="vertical" size={0}>
+          <strong style={{ color: '#1677ff' }}>{text}</strong>
+          {record.SuDungRubrics && <Tag color="purple" style={{ fontSize: 10 }}>Rubrics</Tag>}
+        </Space>
+      ),
       width: '30%',
     },
     {
@@ -244,7 +323,15 @@ const TopicManagement = () => {
           type="primary"
           icon={<Plus size={18} />}
           size="large"
-          onClick={() => { setChiTietBoSung([]); setIsModalVisible(true); }}
+          onClick={() => {
+            setChiTietBoSung([]);
+            setSuDungRubrics(false);
+            setHienThiChiTietChoSV(false);
+            setRubricsTieuChi([]);
+            setRubricsSource('new');
+            setSelectedTemplateId(null);
+            setIsModalVisible(true);
+          }}
         >
           Tạo Đề Tài Mới
         </Button>
@@ -286,6 +373,32 @@ const TopicManagement = () => {
                     />
                   </Descriptions.Item>
                 )}
+                {/* Hiển thị Rubrics nếu đề tài có */}
+                {record.SuDungRubrics && record.Rubrics && record.Rubrics.length > 0 && (
+                  <Descriptions.Item label={<strong style={{ color: '#722ed1' }}>📋 Rubrics Chấm Điểm</strong>}>
+                    <div>
+                      <Space style={{ marginBottom: 8 }}>
+                        <Tag color="purple">{record.Rubrics.length} tiêu chí</Tag>
+                        <Tag color={record.HienThiChiTietChoSV ? 'green' : 'default'}>
+                          SV {record.HienThiChiTietChoSV ? 'xem được' : 'không xem được'} chi tiết
+                        </Tag>
+                      </Space>
+                      {record.Rubrics.map((tc, idx) => (
+                        <div key={idx} style={{ marginBottom: 4, paddingLeft: 8, borderLeft: '2px solid #722ed1' }}>
+                          <Text strong>{tc.TenTieuChi}</Text>
+                          <Tag color="blue" style={{ marginLeft: 8 }}>{tc.TrongSo}%</Tag>
+                          <Tag>{tc.DiemToiDa || 10} điểm</Tag>
+                          {tc.MoTa && <Text type="secondary" style={{ display: 'block', fontSize: 12 }}>{tc.MoTa}</Text>}
+                          {tc.GoiYChoAI && tc.GoiYChoAI.length > 0 && (
+                            <div>
+                              {tc.GoiYChoAI.map((kw, ki) => <Tag key={ki} color="geekblue" style={{ fontSize: 10 }}>{kw}</Tag>)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </Descriptions.Item>
+                )}
               </Descriptions>
             </div>
           ),
@@ -293,7 +406,7 @@ const TopicManagement = () => {
         }}
       />
 
-      {/* Modal Tạo Đề Tài - MỞ RỘNG */}
+      {/* Modal Tạo Đề Tài - MỞ RỘNG VỚI RUBRICS */}
       <Modal
         title="Đăng Ký Đề Tài Mới Lên Hệ Thống"
         open={isModalVisible}
@@ -301,7 +414,7 @@ const TopicManagement = () => {
         onOk={() => form.submit()}
         okText="Lưu Đề Tài"
         cancelText="Hủy"
-        width={700}
+        width={750}
       >
         <Form form={form} layout="vertical" onFinish={handleAddSubmit}>
           <Form.Item
@@ -370,9 +483,130 @@ const TopicManagement = () => {
               <Button type="text" danger icon={<MinusCircle size={18} />} onClick={() => removeChiTiet(index)} />
             </div>
           ))}
-          <Button type="dashed" onClick={addChiTiet} style={{ width: '100%' }} icon={<Plus size={14} />}>
-            + Thêm mục bổ sung
+          <Button type="dashed" onClick={addChiTiet} style={{ width: '100%', marginBottom: 16 }} icon={<Plus size={14} />}>
+            Thêm mục bổ sung
           </Button>
+
+          {/* === RUBRICS CHẤM ĐIỂM === */}
+          <Divider orientation="left" plain>
+            <div style={{ color: '#722ed1', display: 'flex', alignItems: 'center', gap: 8 }}> <NotebookText />Rubrics Chấm Điểm (Tùy chọn)</div>
+          </Divider>
+
+          <div style={{ marginBottom: 16, display: 'flex', gap: 24 }}>
+            <Space>
+              <Switch checked={suDungRubrics} onChange={v => {
+                setSuDungRubrics(v);
+                if (v && rubricsTieuChi.length === 0) {
+                  setRubricsTieuChi([{ TenTieuChi: '', MoTa: '', TrongSo: 0, DiemToiDa: 10, GoiYChoAI: [] }]);
+                }
+              }} />
+              <Text>Sử dụng Rubrics chấm điểm</Text>
+            </Space>
+            <Space>
+              <Switch checked={hienThiChiTietChoSV} onChange={setHienThiChiTietChoSV} disabled={!suDungRubrics} />
+              <Text type={suDungRubrics ? undefined : 'secondary'}>Cho SV xem chi tiết điểm</Text>
+            </Space>
+          </div>
+
+          {suDungRubrics && (
+            <div style={{ padding: 16, border: '1px solid #d3adf7', borderRadius: 8, background: '#faf0ff' }}>
+              {/* Chọn nguồn Rubrics */}
+              <div style={{ marginBottom: 16 }}>
+                <Select
+                  value={rubricsSource}
+                  onChange={v => {
+                    setRubricsSource(v);
+                    if (v === 'new') {
+                      setSelectedTemplateId(null);
+                      setRubricsTieuChi([{ TenTieuChi: '', MoTa: '', TrongSo: 0, DiemToiDa: 10, GoiYChoAI: [] }]);
+                    }
+                  }}
+                  style={{ width: 200, marginRight: 12 }}
+                >
+                  <Option value="new">Tạo Rubrics mới</Option>
+                  <Option value="template" disabled={templates.length === 0}>Chọn từ mẫu có sẵn</Option>
+                </Select>
+
+                {rubricsSource === 'template' && (
+                  <Select
+                    value={selectedTemplateId}
+                    onChange={handleTemplateSelect}
+                    placeholder="Chọn Rubrics Template..."
+                    style={{ width: 300 }}
+                  >
+                    {templates.map(tpl => (
+                      <Option key={tpl._id} value={tpl._id}>
+                        {tpl.TenMau} ({tpl.TieuChi?.length} tiêu chí)
+                        {tpl.MacDinh && ' ⭐'}
+                      </Option>
+                    ))}
+                  </Select>
+                )}
+              </div>
+
+              {/* Hiển thị tổng trọng số */}
+              <div style={{ marginBottom: 12, textAlign: 'right' }}>
+                <Tag color={tongTrongSo === 100 ? 'success' : 'error'} style={{ fontSize: 13 }}>
+                  Tổng trọng số: {tongTrongSo}% {tongTrongSo === 100 ? '✅' : '❌'}
+                </Tag>
+              </div>
+
+              {/* Danh sách tiêu chí */}
+              {rubricsTieuChi.map((tc, index) => (
+                <div key={index} style={{
+                  padding: 10, marginBottom: 10, border: '1px solid #f0f0f0',
+                  borderRadius: 6, background: '#fff'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <Text strong style={{ color: '#722ed1' }}>Tiêu chí {index + 1}</Text>
+                    <Button type="text" danger size="small" icon={<MinusCircle size={14} />}
+                      onClick={() => removeRubricsTieuChi(index)} disabled={rubricsTieuChi.length <= 1} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                    <Input
+                      placeholder="Tên tiêu chí"
+                      value={tc.TenTieuChi}
+                      onChange={e => updateRubricsTieuChi(index, 'TenTieuChi', e.target.value)}
+                      style={{ flex: 2 }}
+                    />
+                    <InputNumber
+                      min={0} max={100}
+                      value={tc.TrongSo}
+                      onChange={v => updateRubricsTieuChi(index, 'TrongSo', v || 0)}
+                      addonAfter="%"
+                      style={{ width: 110 }}
+                    />
+                    <InputNumber
+                      min={1} max={100}
+                      value={tc.DiemToiDa}
+                      onChange={v => updateRubricsTieuChi(index, 'DiemToiDa', v || 10)}
+                      addonAfter="đ"
+                      style={{ width: 110 }}
+                    />
+                  </div>
+                  <Input.TextArea
+                    placeholder="Mô tả tiêu chí..."
+                    value={tc.MoTa}
+                    onChange={e => updateRubricsTieuChi(index, 'MoTa', e.target.value)}
+                    rows={1}
+                    style={{ marginBottom: 6 }}
+                  />
+                  <Select
+                    mode="tags"
+                    value={tc.GoiYChoAI}
+                    onChange={v => updateRubricsTieuChi(index, 'GoiYChoAI', v)}
+                    placeholder="Gợi ý từ khóa cho AI (nhấn Enter thêm)"
+                    style={{ width: '100%' }}
+                    size="small"
+                  />
+                </div>
+              ))}
+
+              <Button type="dashed" onClick={addRubricsTieuChi} style={{ width: '100%' }} icon={<Plus size={14} />}>
+                Thêm tiêu chí
+              </Button>
+            </div>
+          )}
         </Form>
       </Modal>
 
@@ -475,4 +709,3 @@ const TopicManagement = () => {
 };
 
 export default TopicManagement;
-

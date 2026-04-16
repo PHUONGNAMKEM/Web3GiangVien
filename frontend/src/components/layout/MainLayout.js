@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Button, Avatar, theme, Dropdown } from 'antd';
-import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award } from 'lucide-react';
+import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award, ClipboardList } from 'lucide-react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import authService from '../../services/authService';
 
@@ -40,6 +40,7 @@ const MainLayout = () => {
   const lecturerMenuItems = [
     { key: '/lecturer', icon: <Monitor size={18} />, label: 'Dashboard Giảng Viên' },
     { key: '/lecturer/topics', icon: <Award size={18} />, label: 'Quản Lý Đề Tài' },
+    { key: '/lecturer/rubrics', icon: <ClipboardList size={18} />, label: 'Quản Lý Rubrics' },
     { key: '/lecturer/review', icon: <FileText size={18} />, label: 'Chấm Điểm (AI)' }
   ];
 

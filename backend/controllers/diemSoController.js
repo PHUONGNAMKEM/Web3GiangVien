@@ -1,9 +1,10 @@
 const DiemSo = require('../models/DiemSo');
 const contractService = require('../services/thesisContractService');
+const logger = require('../config/logger');
 
 exports.chamDiem = async (req, res) => {
     try {
-        const { baoCaoId, deTaiId, sinhVienId, giangVienId, diem, nhanXet, aiScore, aiFeedback } = req.body;
+        const { baoCaoId, deTaiId, sinhVienId, giangVienId, diem, nhanXet, aiScore, aiFeedback, rubricsResult } = req.body;
 
         // Kiểm tra xem đã chấm điểm chưa
         const existingGrade = await DiemSo.findOne({ BaoCao: baoCaoId, SinhVien: sinhVienId });
@@ -26,12 +27,15 @@ exports.chamDiem = async (req, res) => {
             NhanXet: nhanXet,
             AI_Score: aiScore,
             AI_Feedback: aiFeedback,
+            RubricsResult: rubricsResult || [],
             TxHash: txHash
         });
 
         await result.save();
+        logger.info(`[GRADE] Student ${sinhVienId} graded ${diem}/10 for topic ${deTaiId} | AI: ${aiScore || 'N/A'} | txHash: ${txHash}`);
         res.status(201).json({ message: 'Chấm điểm thành công', data: result });
     } catch (err) {
+        logger.error(`[GRADE] Failed to grade student ${req.body.sinhVienId}: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };

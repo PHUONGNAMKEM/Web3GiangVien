@@ -3,7 +3,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const http = require('http');
 const socketIo = require('socket.io');
+const morgan = require('morgan');
 const connectDB = require('./config/db');
+const logger = require('./config/logger');
 require('dotenv').config();
 
 const app = express();
@@ -23,11 +25,15 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// HTTP Request Logging (Morgan → Winston)
+const morganStream = { write: (message) => logger.info(`[HTTP] ${message.trim()}`) };
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms', { stream: morganStream }));
+
 // Socket.IO
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  logger.info(`[SOCKET] User connected: ${socket.id}`);
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    logger.info(`[SOCKET] User disconnected: ${socket.id}`);
   });
 });
 app.set('io', io);
@@ -65,6 +71,7 @@ const baoCaoController = require('./controllers/baoCaoController');
 const diemSoController = require('./controllers/diemSoController');
 const aiController = require('./controllers/aiController');
 const tienDoController = require('./controllers/tienDoController');
+const rubricsController = require('./controllers/rubricsController');
 
 
 // 1. Root verify
@@ -131,9 +138,18 @@ app.put('/api/tiendo/:id/nhanxet', tienDoController.commentProgress);
 
 // 9. AI / ML Services
 app.post('/api/ai/analyze-report', aiController.analyzeReport);
+app.post('/api/ai/analyze-rubrics', aiController.analyzeReportWithRubrics);
 app.post('/api/ai/match-student', aiController.matchStudent);
+
+// 10. Rubrics Template
+app.get('/api/rubrics/giangvien/:gvId', rubricsController.getTemplatesByGV);
+app.post('/api/rubrics', rubricsController.createTemplate);
+app.put('/api/rubrics/:id', rubricsController.updateTemplate);
+app.delete('/api/rubrics/:id', rubricsController.deleteTemplate);
+app.put('/api/rubrics/:id/default', rubricsController.setDefaultTemplate);
+app.post('/api/rubrics/:id/apply/:deTaiId', rubricsController.applyTemplate);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`[SERVER] Web3 Giảng Viên API running on port ${PORT}`);
 });

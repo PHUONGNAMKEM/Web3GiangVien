@@ -3,6 +3,7 @@ const DeTai = require('../models/DeTai');
 const DangKyDeTai = require('../models/DangKyDeTai');
 const DiemSo = require('../models/DiemSo');
 const ipfsService = require('../services/ipfsService');
+const logger = require('../config/logger');
 
 const getAcceptedMembers = (dangKy) => {
     const acceptedMembers = (dangKy?.ThanhVien || []).filter(tv =>
@@ -82,7 +83,7 @@ exports.uploadBaoCao = async (req, res) => {
             const ipfsResult = await ipfsService.uploadFile(req.file.path, req.file.originalname);
             ipfsCid = ipfsResult.IpfsHash;
         } catch (e) {
-            console.error('Lỗi khi tải lên IPFS:', e.message);
+            logger.error(`[REPORT] IPFS upload failed: ${e.message}`);
             return res.status(500).json({ error: 'Không thể tải file lên IPFS (Pinata). Vui lòng kiểm tra API Key.' });
         }
 
@@ -97,11 +98,13 @@ exports.uploadBaoCao = async (req, res) => {
         const myReport = createdReports.find(report => report.SinhVien.toString() === requesterId) || createdReports[0];
         const populated = await BaoCao.findById(myReport._id).populate('DeTai').populate('SinhVien');
 
+        logger.info(`[REPORT] Uploaded by student ${requesterId} | topic=${deTaiId} | CID=${ipfsCid} | members=${acceptedMembers.length}`);
         res.status(201).json({
             message: isGroupTopic ? 'Nộp báo cáo thành công cho cả nhóm' : 'Nộp báo cáo thành công',
             data: populated
         });
     } catch (err) {
+        logger.error(`[REPORT] Upload failed: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };
