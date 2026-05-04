@@ -39,6 +39,45 @@
       "artifacts": [
         "ThesisManagement"
       ]
+    },
+    "C:\\Users\\Lenovo\\Downloads\\FileTaiLieuHK8\\DoAnKySu\\Web3-GiangVien\\backend\\contracts\\ThesisManagementV2.sol": {
+      "lastModificationDate": 1777876782097,
+      "contentHash": "857bea28023876dde4f8ed2dea207dde",
+      "sourceName": "contracts/ThesisManagementV2.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200,
+            "details": {
+              "yul": true
+            }
+          },
+          "viaIR": true,
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "ThesisManagementV2"
+      ]
     }
   }
 }

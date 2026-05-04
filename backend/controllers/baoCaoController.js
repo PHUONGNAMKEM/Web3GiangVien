@@ -96,12 +96,33 @@ exports.uploadBaoCao = async (req, res) => {
 
         const createdReports = await BaoCao.insertMany(payload);
         const myReport = createdReports.find(report => report.SinhVien.toString() === requesterId) || createdReports[0];
+
+        // === GHI SUBMISSION LÊN BLOCKCHAIN (non-blocking) ===
+        let submitTxHash = null;
+        try {
+            const contractService = require('../services/thesisContractService');
+            const timestamp = Math.floor(Date.now() / 1000);
+            submitTxHash = await contractService.submitReportOnChain(
+                requesterId, deTaiId, ipfsCid, timestamp
+            );
+            // Cập nhật TxHash vào tất cả BaoCao đã tạo
+            await BaoCao.updateMany(
+                { _id: { $in: createdReports.map(r => r._id) } },
+                { SubmitTxHash: submitTxHash }
+            );
+            logger.info(`[REPORT] Blockchain submit success | txHash=${submitTxHash}`);
+        } catch (bcErr) {
+            logger.warn(`[REPORT] Blockchain submit failed (non-blocking): ${bcErr.message}`);
+        }
+
         const populated = await BaoCao.findById(myReport._id).populate('DeTai').populate('SinhVien');
 
         logger.info(`[REPORT] Uploaded by student ${requesterId} | topic=${deTaiId} | CID=${ipfsCid} | members=${acceptedMembers.length}`);
         res.status(201).json({
             message: isGroupTopic ? 'Nộp báo cáo thành công cho cả nhóm' : 'Nộp báo cáo thành công',
-            data: populated
+            data: populated,
+            blockchainStatus: submitTxHash ? 'success' : 'failed',
+            txHash: submitTxHash || null
         });
     } catch (err) {
         logger.error(`[REPORT] Upload failed: ${err.message}`);

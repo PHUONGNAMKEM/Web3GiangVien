@@ -78,6 +78,11 @@ const aiApiService = {
         return response.data;
     },
 
+    updateTopic: async (id, topicData) => {
+        const response = await axios.put(`${API_URL}/detai/${id}`, topicData, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
     // GV xóa đề tài
     deleteTopic: async (topicId) => {
         const response = await axios.delete(`${API_URL}/detai/${topicId}`, { headers: getAuthHeaders() });
@@ -201,6 +206,55 @@ const aiApiService = {
 
     analyzeReportWithRubrics: async (text, rubrics) => {
         const response = await axios.post(`${API_URL}/ai/analyze-rubrics`, { text, rubrics }, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // === SO SÁNH ĐIỂM AI vs GV ===
+
+    getScoreComparison: async (gvId) => {
+        const response = await axios.get(`${API_URL}/diemso/comparison/${gvId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // === BÀI TEST CẠNH TRANH ===
+
+    createBaiTest: async (data) => {
+        const response = await axios.post(`${API_URL}/baitest`, data, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    getBaiTestByTopic: async (deTaiId) => {
+        const response = await axios.get(`${API_URL}/baitest/detai/${deTaiId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    getBaiTestForStudent: async (deTaiId) => {
+        const response = await axios.get(`${API_URL}/baitest/detai/${deTaiId}/student`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    submitBaiTest: async (testId, data) => {
+        const response = await axios.post(`${API_URL}/baitest/${testId}/submit`, data, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    getTestResults: async (testId) => {
+        const response = await axios.get(`${API_URL}/baitest/${testId}/results`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    selectTestWinner: async (testId, dangKyId) => {
+        const response = await axios.post(`${API_URL}/baitest/${testId}/select-winner`, { dangKyId }, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    deleteBaiTest: async (testId) => {
+        const response = await axios.delete(`${API_URL}/baitest/${testId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    checkTestSubmitted: async (deTaiId, sinhVienId) => {
+        const response = await axios.get(`${API_URL}/baitest/check/${deTaiId}/${sinhVienId}`, { headers: getAuthHeaders() });
         return response.data;
     }
 };

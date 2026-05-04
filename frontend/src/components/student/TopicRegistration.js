@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Typography, Tag, Badge, message, Row, Col, Modal, Skeleton, Alert, Input, Space, List, Divider } from 'antd';
-import { CheckCircle, Code, Zap, Lock } from 'lucide-react';
+import { CheckCircle, Code, Zap, Lock, ListChecks } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 
 const { Title, Paragraph, Text } = Typography;
 
 const TopicRegistration = () => {
+  const navigate = useNavigate();
   const [loadingId, setLoadingId] = useState(null);
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -192,13 +194,31 @@ const TopicRegistration = () => {
               type={registrationStatus === 'DaDuyet' ? 'success' : 'info'}
               showIcon
               action={
-                registrationStatus === 'ChoDuyet' ? (
+                registrationStatus === 'ChoDuyet' || registrationStatus === 'ChoTest' ? (
                   <Button size="small" type="primary" danger onClick={handleCancelRegistration}>
                     Hủy Đăng Ký
                   </Button>
                 ) : null
               }
             />
+
+            {/* Alert khi cần làm bài test cạnh tranh */}
+            {registrationStatus === 'ChoTest' && (
+              <Alert
+                message="Đề tài yêu cầu Bài Test Cạnh Tranh"
+                description="Giảng viên đã tạo bài test đầu vào. Bạn cần hoàn thành bài test để cạnh tranh giành đề tài này."
+                type="warning"
+                showIcon
+                icon={<ListChecks size={20} />}
+                action={
+                  <Button type="primary" size="small"
+                    style={{ background: '#722ed1', borderColor: '#722ed1' }}
+                    onClick={() => navigate(`/student/entrance-test/${registeredTopicId}`)}>
+                    Bắt Đầu Làm Bài Test
+                  </Button>
+                }
+              />
+            )}
 
             {/* Thông tin nhóm sinh viên */}
             {fullRegistration.DeTai?.SoLuongSinhVien > 1 && (
@@ -308,6 +328,7 @@ const TopicRegistration = () => {
                   <br />
                   <Text type="secondary">Sinh viên tối đa:</Text>
                   <Tag color="geekblue" style={{ marginLeft: 8, marginTop: 4 }}>{topic.SoLuongSinhVien || 1} SV</Tag>
+                  {topic.CoBaiTest && <Tag color="volcano" style={{ marginLeft: 4, marginTop: 4 }}>🏆 Có bài test</Tag>}
                   <br />
                   <br />
                   <Text type="secondary">Mô tả cốt lõi:</Text>

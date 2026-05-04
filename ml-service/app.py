@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from utils.log_config import setup_logging
 from routes.analyze import router as analyze_router
 from routes.match import router as match_router
+from routes.compare_code import router as compare_code_router
 
 # Khởi tạo logging cho ML Service
 logger = setup_logging()
@@ -20,6 +21,7 @@ app.add_middleware(
 
 app.include_router(analyze_router)
 app.include_router(match_router)
+app.include_router(compare_code_router)
 
 logger.info("[SERVER] ML Service started | FastAPI ready")
 

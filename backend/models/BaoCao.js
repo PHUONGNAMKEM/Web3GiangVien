@@ -5,6 +5,7 @@ const baoCaoSchema = new mongoose.Schema({
   SinhVien: { type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien', required: true },
   TieuDe: { type: String, required: true },
   IPFS_CID: { type: String, required: true }, // Nơi lưu trữ hash của file PDF trên mạng IPFS
+  SubmitTxHash: { type: String, default: null }, // Mã giao dịch khi SV nộp bài lên Blockchain
   NgayNop: { type: Date, default: Date.now }
 }, { timestamps: true });
 

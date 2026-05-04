@@ -23,6 +23,7 @@ const deTaiSchema = new mongoose.Schema({
   SoLuongSinhVien: { type: Number, default: 1, min: 1 },
   Deadline: { type: Date, required: true },
   GiangVienHuongDan: { type: mongoose.Schema.Types.ObjectId, ref: 'GiangVien', required: true },
+  CoBaiTest: { type: Boolean, default: false },       // Có yêu cầu bài test cạnh tranh không
   TrangThai: { type: String, enum: ['MoDangKy', 'DaChot', 'HoanThanh'], default: 'MoDangKy' }
 }, { timestamps: true });
 

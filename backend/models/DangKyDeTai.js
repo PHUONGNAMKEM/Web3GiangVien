@@ -13,7 +13,7 @@ const dangKyDeTaiSchema = new mongoose.Schema({
     },
     NgayThamGia: { type: Date, default: Date.now }
   }],
-  TrangThai: { type: String, enum: ['ChoDuyet', 'DaDuyet', 'TuChoi'], default: 'ChoDuyet' }
+  TrangThai: { type: String, enum: ['ChoDuyet', 'ChoTest', 'DaDuyet', 'TuChoi'], default: 'ChoDuyet' }
 }, { timestamps: true });
 
 // Một sinh viên chỉ đăng ký 1 đề tài 1 lần

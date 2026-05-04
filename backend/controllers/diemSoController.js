@@ -51,3 +51,76 @@ exports.getDiemBySinhVien = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+// Bảng so sánh điểm AI vs GV cho tất cả SV của 1 giảng viên
+exports.getComparison = async (req, res) => {
+    try {
+        const gvId = req.params.gvId;
+        const DeTai = require('../models/DeTai');
+        const mongoose = require('mongoose');
+
+        // Tìm tất cả đề tài của GV
+        let myTopics;
+        try {
+            const objectId = new mongoose.Types.ObjectId(gvId);
+            myTopics = await DeTai.find({
+                $or: [{ GiangVienHuongDan: objectId }, { GiangVienHuongDan: gvId }]
+            });
+        } catch (e) {
+            myTopics = await DeTai.find({ GiangVienHuongDan: gvId });
+        }
+
+        const topicIds = myTopics.map(t => t._id);
+
+        // Lấy tất cả điểm số cho các đề tài đó
+        const allGrades = await DiemSo.find({ DeTai: { $in: topicIds } })
+            .populate('SinhVien', 'HoTen MaSV')
+            .populate('DeTai', 'TenDeTai MaDeTai SuDungRubrics');
+
+        // Tạo danh sách so sánh
+        const comparisons = allGrades
+            .filter(g => g.AI_Score != null)
+            .map(g => {
+                const diff = (g.Diem || 0) - (g.AI_Score || 0);
+                return {
+                    _id: g._id,
+                    student: g.SinhVien,
+                    topic: g.DeTai,
+                    gvScore: g.Diem,
+                    aiScore: g.AI_Score,
+                    diff: Math.round(diff * 100) / 100,
+                    absDiff: Math.round(Math.abs(diff) * 100) / 100,
+                    feedback: g.NhanXet,
+                    aiFeedback: g.AI_Feedback,
+                    rubricsDetail: (g.RubricsResult || []).map(r => ({
+                        criteria: r.TenTieuChi,
+                        weight: r.TrongSo,
+                        aiScore: r.AI_DiemTieuChi,
+                        gvScore: r.GV_DiemTieuChi,
+                        maxScore: r.DiemToiDa
+                    })),
+                    txHash: g.TxHash,
+                    gradedAt: g.createdAt
+                };
+            });
+
+        // Thống kê tổng hợp
+        const count = comparisons.length;
+        const stats = {
+            totalGraded: count,
+            avgGV: count > 0 ? Math.round(comparisons.reduce((s, c) => s + c.gvScore, 0) / count * 100) / 100 : 0,
+            avgAI: count > 0 ? Math.round(comparisons.reduce((s, c) => s + c.aiScore, 0) / count * 100) / 100 : 0,
+            avgDiff: count > 0 ? Math.round(comparisons.reduce((s, c) => s + c.diff, 0) / count * 100) / 100 : 0,
+            avgAbsDiff: count > 0 ? Math.round(comparisons.reduce((s, c) => s + c.absDiff, 0) / count * 100) / 100 : 0,
+            aiHigherCount: comparisons.filter(c => c.diff < 0).length,
+            gvHigherCount: comparisons.filter(c => c.diff > 0).length,
+            matchCount: comparisons.filter(c => c.absDiff < 0.5).length
+        };
+
+        logger.info(`[GRADE] Comparison for GV ${gvId} | total=${count} | avgDiff=${stats.avgDiff}`);
+        res.json({ comparisons, stats });
+    } catch (err) {
+        logger.error(`[GRADE] Comparison failed: ${err.message}`);
+        res.status(500).json({ error: err.message });
+    }
+};

@@ -110,6 +110,11 @@ exports.registerTopic = async (req, res) => {
             return res.status(400).json({ error: 'Bạn đã đăng ký hoặc đang trong nhóm của một đề tài. Không thể đăng ký thêm.' });
         }
 
+        // Kiểm tra đề tài có bài test cạnh tranh không
+        const deTai = await DeTai.findById(deTaiId);
+        if (!deTai) return res.status(404).json({ error: 'Không tìm thấy đề tài.' });
+        const trangThai = deTai.CoBaiTest ? 'ChoTest' : 'ChoDuyet';
+
         const dangKy = new DangKyDeTai({ 
             DeTai: deTaiId, 
             SinhVien: sinhVienId, 
@@ -118,12 +123,15 @@ exports.registerTopic = async (req, res) => {
                 VaiTro: 'TruongNhom',
                 TrangThaiTV: 'DaChapNhan'
             }],
-            TrangThai: 'ChoDuyet' 
+            TrangThai: trangThai 
         });
 
         await dangKy.save();
-        logger.info(`[TOPIC] Student ${sinhVienId} registered for topic ${deTaiId}`);
-        res.status(201).json({ message: 'Đăng ký đề tài thành công (Trưởng nhóm)!', data: dangKy });
+        logger.info(`[TOPIC] Student ${sinhVienId} registered for topic ${deTaiId} | status=${trangThai}`);
+        const msg = deTai.CoBaiTest 
+            ? 'Đăng ký thành công! Bạn cần hoàn thành bài test cạnh tranh.' 
+            : 'Đăng ký đề tài thành công (Trưởng nhóm)!';
+        res.status(201).json({ message: msg, data: dangKy });
     } catch (err) {
         logger.error(`[TOPIC] Registration failed: ${err.message}`);
         res.status(500).json({ error: err.message });

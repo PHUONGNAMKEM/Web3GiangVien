@@ -1,1 +1,45 @@
 2026-04-16 11:19:48 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-04-18 11:33:46 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-04-18 13:36:43 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-04-18 13:53:10 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-04-18 13:53:11 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=1192ms
+2026-04-18 13:53:11 [INFO ] [AI] /analyze-report response | score=6.31
+2026-04-18 14:03:56 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-04-18 16:11:22 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-04-18 16:11:25 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=2971ms
+2026-04-18 16:11:25 [INFO ] [AI] /analyze-report response | score=6.31
+2026-04-18 16:11:48 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-04-18 16:11:48 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=610ms
+2026-04-18 16:11:48 [INFO ] [AI] /analyze-report response | score=6.31
+2026-04-18 16:12:09 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-04-18 16:12:10 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=546ms
+2026-04-18 16:12:10 [INFO ] [AI] /analyze-report response | score=6.31
+2026-04-18 16:12:17 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-04-18 16:12:18 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=651ms
+2026-04-18 16:12:18 [INFO ] [AI] /analyze-report response | score=6.31
+2026-04-18 16:12:33 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-04-18 16:12:34 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=542ms
+2026-04-18 16:12:34 [INFO ] [AI] /analyze-report response | score=6.31
+2026-04-18 16:17:16 [INFO ] [AI] POST /analyze-report | textLength=75 | requirements=2
+2026-04-18 16:17:16 [INFO ] [AI] POST /analyze-report | textLength=75 | requirements=2
+2026-04-18 16:17:17 [INFO ] [AI] Report analysis completed | score=4.1 | requirements=2 | textLength=81 | time=657ms
+2026-04-18 16:17:17 [INFO ] [AI] /analyze-report response | score=4.1
+2026-04-18 16:17:17 [INFO ] [AI] Report analysis completed | score=4.1 | requirements=2 | textLength=81 | time=668ms
+2026-04-18 16:17:17 [INFO ] [AI] /analyze-report response | score=4.1
+2026-04-18 16:17:52 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-04-18 16:17:52 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=524ms
+2026-04-18 16:17:52 [INFO ] [AI] /analyze-report response | score=6.11
+2026-04-18 16:19:49 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-04-18 16:19:49 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=317ms
+2026-04-18 16:19:49 [INFO ] [AI] /analyze-report response | score=6.11
+2026-04-18 16:20:18 [INFO ] [AI] POST /analyze-report | textLength=75 | requirements=2
+2026-04-18 16:20:18 [INFO ] [AI] POST /analyze-report | textLength=75 | requirements=2
+2026-04-18 16:20:18 [INFO ] [AI] Report analysis completed | score=4.1 | requirements=2 | textLength=81 | time=640ms
+2026-04-18 16:20:18 [INFO ] [AI] /analyze-report response | score=4.1
+2026-04-18 16:20:19 [INFO ] [AI] Report analysis completed | score=4.1 | requirements=2 | textLength=81 | time=757ms
+2026-04-18 16:20:19 [INFO ] [AI] /analyze-report response | score=4.1
+2026-04-18 16:20:43 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-04-18 16:20:43 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=271ms
+2026-04-18 16:20:43 [INFO ] [AI] /analyze-report response | score=6.11
+2026-05-04 13:18:27 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-05-04 14:08:34 [INFO ] [SERVER] ML Service started | FastAPI ready

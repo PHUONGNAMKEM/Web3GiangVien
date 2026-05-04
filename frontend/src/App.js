@@ -7,11 +7,14 @@ import LecturerDashboard from './components/lecturer/LecturerDashboard';
 import TopicManagement from './components/lecturer/TopicManagement';
 import SubmissionReview from './components/lecturer/SubmissionReview';
 import RubricsManagement from './components/lecturer/RubricsManagement';
+import ScoreComparison from './components/lecturer/ScoreComparison';
+import EntranceTestManager from './components/lecturer/EntranceTestManager';
 import StudentDashboard from './components/student/StudentDashboard';
 import TopicRegistration from './components/student/TopicRegistration';
 import ReportUpload from './components/student/ReportUpload';
 import ProgressTracking from './components/student/ProgressTracking';
 import ProgressLog from './components/student/ProgressLog';
+import EntranceTest from './components/student/EntranceTest';
 
 // Protected Route component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -76,6 +79,8 @@ function App() {
           <Route path="topics" element={<TopicManagement />} />
           <Route path="review" element={<SubmissionReview />} />
           <Route path="rubrics" element={<RubricsManagement />} />
+          <Route path="comparison" element={<ScoreComparison />} />
+          <Route path="entrance-test/:deTaiId" element={<EntranceTestManager />} />
         </Route>
 
         <Route path="/student" element={
@@ -88,6 +93,7 @@ function App() {
           <Route path="upload" element={<ReportUpload />} />
           <Route path="progress-log" element={<ProgressLog />} />
           <Route path="progress" element={<ProgressTracking />} />
+          <Route path="entrance-test/:deTaiId" element={<EntranceTest />} />
         </Route>
 
         {/* Unknown */}

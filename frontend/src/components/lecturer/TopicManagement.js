@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider, Descriptions, Switch, Alert } from 'antd';
-import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle, NotebookText } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle, NotebookText, ListChecks } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import dayjs from 'dayjs';
@@ -9,12 +10,14 @@ const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
 const TopicManagement = () => {
+  const navigate = useNavigate();
   const [topics, setTopics] = useState([]);
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState(null);
+  const [editingTopic, setEditingTopic] = useState(null);
   const [approvingId, setApprovingId] = useState(null);
   const [chiTietBoSung, setChiTietBoSung] = useState([]);
   const [form] = Form.useForm();
@@ -149,7 +152,7 @@ const TopicManagement = () => {
         SoLuongSinhVien: values.soLuongSV || 1,
         Deadline: deadlineDate,
         GiangVienHuongDan: user.id,
-        TrangThai: 'MoDangKy',
+        TrangThai: editingTopic ? editingTopic.TrangThai : 'MoDangKy',
         // Rubrics
         SuDungRubrics: suDungRubrics,
         HienThiChiTietChoSV: hienThiChiTietChoSV,
@@ -157,18 +160,44 @@ const TopicManagement = () => {
         _templateId: (suDungRubrics && rubricsSource === 'template') ? selectedTemplateId : undefined,
       };
 
-      await aiApiService.createTopic(topicData);
+      if (editingTopic) {
+        await aiApiService.updateTopic(editingTopic._id, topicData);
+        message.success('Cập nhật Đề tài thành công!');
+      } else {
+        await aiApiService.createTopic(topicData);
+        message.success('Tạo Đề tài thành công! Sinh viên đã có thể thấy trên hệ thống.');
+      }
       setIsModalVisible(false);
       form.resetFields();
       setChiTietBoSung([]);
       setSuDungRubrics(false);
       setRubricsTieuChi([]);
       setSelectedTemplateId(null);
-      message.success('Tạo Đề tài thành công! Sinh viên đã có thể thấy trên hệ thống.');
       fetchData();
     } catch (err) {
-      message.error('Tạo đề tài thất bại: ' + (err.response?.data?.error || err.message));
+      message.error((editingTopic ? 'Cập nhật' : 'Tạo') + ' đề tài thất bại: ' + (err.response?.data?.error || err.message));
     }
+  };
+
+  const handleEdit = (record) => {
+    setEditingTopic(record);
+    form.setFieldsValue({
+      title: record.TenDeTai,
+      description: record.MoTa,
+      detailDescription: record.MoTaChiTiet,
+      requires: record.YeuCau || [],
+      soLuongSV: record.SoLuongSinhVien,
+      deadline: record.Deadline ? dayjs(record.Deadline) : null,
+    });
+    setChiTietBoSung(record.ChiTietBoSung || []);
+    setSuDungRubrics(record.SuDungRubrics || false);
+    setHienThiChiTietChoSV(record.HienThiChiTietChoSV || false);
+    setRubricsTieuChi((record.Rubrics || []).map(tc => ({
+      ...tc,
+      DiemToiDa: tc.DiemToiDa || 10
+    })));
+    setRubricsSource('new');
+    setIsModalVisible(true);
   };
 
   const handleDelete = (topicId) => {
@@ -228,48 +257,53 @@ const TopicManagement = () => {
       title: 'Tên Đề Tài',
       dataIndex: 'TenDeTai',
       key: 'TenDeTai',
+      width: 280,
       render: (text, record) => (
-        <Space direction="vertical" size={0}>
-          <strong style={{ color: '#1677ff' }}>{text}</strong>
-          {record.SuDungRubrics && <Tag color="purple" style={{ fontSize: 10 }}>Rubrics</Tag>}
-        </Space>
+        <div>
+          <strong style={{ color: '#1677ff', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.4' }}>{text}</strong>
+          <Space size={2} wrap={false} style={{ marginTop: 2 }}>
+            {record.SuDungRubrics && <Tag color="purple" style={{ fontSize: 10, margin: 0, lineHeight: '16px', padding: '0 4px' }}>Rubrics</Tag>}
+            {record.CoBaiTest && <Tag color="volcano" style={{ fontSize: 10, margin: 0, lineHeight: '16px', padding: '0 4px' }}>🏆 Test</Tag>}
+          </Space>
+        </div>
       ),
-      width: '30%',
     },
     {
-      title: 'Số SV',
+      title: 'SV',
       key: 'soLuong',
-      width: '8%',
+      width: 55,
+      align: 'center',
       render: (_, record) => (
-        <Tag color={record.SoLuongSinhVien > 1 ? 'blue' : 'default'}>
-          {record.SoLuongSinhVien || 1} SV
+        <Tag color={record.SoLuongSinhVien > 1 ? 'blue' : 'default'} style={{ margin: 0 }}>
+          {record.SoLuongSinhVien || 1}
         </Tag>
       ),
     },
     {
-      title: 'Yêu cầu (Tags NLP)',
+      title: 'Yêu cầu',
       dataIndex: 'YeuCau',
       key: 'YeuCau',
+      width: 200,
       render: tags => (
-        <span>
-          {(tags || []).map(tag => (
-            <Tag color="geekblue" key={tag}>{tag.toUpperCase()}</Tag>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+          {(tags || []).slice(0, 3).map(tag => (
+            <Tag color="geekblue" key={tag} style={{ fontSize: 10, margin: 0, lineHeight: '16px', padding: '0 4px' }}>{tag.toUpperCase()}</Tag>
           ))}
-        </span>
+          {(tags || []).length > 3 && <Tag style={{ fontSize: 10, margin: 0 }}>+{tags.length - 3}</Tag>}
+        </div>
       ),
     },
     {
-      title: 'SV Đăng Ký',
+      title: 'Đăng Ký',
       key: 'registrations',
+      width: 75,
+      align: 'center',
       render: (_, record) => {
         const count = countRegistrations(record._id);
         return (
-          <Space>
+          <Badge count={count} showZero color={count > 0 ? '#1677ff' : '#d9d9d9'} size="small">
             <Users size={16} color="#595959" />
-            <Badge count={count} showZero color={count > 0 ? '#1677ff' : '#d9d9d9'}>
-              <span style={{ padding: '0 8px' }}>{count} SV</span>
-            </Badge>
-          </Space>
+          </Badge>
         );
       },
     },
@@ -277,39 +311,51 @@ const TopicManagement = () => {
       title: 'Trạng Thái',
       key: 'TrangThai',
       dataIndex: 'TrangThai',
+      width: 100,
+      align: 'center',
       render: status => {
         const colorMap = { 'MoDangKy': 'green', 'DaChot': 'volcano', 'HoanThanh': 'blue' };
-        const labelMap = { 'MoDangKy': 'Mở Đăng Ký', 'DaChot': 'Đã Chốt SV', 'HoanThanh': 'Hoàn Thành' };
-        return <Tag color={colorMap[status] || 'default'}>{labelMap[status] || status}</Tag>;
+        const labelMap = { 'MoDangKy': 'Mở ĐK', 'DaChot': 'Đã Chốt', 'HoanThanh': 'Xong' };
+        return <Tag color={colorMap[status] || 'default'} style={{ margin: 0 }}>{labelMap[status] || status}</Tag>;
       },
     },
     {
       title: 'Thao Tác',
       key: 'action',
+      width: 180,
+      align: 'center',
       render: (_, record) => {
         const regCount = countRegistrations(record._id);
         return (
-          <Space size="middle">
-            {regCount > 0 && (
-              <Tooltip title="Xem đăng ký">
-                <span>
-                  <Button
-                    type="primary"
-                    size="small"
-                    icon={<Eye size={14} />}
-                    onClick={() => showRegistrationDrawer(record)}
-                  >
-                    Duyệt ({regCount})
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
+            <Space size={4}>
+              {regCount > 0 && (
+                <Button type="primary" size="small" icon={<Eye size={12} />}
+                  onClick={() => showRegistrationDrawer(record)} style={{ fontSize: 12, padding: '0 6px', height: 24 }}>
+                  Duyệt ({regCount})
+                </Button>
+              )}
+              {record.TrangThai === 'MoDangKy' && (
+                <Tooltip title="Bài test"><span>
+                  <Button size="small" icon={<ListChecks size={12} />}
+                    onClick={() => navigate(`/lecturer/entrance-test/${record._id}`)}
+                    style={{ fontSize: 12, padding: '0 6px', height: 24 }}>
+                    Test
                   </Button>
-                </span>
-              </Tooltip>
-            )}
-            <Tooltip title="Xóa đề tài">
-              <span>
-                <Button type="text" danger icon={<Trash2 size={16} />} onClick={() => handleDelete(record._id)} />
-              </span>
-            </Tooltip>
-          </Space>
+                </span></Tooltip>
+              )}
+            </Space>
+            <Space size={0}>
+              <Tooltip title="Sửa"><span>
+                <Button type="text" size="small" icon={<Edit2 size={14} />}
+                  onClick={() => handleEdit(record)} style={{ height: 24, width: 24, padding: 0 }} />
+              </span></Tooltip>
+              <Tooltip title="Xóa"><span>
+                <Button type="text" danger size="small" icon={<Trash2 size={14} />}
+                  onClick={() => handleDelete(record._id)} style={{ height: 24, width: 24, padding: 0 }} />
+              </span></Tooltip>
+            </Space>
+          </div>
         );
       },
     },
@@ -324,12 +370,14 @@ const TopicManagement = () => {
           icon={<Plus size={18} />}
           size="large"
           onClick={() => {
+            setEditingTopic(null);
             setChiTietBoSung([]);
             setSuDungRubrics(false);
             setHienThiChiTietChoSV(false);
             setRubricsTieuChi([]);
             setRubricsSource('new');
             setSelectedTemplateId(null);
+            form.resetFields();
             setIsModalVisible(true);
           }}
         >
@@ -343,6 +391,8 @@ const TopicManagement = () => {
         rowKey="_id"
         loading={loading}
         pagination={{ pageSize: 5 }}
+        size="small"
+        scroll={{ x: 900 }}
         expandable={{
           expandedRowRender: record => (
             <div style={{ padding: '8px 24px', background: '#fafafa', borderRadius: 8 }}>
@@ -406,13 +456,13 @@ const TopicManagement = () => {
         }}
       />
 
-      {/* Modal Tạo Đề Tài - MỞ RỘNG VỚI RUBRICS */}
+      {/* Modal Tạo / Sửa Đề Tài - MỞ RỘNG VỚI RUBRICS */}
       <Modal
-        title="Đăng Ký Đề Tài Mới Lên Hệ Thống"
+        title={editingTopic ? "Cập Nhật Đề Tài" : "Đăng Ký Đề Tài Mới Lên Hệ Thống"}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         onOk={() => form.submit()}
-        okText="Lưu Đề Tài"
+        okText={editingTopic ? "Cập Nhật" : "Lưu Đề Tài"}
         cancelText="Hủy"
         width={750}
       >
@@ -572,14 +622,14 @@ const TopicManagement = () => {
                     <InputNumber
                       min={0} max={100}
                       value={tc.TrongSo}
-                      onChange={v => updateRubricsTieuChi(index, 'TrongSo', v || 0)}
+                      onChange={v => updateRubricsTieuChi(index, 'TrongSo', v)}
                       addonAfter="%"
                       style={{ width: 110 }}
                     />
                     <InputNumber
                       min={1} max={100}
                       value={tc.DiemToiDa}
-                      onChange={v => updateRubricsTieuChi(index, 'DiemToiDa', v || 10)}
+                      onChange={v => updateRubricsTieuChi(index, 'DiemToiDa', v)}
                       addonAfter="đ"
                       style={{ width: 110 }}
                     />

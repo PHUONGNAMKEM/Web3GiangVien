@@ -72,6 +72,7 @@ const diemSoController = require('./controllers/diemSoController');
 const aiController = require('./controllers/aiController');
 const tienDoController = require('./controllers/tienDoController');
 const rubricsController = require('./controllers/rubricsController');
+const baiTestController = require('./controllers/baiTestController');
 
 
 // 1. Root verify
@@ -129,6 +130,7 @@ app.get('/api/baocao/giangvien/:gvId', baoCaoController.getBaoCaoByLecturer);
 // 7. Điểm Số
 app.post('/api/diemso', diemSoController.chamDiem);
 app.get('/api/diemso/sinhvien/:svId', diemSoController.getDiemBySinhVien);
+app.get('/api/diemso/comparison/:gvId', diemSoController.getComparison);
 
 // 8. Tiến Độ
 app.post('/api/tiendo', tienDoController.createProgressEntry);
@@ -148,6 +150,16 @@ app.put('/api/rubrics/:id', rubricsController.updateTemplate);
 app.delete('/api/rubrics/:id', rubricsController.deleteTemplate);
 app.put('/api/rubrics/:id/default', rubricsController.setDefaultTemplate);
 app.post('/api/rubrics/:id/apply/:deTaiId', rubricsController.applyTemplate);
+
+// 11. Bài Test Cạnh Tranh Đầu Vào
+app.post('/api/baitest', baiTestController.createTest);
+app.get('/api/baitest/detai/:deTaiId', baiTestController.getTestByTopic);
+app.get('/api/baitest/detai/:deTaiId/student', baiTestController.getTestForStudent);
+app.post('/api/baitest/:id/submit', baiTestController.submitTest);
+app.get('/api/baitest/:id/results', baiTestController.getTestResults);
+app.post('/api/baitest/:id/select-winner', baiTestController.selectWinner);
+app.delete('/api/baitest/:id', baiTestController.deleteTest);
+app.get('/api/baitest/check/:deTaiId/:sinhVienId', baiTestController.checkSubmitted);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

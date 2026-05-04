@@ -110,7 +110,13 @@ const ReportUpload = () => {
       setProgress(100);
       setExistingBaoCao(result.data);
       setFileList([]);
-      message.success('Nộp báo cáo thành công! File đã được lưu lên hệ thống.');
+
+      // Thông báo tùy theo trạng thái blockchain
+      if (result.blockchainStatus === 'success') {
+        message.success('Nộp báo cáo thành công! Đã ghi lên IPFS & Blockchain ✅');
+      } else {
+        message.warning('Nộp báo cáo thành công trên IPFS! Blockchain tạm thời không khả dụng ⚠️');
+      }
     } catch (err) {
       clearInterval(interval);
       setProgress(0);
