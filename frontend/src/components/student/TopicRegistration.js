@@ -18,6 +18,7 @@ const TopicRegistration = () => {
   const [fullRegistration, setFullRegistration] = useState(null);
   const [inviteMaSV, setInviteMaSV] = useState('');
   const [inviting, setInviting] = useState(false);
+  const [testSubmitted, setTestSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,6 +34,19 @@ const TopicRegistration = () => {
           setRegistrationStatus(regRes.registration.TrangThai);
           setRegistrationId(regRes.registration._id);
           setFullRegistration(regRes.registration);
+
+          // Kiểm tra đã nộp bài test chưa
+          if (regRes.registration.TrangThai === 'ChoTest') {
+            const deTaiIdForTest = regRes.registration.DeTai?._id || regRes.registration.DeTai;
+            try {
+              const checkTest = await aiApiService.checkTestSubmitted(deTaiIdForTest, user.id);
+              if (checkTest.submitted) {
+                setTestSubmitted(true);
+              }
+            } catch (e) {
+              console.warn('Không kiểm tra được trạng thái test');
+            }
+          }
         }
 
         // 2. Lấy danh sách đề tài từ DB
@@ -78,7 +92,10 @@ const TopicRegistration = () => {
           console.warn('SBERT matching failed, hiển thị không có điểm AI');
         }
 
-        setTopics(enriched.sort((a, b) => parseFloat(b.ai_score) - parseFloat(a.ai_score)));
+        setTopics(enriched
+          .filter(t => !t.DaCoDangKy || (registeredTopicId && (t._id || '').toString() === registeredTopicId.toString()))
+          .sort((a, b) => parseFloat(b.ai_score) - parseFloat(a.ai_score))
+        );
       } catch (error) {
         console.error("Lỗi lấy đề tài:", error);
         message.warning("Có lỗi khi tải dữ liệu đề tài.");
@@ -109,10 +126,22 @@ const TopicRegistration = () => {
       cancelText: 'Hủy',
       onOk: async () => {
         setLoadingId(topic._id);
-        try {
+         try {
           await aiApiService.registerTopic(topic._id, user.id);
-          setRegisteredTopicId(topic._id);
-          message.success('Đã gửi yêu cầu đăng ký đề tài thành công! Chờ Giảng viên duyệt.');
+          // Reload đầy đủ state đăng ký
+          const regRes = await aiApiService.getMyRegistration(user.id);
+          if (regRes.registration) {
+            setRegisteredTopicId(regRes.registration.DeTai?._id || regRes.registration.DeTai);
+            setRegistrationStatus(regRes.registration.TrangThai);
+            setRegistrationId(regRes.registration._id);
+            setFullRegistration(regRes.registration);
+          } else {
+            setRegisteredTopicId(topic._id);
+          }
+          const msg = topic.CoBaiTest
+            ? 'Đăng ký thành công! Bạn cần hoàn thành bài test đầu vào.'
+            : 'Đã gửi yêu cầu đăng ký đề tài thành công! Chờ Giảng viên duyệt.';
+          message.success(msg);
         } catch (err) {
           const errMsg = err.response?.data?.error || 'Đăng ký thất bại';
           message.error(errMsg);
@@ -205,17 +234,22 @@ const TopicRegistration = () => {
             {/* Alert khi cần làm bài test cạnh tranh */}
             {registrationStatus === 'ChoTest' && (
               <Alert
-                message="Đề tài yêu cầu Bài Test Cạnh Tranh"
-                description="Giảng viên đã tạo bài test đầu vào. Bạn cần hoàn thành bài test để cạnh tranh giành đề tài này."
-                type="warning"
+                message={testSubmitted ? "Bạn đã hoàn thành bài test" : "Đề tài yêu cầu Bài Test Đầu Vào"}
+                description={testSubmitted
+                  ? "Kết quả bài test của bạn đang được xử lý. Vui lòng chờ hệ thống duyệt tự động."
+                  : "Giảng viên đã tạo bài test đầu vào. Bạn cần hoàn thành bài test để được duyệt đề tài."
+                }
+                type={testSubmitted ? 'info' : 'warning'}
                 showIcon
                 icon={<ListChecks size={20} />}
                 action={
-                  <Button type="primary" size="small"
-                    style={{ background: '#722ed1', borderColor: '#722ed1' }}
-                    onClick={() => navigate(`/student/entrance-test/${registeredTopicId}`)}>
-                    Bắt Đầu Làm Bài Test
-                  </Button>
+                  !testSubmitted ? (
+                    <Button type="primary" size="small"
+                      style={{ background: '#722ed1', borderColor: '#722ed1' }}
+                      onClick={() => navigate(`/student/entrance-test/${registeredTopicId}`)}>
+                      Bắt Đầu Làm Bài Test
+                    </Button>
+                  ) : null
                 }
               />
             )}

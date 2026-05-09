@@ -706,6 +706,8 @@ const TopicManagement = () => {
                       >
                         Từ Chối
                       </Button>
+                    ] : reg.TrangThai === 'ChoTest' ? [
+                      <Tag color="warning" key="chotest">⏳ Đang chờ làm bài test</Tag>
                     ] : [
                       <Tag color={reg.TrangThai === 'DaDuyet' ? 'success' : 'error'}>
                         {reg.TrangThai === 'DaDuyet' ? '✓ Đã Duyệt Nhóm' : '✗ Đã Từ Chối Nhóm'}

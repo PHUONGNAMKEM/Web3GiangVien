@@ -70,12 +70,12 @@ const EntranceTest = () => {
       });
 
       setSubmitted(true);
-      setResult(res.data);
+      setResult({ ...res.data, isDat: res.isDat, phanTram: res.phanTram, nguongDat: res.nguongDat, autoResult: res.autoResult });
 
-      if (res.blockchainStatus === 'success') {
-        message.success('Nộp bài thành công! Kết quả đã ghi lên Blockchain ✅');
+      if (res.isDat) {
+        message.success('Chúc mừng! Bạn đạt ngưỡng yêu cầu, đề tài đã được duyệt tự động! 🎉');
       } else {
-        message.warning('Nộp bài thành công! Blockchain tạm thời không khả dụng ⚠️');
+        message.warning('Bạn chưa đạt ngưỡng yêu cầu bài test.');
       }
     } catch (e) {
       message.error(e.response?.data?.error || 'Lỗi nộp bài');
@@ -94,12 +94,16 @@ const EntranceTest = () => {
   // Đã nộp → hiển thị kết quả
   if (submitted && result) {
     const percent = result.DiemToiDa > 0 ? Math.round((result.TongDiem / result.DiemToiDa) * 100) : 0;
+    const isDat = result.isDat != null ? result.isDat : percent >= 75;
     return (
       <div style={{ maxWidth: 700, margin: '0 auto' }}>
         <Result
-          status={percent >= 60 ? 'success' : 'warning'}
-          title={`Kết quả: ${result.TongDiem} / ${result.DiemToiDa} điểm (${percent}%)`}
-          subTitle="Kết quả bài test cạnh tranh đầu vào"
+          status={isDat ? 'success' : 'warning'}
+          title={isDat ? `Đạt! ${result.TongDiem} / ${result.DiemToiDa} điểm (${percent}%)` : `Chưa đạt! ${result.TongDiem} / ${result.DiemToiDa} điểm (${percent}%)`}
+          subTitle={isDat
+            ? `Bạn đạt ngưỡng ${result.nguongDat || 75}% — Đề tài đã được duyệt tự động!`
+            : `Ngưỡng yêu cầu: ${result.nguongDat || 75}%. Bạn cần đạt điểm cao hơn.`
+          }
         />
         <Card>
           <Descriptions column={1} bordered size="small">

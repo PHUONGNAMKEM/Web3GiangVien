@@ -5,8 +5,19 @@ const logger = require('../config/logger');
 
 exports.getAll = async (req, res) => {
     try {
-        const list = await DeTai.find({}).populate('GiangVienHuongDan');
-        res.json(list);
+        const list = await DeTai.find({}).populate('GiangVienHuongDan').lean();
+
+        // Lấy tất cả đăng ký đang active (không bị từ chối) để gắn cờ DaCoDangKy
+        const DangKyDeTai = require('../models/DangKyDeTai');
+        const activeRegs = await DangKyDeTai.find({ TrangThai: { $nin: ['TuChoi'] } }).select('DeTai');
+        const takenTopicIds = new Set(activeRegs.map(r => r.DeTai.toString()));
+
+        const result = list.map(t => ({
+            ...t,
+            DaCoDangKy: takenTopicIds.has(t._id.toString())
+        }));
+
+        res.json(result);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -110,6 +121,12 @@ exports.registerTopic = async (req, res) => {
             return res.status(400).json({ error: 'Bạn đã đăng ký hoặc đang trong nhóm của một đề tài. Không thể đăng ký thêm.' });
         }
 
+        // Kiểm tra đề tài đã có nhóm đăng ký chưa (1 đề tài = tối đa 1 nhóm)
+        const topicTaken = await DangKyDeTai.findOne({ DeTai: deTaiId, TrangThai: { $nin: ['TuChoi'] } });
+        if (topicTaken) {
+            return res.status(400).json({ error: 'Đề tài này đã có nhóm đăng ký. Không thể đăng ký thêm.' });
+        }
+
         // Kiểm tra đề tài có bài test cạnh tranh không
         const deTai = await DeTai.findById(deTaiId);
         if (!deTai) return res.status(404).json({ error: 'Không tìm thấy đề tài.' });
@@ -200,9 +217,9 @@ exports.cancelRegistration = async (req, res) => {
             return res.status(404).json({ error: 'Không tìm thấy lượt đăng ký' });
         }
 
-        // (Tuỳ chọn) Chỉ cho hủy khi đang chờ duyệt
-        if (dangKy.TrangThai !== 'ChoDuyet') {
-            return res.status(400).json({ error: 'Chỉ có thể hủy đăng ký khi trạng thái là Chờ duyệt' });
+        // Chỉ cho hủy khi Chờ duyệt hoặc Chờ test (chưa được duyệt)
+        if (!['ChoDuyet', 'ChoTest'].includes(dangKy.TrangThai)) {
+            return res.status(400).json({ error: 'Không thể hủy đăng ký khi đề tài đã được duyệt.' });
         }
 
         await DangKyDeTai.findByIdAndDelete(id);

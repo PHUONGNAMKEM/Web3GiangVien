@@ -7,7 +7,7 @@ const logger = require('../config/logger');
 // GV tạo bài test cho đề tài
 exports.createTest = async (req, res) => {
     try {
-        const { deTaiId, tieuDe, moTa, cauHoi, thoiGianLam } = req.body;
+        const { deTaiId, tieuDe, moTa, cauHoi, thoiGianLam, nguongDat } = req.body;
 
         const deTai = await DeTai.findById(deTaiId);
         if (!deTai) return res.status(404).json({ error: 'Không tìm thấy đề tài.' });
@@ -21,7 +21,8 @@ exports.createTest = async (req, res) => {
             TieuDe: tieuDe || `Bài test: ${deTai.TenDeTai}`,
             MoTa: moTa || '',
             CauHoi: cauHoi || [],
-            ThoiGianLam: thoiGianLam || 30
+            ThoiGianLam: thoiGianLam || 30,
+            NguongDat: nguongDat != null ? nguongDat : 75
         });
 
         // Đánh dấu đề tài có bài test
@@ -77,6 +78,7 @@ exports.getTestForStudent = async (req, res) => {
             CauHoi: safeCauHoi,
             ThoiGianLam: baiTest.ThoiGianLam,
             TrangThai: baiTest.TrangThai,
+            NguongDat: baiTest.NguongDat,
             soCauHoi: baiTest.CauHoi.length
         });
     } catch (err) {
@@ -171,11 +173,45 @@ exports.submitTest = async (req, res) => {
             ThoiGianNop: new Date()
         });
 
+        // === AUTO APPROVE / REJECT dựa trên ngưỡng đạt ===
+        const phanTram = diemToiDa > 0 ? Math.round((tongDiem / diemToiDa) * 100) : 0;
+        const nguongDat = baiTest.NguongDat || 75;
+        const isDat = phanTram >= nguongDat;
+
+        // Tìm đăng ký của SV cho đề tài này
+        const dangKy = await DangKyDeTai.findOne({
+            DeTai: baiTest.DeTai,
+            TrangThai: 'ChoTest',
+            $or: [
+                { SinhVien: sinhVienId },
+                { 'ThanhVien.SinhVien': sinhVienId, 'ThanhVien.TrangThaiTV': 'DaChapNhan' }
+            ]
+        });
+
+        let autoResult = 'none';
+        if (dangKy) {
+            if (isDat) {
+                await DangKyDeTai.findByIdAndUpdate(dangKy._id, { TrangThai: 'DaDuyet' });
+                await DeTai.findByIdAndUpdate(baiTest.DeTai, { TrangThai: 'DaChot' });
+                await BaiTest.findByIdAndUpdate(baiTest._id, { TrangThai: 'DaDong' });
+                autoResult = 'approved';
+                logger.info(`[TEST] Auto-approved: student ${sinhVienId} scored ${phanTram}% >= ${nguongDat}%`);
+            } else {
+                await DangKyDeTai.findByIdAndUpdate(dangKy._id, { TrangThai: 'TuChoi' });
+                autoResult = 'rejected';
+                logger.info(`[TEST] Auto-rejected: student ${sinhVienId} scored ${phanTram}% < ${nguongDat}%`);
+            }
+        }
+
         logger.info(`[TEST] Student ${sinhVienId} submitted test | score=${tongDiem}/${diemToiDa} | txHash=${txHash || 'N/A'}`);
         res.status(201).json({
-            message: 'Nộp bài test thành công!',
+            message: isDat ? 'Chúc mừng! Bạn đạt ngưỡng yêu cầu, đề tài đã được duyệt tự động!' : 'Bạn chưa đạt ngưỡng yêu cầu.',
             data: ketQua,
-            blockchainStatus: txHash ? 'success' : 'failed'
+            blockchainStatus: txHash ? 'success' : 'failed',
+            autoResult,
+            phanTram,
+            nguongDat,
+            isDat
         });
     } catch (err) {
         logger.error(`[TEST] Submit failed: ${err.message}`);
