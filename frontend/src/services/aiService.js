@@ -50,10 +50,11 @@ const aiApiService = {
         return response.data;
     },
 
-    // SV đăng ký đề tài
-    registerTopic: async (topicId, sinhVienId) => {
+    // SV đăng ký đề tài (theo nhóm)
+    registerTopic: async (topicId, sinhVienId, nhomId) => {
         const response = await axios.post(`${API_URL}/detai/${topicId}/register`, {
-            sinhVienId
+            sinhVienId,
+            nhomId
         }, { headers: getAuthHeaders() });
         return response.data;
     },

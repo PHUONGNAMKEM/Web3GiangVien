@@ -15,6 +15,7 @@ import ReportUpload from './components/student/ReportUpload';
 import ProgressTracking from './components/student/ProgressTracking';
 import ProgressLog from './components/student/ProgressLog';
 import EntranceTest from './components/student/EntranceTest';
+import GroupManagement from './components/student/GroupManagement';
 
 // Protected Route component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -93,6 +94,7 @@ function App() {
           <Route path="upload" element={<ReportUpload />} />
           <Route path="progress-log" element={<ProgressLog />} />
           <Route path="progress" element={<ProgressTracking />} />
+          <Route path="group" element={<GroupManagement />} />
           <Route path="entrance-test/:deTaiId" element={<EntranceTest />} />
         </Route>
 

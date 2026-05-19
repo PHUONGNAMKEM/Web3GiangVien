@@ -16,6 +16,7 @@ const EntranceTestManager = () => {
   const [topic, setTopic] = useState(null);
   const [baiTest, setBaiTest] = useState(null);
   const [results, setResults] = useState([]);
+  const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -43,6 +44,15 @@ const EntranceTestManager = () => {
         // Lấy kết quả
         const res = await aiApiService.getTestResults(test._id);
         setResults(res || []);
+        // Lấy đăng ký cho đề tài này
+        try {
+          const regs = await aiApiService.getRegistrationsByLecturer(user.id);
+          const topicRegs = (regs || []).filter(r => {
+            const rid = r.DeTai?._id || r.DeTai;
+            return rid && rid.toString() === deTaiId;
+          });
+          setRegistrations(topicRegs);
+        } catch (e) { setRegistrations([]); }
       } catch (e) {
         setBaiTest(null);
       }
@@ -142,18 +152,23 @@ const EntranceTestManager = () => {
     {
       title: 'STT',
       key: 'rank',
-      width: 60,
+      width: 50,
       render: (_, __, idx) => <Text strong>{idx + 1}</Text>
     },
     {
-      title: 'Sinh Viên',
+      title: 'Nhóm / Sinh Viên',
       key: 'student',
-      render: (_, r) => <Text strong>{r.SinhVien?.HoTen || 'N/A'} ({r.SinhVien?.MaSV})</Text>,
+      render: (_, r) => (
+        <div>
+          <Text strong>{r.SinhVien?.HoTen || 'N/A'} ({r.SinhVien?.MaSV})</Text>
+          {r.Nhom && <Tag color="blue" style={{ marginLeft: 6, fontSize: 10 }}>{r.Nhom.TenNhom || 'Nhóm'}</Tag>}
+        </div>
+      ),
     },
     {
       title: 'Tổng Điểm',
       key: 'score',
-      width: 120,
+      width: 110,
       align: 'center',
       render: (_, r) => {
         const pct = r.DiemToiDa > 0 ? Math.round((r.TongDiem / r.DiemToiDa) * 100) : 0;
@@ -169,12 +184,21 @@ const EntranceTestManager = () => {
     {
       title: 'Kết quả',
       key: 'result',
-      width: 120,
+      width: 140,
       align: 'center',
       render: (_, r) => {
         const pct = r.DiemToiDa > 0 ? Math.round((r.TongDiem / r.DiemToiDa) * 100) : 0;
         const threshold = baiTest?.NguongDat || 75;
         const passed = pct >= threshold;
+        // Check competition status from DangKyDeTai
+        const regStatus = registrations.find(reg => 
+          reg.Nhom?._id === r.Nhom?._id || reg.SinhVien?._id === r.SinhVien?._id
+        );
+        const isWinner = regStatus?.TrangThai === 'DaDuyet';
+        const isLost = regStatus?.TrangThai === 'Thua';
+        
+        if (isWinner) return <Tag color="gold" style={{ fontSize: 13 }}>🏆 WINNER</Tag>;
+        if (isLost) return <Tag color="default" style={{ fontSize: 13 }}>😞 Thua</Tag>;
         return <Tag color={passed ? 'success' : 'error'} style={{ fontSize: 13 }}>{passed ? `✅ Đạt (≥${threshold}%)` : `❌ Không đạt`}</Tag>;
       },
     },

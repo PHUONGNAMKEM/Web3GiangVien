@@ -32,6 +32,21 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms', 
 // Socket.IO
 io.on('connection', (socket) => {
   logger.info(`[SOCKET] User connected: ${socket.id}`);
+
+  // Nhóm join room cạnh tranh theo đề tài
+  socket.on('competition:join', ({ deTaiId, nhomId }) => {
+    socket.join(`competition:${deTaiId}`);
+    socket.nhomId = nhomId;
+    socket.deTaiId = deTaiId;
+    logger.info(`[SOCKET] Nhom ${nhomId} joined competition room: ${deTaiId}`);
+  });
+
+  // Nhóm rời room
+  socket.on('competition:leave', ({ deTaiId }) => {
+    socket.leave(`competition:${deTaiId}`);
+    logger.info(`[SOCKET] Left competition room: ${deTaiId}`);
+  });
+
   socket.on('disconnect', () => {
     logger.info(`[SOCKET] User disconnected: ${socket.id}`);
   });
@@ -73,6 +88,7 @@ const aiController = require('./controllers/aiController');
 const tienDoController = require('./controllers/tienDoController');
 const rubricsController = require('./controllers/rubricsController');
 const baiTestController = require('./controllers/baiTestController');
+const nhomController = require('./controllers/nhomController');
 
 
 // 1. Root verify
@@ -160,6 +176,19 @@ app.get('/api/baitest/:id/results', baiTestController.getTestResults);
 app.post('/api/baitest/:id/select-winner', baiTestController.selectWinner);
 app.delete('/api/baitest/:id', baiTestController.deleteTest);
 app.get('/api/baitest/check/:deTaiId/:sinhVienId', baiTestController.checkSubmitted);
+
+// 12. Quản Lý Nhóm
+app.post('/api/nhom', nhomController.createNhom);
+app.get('/api/nhom/sinhvien/:svId', nhomController.getNhomBySinhVien);
+app.get('/api/nhom/invites/:svId', nhomController.getPendingInvites);
+app.get('/api/nhom/:id', nhomController.getNhomById);
+app.post('/api/nhom/:id/invite', nhomController.inviteMember);
+app.post('/api/nhom/:id/respond', nhomController.respondToInvite);
+app.delete('/api/nhom/:id/kick/:svId', nhomController.kickMember);
+app.post('/api/nhom/:id/leave', nhomController.leaveNhom);
+app.post('/api/nhom/:id/transfer-leader', nhomController.transferLeader);
+app.post('/api/nhom/:id/chot', nhomController.chotNhom);
+app.delete('/api/nhom/:id', nhomController.deleteNhom);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

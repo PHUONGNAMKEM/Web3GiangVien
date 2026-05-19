@@ -57,3 +57,23 @@
 2026-05-09 14:41:03 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
 2026-05-09 14:41:03 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=576ms
 2026-05-09 14:41:03 [INFO ] [AI] /analyze-report response | score=6.31
+2026-05-19 16:24:19 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-05-19 16:44:04 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-05-19 16:50:54 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-05-19 16:50:56 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=1772ms
+2026-05-19 16:50:56 [INFO ] [AI] /analyze-report response | score=6.11
+2026-05-19 16:53:11 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-05-19 16:53:12 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=892ms
+2026-05-19 16:53:12 [INFO ] [AI] /analyze-report response | score=6.31
+2026-05-19 16:53:17 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-05-19 16:53:18 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=280ms
+2026-05-19 16:53:18 [INFO ] [AI] /analyze-report response | score=6.11
+2026-05-19 16:58:22 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-05-19 16:58:22 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=202ms
+2026-05-19 16:58:22 [INFO ] [AI] /analyze-report response | score=6.11
+2026-05-19 16:58:31 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-05-19 16:58:31 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=178ms
+2026-05-19 16:58:31 [INFO ] [AI] /analyze-report response | score=6.11
+2026-05-19 16:58:46 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-05-19 16:58:47 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=512ms
+2026-05-19 16:58:47 [INFO ] [AI] /analyze-report response | score=6.31
