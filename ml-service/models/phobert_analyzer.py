@@ -1,5 +1,6 @@
 import time
 import logging
+import numpy as np
 import torch
 import torch.nn.functional as F
 from transformers import AutoModel, AutoTokenizer
@@ -24,6 +25,14 @@ class PhoBertAnalyzer:
         self.model.eval()
         logger.info(f"[AI] {self.model_name} loaded successfully")
 
+    def _calc_repetition_ratio(self, text: str) -> float:
+        """Tính tỷ lệ câu bị lặp lại — phát hiện copy-paste. Trả về 0.0 (không lặp) đến 1.0 (toàn lặp)."""
+        sentences = [s.strip() for s in text.split('.') if len(s.strip()) > 20]
+        if not sentences:
+            return 0.0
+        unique = set(s.lower() for s in sentences)
+        return 1.0 - (len(unique) / len(sentences))
+
     def _get_embedding(self, text: str):
         # Tokenize with max length for PhoBERT
         inputs = self.tokenizer(text, return_tensors='pt', padding=True, truncation=True, max_length=256).to(self.device)
@@ -46,31 +55,42 @@ class PhoBertAnalyzer:
             }
 
         hits = extract_requirement_hits(clean_text, topic_requirements)
-        base_score = min(8.0, 4.0 + len(clean_text) / 800.0)
-        
-        bonus = 0.0
+
+        # Phát hiện copy-paste: penalize nội dung lặp lại
+        repetition_ratio = self._calc_repetition_ratio(clean_text)
+        repetition_penalty = repetition_ratio * 3.0  # tối đa -3.0 điểm
+
         semantic_hits = 0
+        semantic_bonus = 0.0
         issues = []
 
         if topic_requirements:
             doc_emb = self._get_embedding(clean_text)
-            
+
             for req in topic_requirements:
                 req_norm = normalize_text(req)
                 req_emb = self._get_embedding(req_norm)
-                
                 sim = F.cosine_similarity(doc_emb, req_emb).item()
                 logger.debug(f"[AI] Requirement '{req[:30]}...' similarity={sim:.4f}")
-                if sim > 0.45:  # Threshold for semantic matching
+                if sim > 0.45:
                     semantic_hits += 1
 
             total_hits = max(hits, semantic_hits)
-            bonus = 2.0 * min(1.0, (total_hits / len(topic_requirements)))
-            
+            keyword_density_score = (total_hits / len(topic_requirements)) * 1.5
+            semantic_bonus = 2.0 * min(1.0, (total_hits / len(topic_requirements)))
+
             if total_hits == 0:
                 issues.append("Báo cáo thiếu các kiến thức chuyên môn cốt lõi của đề tài.")
+        else:
+            keyword_density_score = 0.5
 
-        score = round(min(10.0, base_score + bonus), 2)
+        # Base cố định 5.0 — không phụ thuộc độ dài văn bản
+        base_score = 5.0 + keyword_density_score - repetition_penalty
+
+        if repetition_ratio > 0.3:
+            issues.append(f"Phát hiện nội dung lặp lại ({repetition_ratio:.0%}) — kiểm tra copy-paste.")
+
+        score = round(min(10.0, max(0.0, base_score + semantic_bonus)), 2)
 
         if len(clean_text) < 300:
             issues.append("Nội dung báo cáo quá ngắn, cần bổ sung thêm chi tiết kỹ thuật.")
@@ -80,7 +100,7 @@ class PhoBertAnalyzer:
             feedback = "Cần cải thiện: " + "; ".join(issues)
 
         elapsed = int((time.time() - start_time) * 1000)
-        logger.info(f"[AI] Report analysis completed | score={score} | requirements={len(topic_requirements)} | textLength={len(clean_text)} | time={elapsed}ms")
+        logger.info(f"[AI] Report analysis completed | score={score} | requirements={len(topic_requirements)} | repetition={repetition_ratio:.2f} | textLength={len(clean_text)} | time={elapsed}ms")
 
         return {
             "score": score,
@@ -145,9 +165,22 @@ class PhoBertAnalyzer:
             best_chunk_idx, best_sim = max(chunk_similarities, key=lambda x: x[1])
             best_chunk = chunks[best_chunk_idx]
 
-            # Chuyển similarity → điểm (scale + clamp)
+            # === KEYWORD HIT RATE từ GoiYChoAI (trực tiếp trên chunk tốt nhất) ===
+            goi_y_lower = [kw.lower() for kw in goi_y]
+            if goi_y_lower:
+                chunk_content_lower = best_chunk.content.lower()
+                keyword_hits = sum(1 for kw in goi_y_lower if kw in chunk_content_lower)
+                keyword_hit_rate = keyword_hits / len(goi_y_lower)
+            else:
+                keyword_hit_rate = 0.5  # neutral nếu GV không cung cấp keywords
+
+            # Blend: 70% semantic similarity + 30% keyword hit rate
+            blended_sim = 0.7 * best_sim + 0.3 * keyword_hit_rate
+            logger.debug(f"[AI] Criteria '{rubric['TenTieuChi']}' | bestSim={best_sim:.4f} | keywordHitRate={keyword_hit_rate:.4f} | blended={blended_sim:.4f}")
+
+            # Chuyển blended_sim → điểm (scale + clamp)
             diem_toi_da = rubric.get('DiemToiDa', 10)
-            raw_score = max(0, min(diem_toi_da, best_sim * diem_toi_da * 1.3))
+            raw_score = max(0, min(diem_toi_da, blended_sim * diem_toi_da * 1.3))
             score = round(raw_score, 2)
 
             # Trọng số
@@ -155,15 +188,22 @@ class PhoBertAnalyzer:
             if diem_toi_da > 0:
                 total_weighted_score += score / diem_toi_da * trong_so
 
+            # === ADAPTIVE THRESHOLD dựa trên phân phối similarity của tiêu chí này ===
+            all_sims = [s for _, s in chunk_similarities]
+            mean_sim = float(np.mean(all_sims))
+            std_sim  = float(np.std(all_sims))
+            good_threshold = min(0.75, mean_sim + 0.5 * std_sim)
+            ok_threshold   = max(0.20, mean_sim - 0.5 * std_sim)
+
             # Feedback cho tiêu chí (dẫn chiếu chunk cụ thể)
-            if best_sim > 0.6:
+            if best_sim >= good_threshold:
                 nhan_xet = f"Tốt: '{best_chunk.heading}' thể hiện rõ nội dung '{rubric['TenTieuChi']}'"
-            elif best_sim > 0.4:
+            elif best_sim >= ok_threshold:
                 nhan_xet = f"Khá: Có đề cập '{rubric['TenTieuChi']}' tại '{best_chunk.heading}' nhưng chưa sâu"
             else:
                 nhan_xet = f"Yếu: Thiếu nội dung liên quan đến '{rubric['TenTieuChi']}'"
 
-            logger.debug(f"[AI] Criteria '{rubric['TenTieuChi']}' | bestSim={best_sim:.4f} | score={score} | chunk='{best_chunk.heading}'")
+            logger.debug(f"[AI] Criteria '{rubric['TenTieuChi']}' | bestSim={best_sim:.4f} | blended={blended_sim:.4f} | score={score} | goodThr={good_threshold:.3f} | okThr={ok_threshold:.3f} | chunk='{best_chunk.heading}'")
 
             results.append({
                 "TenTieuChi": rubric['TenTieuChi'],
