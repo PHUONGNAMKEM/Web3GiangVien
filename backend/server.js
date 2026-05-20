@@ -73,6 +73,7 @@ const aiController = require('./controllers/aiController');
 const tienDoController = require('./controllers/tienDoController');
 const rubricsController = require('./controllers/rubricsController');
 const baiTestController = require('./controllers/baiTestController');
+const blockchainController = require('./controllers/blockchainController');
 
 
 // 1. Root verify
@@ -129,11 +130,23 @@ app.get('/api/baocao/giangvien/:gvId', baoCaoController.getBaoCaoByLecturer);
 
 // 7. Điểm Số
 app.post('/api/diemso', diemSoController.chamDiem);
+app.put('/api/diemso/:id/retry-blockchain', diemSoController.retryBlockchain);
 app.get('/api/diemso/sinhvien/:svId', diemSoController.getDiemBySinhVien);
 app.get('/api/diemso/comparison/:gvId', diemSoController.getComparison);
 
+// 7.1. Blockchain read-only debug routes (khong hien tren UI)
+app.get('/api/blockchain/contracts', blockchainController.getContracts);
+app.get('/api/blockchain/db-records', blockchainController.getThesisDbRecords);
+app.get('/api/blockchain/thesis/db-records', blockchainController.getThesisDbRecords);
+app.get('/api/blockchain/thesis/topic/:topicId', blockchainController.getThesisTopic);
+app.get('/api/blockchain/thesis/submissions', blockchainController.getThesisSubmissions);
+
 // 8. Tiến Độ
 app.post('/api/tiendo', tienDoController.createProgressEntry);
+app.get('/api/tiendo/sinhvien/:svId', tienDoController.getProgressBySinhVien);
+app.get('/api/tiendo/detail/:id', tienDoController.getProgressDetail);
+app.put('/api/tiendo/:id', tienDoController.updateProgressEntry);
+app.put('/api/tiendo/:id/danhgia', tienDoController.evaluateProgress);
 app.get('/api/tiendo/:svId', tienDoController.getProgressBySV);
 app.get('/api/tiendo/detai/:deTaiId', tienDoController.getProgressByTopic);
 app.put('/api/tiendo/:id/nhanxet', tienDoController.commentProgress);

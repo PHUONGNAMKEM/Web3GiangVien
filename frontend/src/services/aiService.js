@@ -124,6 +124,13 @@ const aiApiService = {
     },
 
     // SV xem điểm
+    retryGradeBlockchain: async (gradeId, giangVienId) => {
+        const response = await axios.put(`${API_URL}/diemso/${gradeId}/retry-blockchain`, {
+            giangVienId
+        }, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
     getDiemBySinhVien: async (svId) => {
         const response = await axios.get(`${API_URL}/diemso/sinhvien/${svId}`, { headers: getAuthHeaders() });
         return response.data;
@@ -163,6 +170,23 @@ const aiApiService = {
     },
     getProgressByTopic: async (deTaiId) => {
         const response = await axios.get(`${API_URL}/tiendo/detai/${deTaiId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+    getProgressBySinhVien: async (svId, deTaiId) => {
+        const query = deTaiId ? `?deTaiId=${deTaiId}` : '';
+        const response = await axios.get(`${API_URL}/tiendo/sinhvien/${svId}${query}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+    getProgressDetail: async (tienDoId) => {
+        const response = await axios.get(`${API_URL}/tiendo/detail/${tienDoId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+    updateProgressEntry: async (tienDoId, data) => {
+        const response = await axios.put(`${API_URL}/tiendo/${tienDoId}`, data, { headers: getAuthHeaders() });
+        return response.data;
+    },
+    evaluateProgress: async (tienDoId, data) => {
+        const response = await axios.put(`${API_URL}/tiendo/${tienDoId}/danhgia`, data, { headers: getAuthHeaders() });
         return response.data;
     },
     commentProgress: async (tienDoId, nhanXet) => {

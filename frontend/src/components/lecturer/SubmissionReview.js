@@ -1,10 +1,49 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Badge, Drawer, Alert, Typography, InputNumber, Space, message, Tag, Steps, Spin, Skeleton, Empty, Tooltip, Descriptions, List, Divider, Input } from 'antd';
-import { CheckSquare, ShieldCheck, BrainCircuit, ScanSearch, Fingerprint, ExternalLink, Download, Clock } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Table, Button, Badge, Drawer, Alert, Typography, InputNumber, Space, message, Tag, Steps, Spin, Skeleton, Empty, Tooltip, Descriptions, List, Divider, Input, Modal, Select } from 'antd';
+import { CheckSquare, ShieldCheck, BrainCircuit, ScanSearch, Fingerprint, ExternalLink, Download, Clock, RefreshCw } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 
 const { Title, Text, Paragraph } = Typography;
+
+const WARNING_LABELS = {
+  GIAM_PHAN_TRAM: 'Tiến độ giảm so với tuần trước',
+  TANG_BAT_THUONG: 'Tiến độ tăng bất thường',
+  KHONG_MINH_CHUNG_NHUNG_CAO: 'Không có minh chứng nhưng tiến độ cao',
+  NOI_DUNG_NGAN: 'Nội dung đã làm còn ngắn',
+  NOP_DON: 'Nộp quá nhiều lần trong thời gian ngắn',
+  THIEU_KE_HOACH: 'Thiếu kế hoạch tuần sau'
+};
+
+const formatWarningLabel = (warning) => WARNING_LABELS[warning] || warning;
+
+const getProgressStatusLabel = (status) => {
+  const labels = {
+    ChoDanhGia: 'Chờ đánh giá',
+    Dat: 'Đạt',
+    CanBoSung: 'Cần bổ sung',
+    KhongDat: 'Không đạt'
+  };
+  return labels[status] || status;
+};
+
+const getSubmissionKey = (record) => record?._id || `${record?.student?._id || ''}-${record?.topic?._id || ''}`;
+
+const countPendingProgress = (logs) => (
+  Array.isArray(logs)
+    ? logs.filter(item => !item.TrangThaiDanhGia || item.TrangThaiDanhGia === 'ChoDanhGia').length
+    : 0
+);
+
+const getBlockchainStatusMeta = (status) => {
+  const meta = {
+    ChuaGhi: { label: 'Chưa ghi Blockchain', color: 'default', alertType: 'info' },
+    Pending: { label: 'Đang ghi Blockchain', color: 'processing', alertType: 'info' },
+    DaGhi: { label: 'Đã ghi Blockchain', color: 'success', alertType: 'success' },
+    LoiGhi: { label: 'Lỗi ghi Blockchain', color: 'error', alertType: 'warning' }
+  };
+  return meta[status] || { label: status || 'Chưa rõ', color: 'default', alertType: 'info' };
+};
 
 const SubmissionReview = () => {
   const [submissions, setSubmissions] = useState([]);
@@ -12,9 +51,19 @@ const SubmissionReview = () => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [progressDrawerVisible, setProgressDrawerVisible] = useState(false);
   const [progressLogs, setProgressLogs] = useState([]);
+  const [progressPendingMap, setProgressPendingMap] = useState({});
+  const [progressSummary, setProgressSummary] = useState(null);
   const [commentingId, setCommentingId] = useState(null);
-  const [commentText, setCommentText] = useState("");
+  const [commentDrafts, setCommentDrafts] = useState({});
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [weeklyModalVisible, setWeeklyModalVisible] = useState(false);
+  const [weeklyTarget, setWeeklyTarget] = useState(null);
+  const [weeklyRubrics, setWeeklyRubrics] = useState([]);
+  const [weeklyStatus, setWeeklyStatus] = useState('ChoDanhGia');
+  const [weeklyComment, setWeeklyComment] = useState('');
+  const [weeklyScore, setWeeklyScore] = useState(0);
+  const [weeklyWarnings, setWeeklyWarnings] = useState([]);
+  const [weeklySaving, setWeeklySaving] = useState(false);
 
   const viewProgress = async (record) => {
     setSelectedSubmission(record);
@@ -22,9 +71,14 @@ const SubmissionReview = () => {
     setLoading(true);
     try {
       const svId = record.student._id;
-      const res = await aiApiService.getProgressBySV(svId);
-      // Lọc progress của riêng đề tài sinh viên đang đăng ký nếu cần
-      setProgressLogs(res.data || []);
+      const res = await aiApiService.getProgressBySinhVien(svId, record.topic?._id);
+      const logs = res.data || [];
+      setProgressLogs(logs);
+      setProgressSummary(buildProgressSummary(logs));
+      setProgressPendingMap(prev => ({
+        ...prev,
+        [getSubmissionKey(record)]: countPendingProgress(logs)
+      }));
     } catch (e) {
       console.error(e);
       message.error("Lỗi lấy nhật ký tiến độ");
@@ -36,11 +90,11 @@ const SubmissionReview = () => {
   const handleCommentProgress = async (logId) => {
     try {
       setCommentingId(logId);
-      await aiApiService.commentProgress(logId, commentText);
+      await aiApiService.commentProgress(logId, commentDrafts[logId] || '');
       message.success("Thêm nhận xét thành công");
       // Cập nhật lại logs
-      setProgressLogs(prev => prev.map(log => log._id === logId ? { ...log, NhanXetGV: commentText } : log));
-      setCommentText("");
+      setProgressLogs(prev => prev.map(log => log._id === logId ? { ...log, NhanXetGV: commentDrafts[logId] || '' } : log));
+      setCommentDrafts(prev => ({ ...prev, [logId]: '' }));
     } catch (e) {
       message.error("Lỗi nhận xét tiến độ");
     } finally {
@@ -48,6 +102,7 @@ const SubmissionReview = () => {
     }
   };
   const [isMinting, setIsMinting] = useState(false);
+  const [isRetryingBlockchain, setIsRetryingBlockchain] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState(null);
   const [existingGrade, setExistingGrade] = useState(null);
@@ -64,7 +119,21 @@ const SubmissionReview = () => {
     try {
       setLoading(true);
       const data = await aiApiService.getSubmissionsByLecturer(user.id);
-      setSubmissions(Array.isArray(data) ? data : []);
+      const nextSubmissions = Array.isArray(data) ? data : [];
+      setSubmissions(nextSubmissions);
+
+      const pendingEntries = await Promise.all(
+        nextSubmissions.map(async (record) => {
+          try {
+            const res = await aiApiService.getProgressBySinhVien(record.student?._id, record.topic?._id);
+            return [getSubmissionKey(record), countPendingProgress(res.data || [])];
+          } catch (err) {
+            console.warn('Không lấy được trạng thái tiến độ:', err);
+            return [getSubmissionKey(record), 0];
+          }
+        })
+      );
+      setProgressPendingMap(Object.fromEntries(pendingEntries));
     } catch (e) {
       console.error('Lỗi lấy submissions:', e);
     } finally {
@@ -94,6 +163,7 @@ const SubmissionReview = () => {
     setExistingGrade(null);
     setRubricsResult([]);
     setGvRubricsScores([]);
+    setProgressSummary(null);
 
     // Nếu đã chấm điểm rồi, lấy thông tin điểm đã lưu
     if (record.status === 'DaCham' && record.grade) {
@@ -160,6 +230,13 @@ const SubmissionReview = () => {
         setAnalyzing(false);
       }
     }
+
+    try {
+      const progressRes = await aiApiService.getProgressBySinhVien(record.student?._id, record.topic?._id);
+      setProgressSummary(buildProgressSummary(progressRes.data || []));
+    } catch (err) {
+      console.error('Lỗi lấy tóm tắt tiến độ:', err);
+    }
   };
 
   const handleBlockchainMint = async () => {
@@ -170,7 +247,13 @@ const SubmissionReview = () => {
         return;
       }
 
-      const response = await aiApiService.chamDiem({
+      const submissionIndex = Number.isFinite(Number(selectedSubmission.submission?.SubmissionIndex))
+        ? Number(selectedSubmission.submission?.SubmissionIndex)
+        : Number.isFinite(Number(selectedSubmission.submission?.submissionIndex))
+          ? Number(selectedSubmission.submission?.submissionIndex)
+          : null;
+
+      const payload = {
         baoCaoId: selectedSubmission.submission._id,
         deTaiId: selectedSubmission.topic._id,
         sinhVienId: selectedSubmission.student._id,
@@ -180,7 +263,13 @@ const SubmissionReview = () => {
         aiScore: aiAnalysis?.score || 0,
         aiFeedback: aiAnalysis?.feedback || "",
         rubricsResult: gvRubricsScores.length > 0 ? gvRubricsScores : undefined,
-      });
+      };
+
+      if (submissionIndex != null) {
+        payload.submissionIndex = submissionIndex;
+      }
+
+      const response = await aiApiService.chamDiem(payload);
 
       // Capture the full grade data from API response (includes TxHash)
       const gradeData = response?.data || {
@@ -212,10 +301,149 @@ const SubmissionReview = () => {
     }
   };
 
+  const handleRetryBlockchain = async () => {
+    const gradeId = selectedSubmission?.grade?._id;
+    if (!gradeId) {
+      message.error('Không tìm thấy bản ghi điểm để ghi lại Blockchain.');
+      return;
+    }
+
+    try {
+      setIsRetryingBlockchain(true);
+      const response = await aiApiService.retryGradeBlockchain(gradeId, user.id);
+      const updatedGrade = response.data || selectedSubmission.grade;
+      const updatedSubmission = { ...selectedSubmission, grade: updatedGrade };
+      setSelectedSubmission(updatedSubmission);
+      setSubmissions(prev => prev.map(s =>
+        s._id === selectedSubmission._id ? updatedSubmission : s
+      ));
+      message.success('Ghi lại Blockchain thành công');
+    } catch (error) {
+      const updatedGrade = error.response?.data?.data;
+      if (updatedGrade) {
+        const updatedSubmission = { ...selectedSubmission, grade: updatedGrade };
+        setSelectedSubmission(updatedSubmission);
+        setSubmissions(prev => prev.map(s =>
+          s._id === selectedSubmission._id ? updatedSubmission : s
+        ));
+      }
+      message.error(error.response?.data?.error || 'Ghi lại Blockchain thất bại');
+    } finally {
+      setIsRetryingBlockchain(false);
+    }
+  };
+
+  const defaultWeeklyRubrics = [
+    { MaTieuChi: 'DUNG_HAN', TenTieuChi: 'Đúng hạn và đầy đủ', TrongSo: 15, DiemToiDa: 10, DiemGV: 0 },
+    { MaTieuChi: 'HOAN_THANH', TenTieuChi: 'Mức độ hoàn thành mục tiêu tuần', TrongSo: 30, DiemToiDa: 10, DiemGV: 0 },
+    { MaTieuChi: 'CHAT_LUONG', TenTieuChi: 'Chất lượng nội dung và minh chứng', TrongSo: 25, DiemToiDa: 10, DiemGV: 0 },
+    { MaTieuChi: 'KHO_KHAN', TenTieuChi: 'Xử lý khó khăn và tư duy phản hồi', TrongSo: 15, DiemToiDa: 10, DiemGV: 0 },
+    { MaTieuChi: 'KE_HOACH', TenTieuChi: 'Kế hoạch tuần sau', TrongSo: 15, DiemToiDa: 10, DiemGV: 0 },
+  ];
+
+  const calcWeeklyScore = (rubrics) => {
+    if (!rubrics || rubrics.length === 0) return 0;
+    const total = rubrics.reduce((sum, item) => {
+      const diemToiDa = item.DiemToiDa || 10;
+      const diemGV = item.DiemGV || 0;
+      return sum + (diemGV / diemToiDa) * (item.TrongSo || 0);
+    }, 0);
+    return Math.round((total / 100 * 10) * 100) / 100;
+  };
+
+  const buildProgressSummary = (logs) => {
+    const validLogs = Array.isArray(logs) ? logs : [];
+    const graded = validLogs.filter(item => item.TrangThaiDanhGia === 'Dat' && item.DiemTienDo != null);
+    const avg = graded.length > 0
+      ? Math.round((graded.reduce((sum, item) => sum + (item.DiemTienDo || 0), 0) / graded.length) * 100) / 100
+      : null;
+    const warnings = validLogs.flatMap(item => item.CanhBaoTienDo || []);
+    return {
+      totalWeeks: validLogs.filter(item => item.TuanSo != null).length,
+      gradedWeeks: graded.length,
+      averageScore: avg,
+      warnings: Array.from(new Set(warnings))
+    };
+  };
+
+  const openWeeklyEvaluation = async (log) => {
+    setWeeklyTarget(log);
+    setWeeklyStatus(log.TrangThaiDanhGia || 'ChoDanhGia');
+    setWeeklyComment(log.NhanXetGV || '');
+    setWeeklyWarnings(log.CanhBaoTienDo || []);
+    setWeeklyModalVisible(true);
+
+    try {
+      const detail = await aiApiService.getProgressDetail(log._id);
+      const detailData = detail.data || log;
+      const rubrics = Array.isArray(detailData.RubricsTuan) && detailData.RubricsTuan.length > 0
+        ? detailData.RubricsTuan.map(r => ({ ...r, DiemGV: r.DiemGV ?? 0 }))
+        : defaultWeeklyRubrics;
+      setWeeklyRubrics(rubrics);
+      setWeeklyWarnings(detail.canhBao || detailData.CanhBaoTienDo || []);
+      setWeeklyScore(calcWeeklyScore(rubrics));
+    } catch (err) {
+      console.error('Lỗi lấy chi tiết tiến độ:', err);
+      setWeeklyRubrics(defaultWeeklyRubrics);
+      setWeeklyScore(calcWeeklyScore(defaultWeeklyRubrics));
+    }
+  };
+
+  const saveWeeklyEvaluation = async (useRubrics) => {
+    if (!weeklyTarget) return;
+    try {
+      setWeeklySaving(true);
+      const payload = {
+        giangVienId: user.id,
+        trangThaiDanhGia: weeklyStatus,
+        nhanXetGV: weeklyComment
+      };
+
+      if (useRubrics) {
+        payload.rubricsTuan = weeklyRubrics;
+      }
+
+      const response = await aiApiService.evaluateProgress(weeklyTarget._id, payload);
+      const updated = response.data || weeklyTarget;
+      setProgressLogs(prev => {
+        const nextLogs = prev.map(item => item._id === weeklyTarget._id ? updated : item);
+        setProgressSummary(buildProgressSummary(nextLogs));
+        setProgressPendingMap(current => ({
+          ...current,
+          [getSubmissionKey(selectedSubmission)]: countPendingProgress(nextLogs)
+        }));
+        return nextLogs;
+      });
+      setWeeklyModalVisible(false);
+      setWeeklyTarget(null);
+      message.success('Lưu đánh giá tuần thành công');
+    } catch (err) {
+      message.error(err.response?.data?.error || 'Lỗi lưu đánh giá tuần');
+    } finally {
+      setWeeklySaving(false);
+    }
+  };
+
+  const groupedProgressLogs = useMemo(() => {
+    const weekly = [];
+    const legacy = [];
+    progressLogs.forEach(item => {
+      if (Number.isFinite(Number(item.TuanSo))) {
+        weekly.push(item);
+      } else {
+        legacy.push(item);
+      }
+    });
+
+    weekly.sort((a, b) => (Number(a.TuanSo) || 0) - (Number(b.TuanSo) || 0));
+    return { weekly, legacy };
+  }, [progressLogs]);
+
   const columns = [
     {
       title: 'Sinh Viên',
       key: 'student',
+      width: 180,
       render: (_, record) => (
         <strong>{record.student?.HoTen || 'N/A'} ({record.student?.MaSV || ''})</strong>
       ),
@@ -224,12 +452,13 @@ const SubmissionReview = () => {
       title: 'Đề Tài',
       key: 'topic',
       ellipsis: true,
-      width: '30%',
+      width: 360,
       render: (_, record) => record.topic?.TenDeTai || 'N/A',
     },
     {
       title: 'Trạng Thái Nộp',
       key: 'status',
+      width: 170,
       render: (_, record) => {
         if (record.status === 'DaCham') {
           return <Badge status="success" text={<Text strong style={{ color: '#eb2f96' }}>Đã chấm điểm</Text>} />
@@ -244,6 +473,7 @@ const SubmissionReview = () => {
     {
       title: 'Thời Gian Nộp',
       key: 'submitDate',
+      width: 160,
       render: (_, record) => (
         record.submission
           ? new Date(record.submission.NgayNop || record.submission.createdAt).toLocaleString('vi-VN')
@@ -253,6 +483,7 @@ const SubmissionReview = () => {
     {
       title: 'Điểm Số',
       key: 'scoreDetail',
+      width: 130,
       render: (_, record) => {
         if (record.status !== 'DaCham' || !record.grade) return <Text type="secondary">—</Text>;
         const gvScore = record.grade.Diem;
@@ -281,24 +512,33 @@ const SubmissionReview = () => {
     {
       title: 'Thao Tác',
       key: 'action',
-      render: (_, record) => (
-        <Space>
-          <Button type="default" icon={<Clock size={16} />} onClick={() => viewProgress(record)}>
-            Tiến Độ
-          </Button>
-          {record.status === 'DaCham' ? (
-            <Button type="default" icon={<ShieldCheck size={16} />} onClick={() => viewDetails(record)}>
-              Xem Điểm & Review
-            </Button>
-          ) : record.submission ? (
-            <Button type="primary" icon={<ScanSearch size={16} />} onClick={() => viewDetails(record)}>
-              Chấm Điểm & Review
-            </Button>
-          ) : (
-            <Tag color="default">Chờ SV nộp bài</Tag>
-          )}
-        </Space>
-      ),
+      width: 260,
+      render: (_, record) => {
+        const hasPendingProgress = (progressPendingMap[getSubmissionKey(record)] || 0) > 0;
+
+        return (
+          <Space size={[8, 8]} wrap>
+            <Tooltip title={hasPendingProgress ? 'Có tiến độ chưa đánh giá' : 'Xem tiến độ'}>
+              <Badge dot={hasPendingProgress} offset={[-2, 2]}>
+                <Button type="default" icon={<Clock size={16} />} onClick={() => viewProgress(record)}>
+                  Tiến Độ
+                </Button>
+              </Badge>
+            </Tooltip>
+            {record.status === 'DaCham' ? (
+              <Button type="default" icon={<ShieldCheck size={16} />} onClick={() => viewDetails(record)}>
+                Xem Điểm & Review
+              </Button>
+            ) : record.submission ? (
+              <Button type="primary" icon={<ScanSearch size={16} />} onClick={() => viewDetails(record)}>
+                Chấm Điểm & Review
+              </Button>
+            ) : (
+              <Tag color="default" style={{ margin: 0 }}>Chờ SV nộp bài</Tag>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 
@@ -315,6 +555,7 @@ const SubmissionReview = () => {
         rowKey="_id"
         loading={loading}
         locale={{ emptyText: <Empty description="Chưa có sinh viên nào được duyệt đề tài. Hãy duyệt đề tài ở trang Quản Lý Đề Tài trước." /> }}
+        scroll={{ x: 1100 }}
       />
 
       <Drawer
@@ -393,6 +634,41 @@ const SubmissionReview = () => {
                 />
               ) : null}
             </div>
+
+            {progressSummary && (
+              <div style={{ padding: 16, background: '#fff7e6', borderRadius: 8, marginBottom: 24, borderLeft: '4px solid #fa8c16' }}>
+                <Space style={{ marginBottom: 8 }}>
+                  <Text strong style={{ color: '#ad4e00', fontSize: 15 }}>Tóm tắt tiến độ tuần</Text>
+                </Space>
+                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                  <div>
+                    <Text type="secondary">Tổng số tuần có nhật ký</Text>
+                    <div><Text strong>{progressSummary.totalWeeks}</Text></div>
+                  </div>
+                  <div>
+                    <Text type="secondary">Tuần đạt yêu cầu</Text>
+                    <div><Text strong>{progressSummary.gradedWeeks}</Text></div>
+                  </div>
+                  <div>
+                    <Text type="secondary">Điểm trung bình (tuần đạt)</Text>
+                    <div><Text strong>{progressSummary.averageScore != null ? progressSummary.averageScore : '—'}</Text></div>
+                  </div>
+                </div>
+                <Text type="secondary" italic style={{ display: 'block', marginTop: 12 }}>
+                  Điểm quá trình chỉ mang tính tham khảo - KHÔNG tự cộng vào điểm cuối kỳ.
+                </Text>
+                {progressSummary.warnings?.length > 0 && (
+                  <div style={{ marginTop: 12, padding: 10, background: '#fff1f0', borderRadius: 6, border: '1px solid #ffccc7' }}>
+                    <Text strong style={{ color: '#a8071a' }}>Cảnh báo tiến độ:</Text>
+                    <ul style={{ margin: '6px 0 0 18px' }}>
+                      {progressSummary.warnings.map((warn, idx) => (
+                        <li key={idx}><Text>{formatWarningLabel(warn)}</Text></li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* === RUBRICS CHI TIẾT (nếu đề tài có Rubrics) === */}
             {rubricsResult.length > 0 && (
@@ -476,16 +752,43 @@ const SubmissionReview = () => {
 
                       <div style={{ marginTop: 24 }}>
                         {selectedSubmission.status === 'DaCham' ? (
+                          (() => {
+                            const blockchainMeta = getBlockchainStatusMeta(selectedSubmission.grade?.TrangThaiBlockchain);
+                            return (
                           <div>
                             <Alert
-                              type="success"
-                              message={`Sinh viên đã được chấm điểm trên Blockchain: ${selectedSubmission.grade?.Diem || score}`}
+                              type={blockchainMeta.alertType}
+                              message={`Sinh viên đã được chấm điểm: ${selectedSubmission.grade?.Diem || score}`}
+                              description={
+                                <Space direction="vertical" size={4}>
+                                  <Space size={8} wrap>
+                                    <Text>Trạng thái Blockchain:</Text>
+                                    <Tag color={blockchainMeta.color} style={{ margin: 0 }}>{blockchainMeta.label}</Tag>
+                                  </Space>
+                                  {selectedSubmission.grade?.TrangThaiBlockchain !== 'DaGhi' && (
+                                    <Button
+                                      size="small"
+                                      icon={<RefreshCw size={14} />}
+                                      onClick={handleRetryBlockchain}
+                                      loading={isRetryingBlockchain}
+                                    >
+                                      Ghi lại Blockchain
+                                    </Button>
+                                  )}
+                                  {selectedSubmission.grade?.LoiBlockchain && (
+                                    <Text type="danger">Lỗi: {selectedSubmission.grade.LoiBlockchain}</Text>
+                                  )}
+                                </Space>
+                              }
                               showIcon
                               style={{ marginBottom: 12 }}
                             />
                             <Descriptions column={1} size="small" bordered style={{ background: '#f6ffed', borderRadius: 8 }}>
                               <Descriptions.Item label="Điểm GV chấm">
                                 <Text strong style={{ color: '#eb2f96', fontSize: 16 }}>{selectedSubmission.grade?.Diem || score}</Text>
+                              </Descriptions.Item>
+                              <Descriptions.Item label="Trạng thái Blockchain">
+                                <Tag color={blockchainMeta.color} style={{ margin: 0 }}>{blockchainMeta.label}</Tag>
                               </Descriptions.Item>
                               {selectedSubmission.grade?.AI_Score != null && (
                                 <Descriptions.Item label="Điểm AI gợi ý">
@@ -527,6 +830,8 @@ const SubmissionReview = () => {
                               )}
                             </Descriptions>
                           </div>
+                            );
+                          })()
                         ) : (
                           <Button
                             type="primary"
@@ -558,57 +863,262 @@ const SubmissionReview = () => {
         onClose={() => setProgressDrawerVisible(false)}
         open={progressDrawerVisible}
       >
-        <List
-          loading={loading}
-          itemLayout="vertical"
-          dataSource={progressLogs}
-          locale={{ emptyText: 'Chưa có nhật ký tiến độ nào.' }}
-          renderItem={item => (
-            <div style={{ marginBottom: 16, padding: '16px', border: '1px solid #e8e8e8', borderRadius: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                <div>
-                  <Tag color="cyan">{item.LoaiCapNhat}</Tag>
-                  <Tag color={item.PhanTramHoanThanh === 100 ? 'success' : 'processing'}>
-                    {item.PhanTramHoanThanh}% Hoàn thành
-                  </Tag>
-                </div>
-                <Text type="secondary" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Clock size={14} /> {new Date(item.createdAt).toLocaleString('vi-VN')}
-                </Text>
+        {loading ? (
+          <List loading itemLayout="vertical" dataSource={[]} />
+        ) : (
+          <div>
+            {groupedProgressLogs.weekly.length === 0 && groupedProgressLogs.legacy.length === 0 && (
+              <Empty description="Chưa có nhật ký tiến độ nào." />
+            )}
+
+            {groupedProgressLogs.weekly.length > 0 && (
+              <div style={{ marginBottom: 20 }}>
+                <Title level={5} style={{ marginBottom: 12 }}>Tiến độ theo tuần</Title>
+                {groupedProgressLogs.weekly.map(item => (
+                  <div key={item._id} style={{ marginBottom: 16, padding: '16px', border: '1px solid #e8e8e8', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                      <Space size={[8, 6]} wrap>
+                        <Tag color="geekblue">Tuần {item.TuanSo}</Tag>
+                        {item.LanNopLai > 0 && <Tag color="orange">Nộp lại lần {item.LanNopLai}</Tag>}
+                        <Tag color={item.TrangThaiDanhGia === 'Dat' ? 'success' : item.TrangThaiDanhGia === 'CanBoSung' ? 'warning' : 'default'}>
+                          {getProgressStatusLabel(item.TrangThaiDanhGia) || 'Chờ đánh giá'}
+                        </Tag>
+                        {item.DiemTienDo != null && (
+                          <Tag color="purple">Điểm tuần: {item.DiemTienDo}</Tag>
+                        )}
+                      </Space>
+                      <Text type="secondary" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Clock size={14} /> {new Date(item.createdAt).toLocaleString('vi-VN')}
+                      </Text>
+                    </div>
+
+                    <div style={{ marginBottom: 8 }}>
+                      <Text type="secondary">Thời gian tuần:</Text>{' '}
+                      <Text>
+                        {item.NgayBatDauTuan ? new Date(item.NgayBatDauTuan).toLocaleDateString('vi-VN') : '—'}
+                        {' '}→{' '}
+                        {item.NgayKetThucTuan ? new Date(item.NgayKetThucTuan).toLocaleDateString('vi-VN') : '—'}
+                      </Text>
+                    </div>
+                    {item.MucTieuTuan && <Paragraph><Text strong>Mục tiêu tuần:</Text> {item.MucTieuTuan}</Paragraph>}
+                    {item.NoiDungDaLam && <Paragraph><Text strong>Đã làm:</Text> {item.NoiDungDaLam}</Paragraph>}
+                    {item.KhoKhan && <Paragraph><Text strong>Khó khăn:</Text> {item.KhoKhan}</Paragraph>}
+                    {item.KeHoachTuanSau && <Paragraph><Text strong>Kế hoạch tuần sau:</Text> {item.KeHoachTuanSau}</Paragraph>}
+
+                    {Array.isArray(item.MinhChung) && item.MinhChung.length > 0 && (
+                      <Paragraph>
+                        <Text strong>Minh chứng:</Text>{' '}
+                        {item.MinhChung.map((mc, idx) => {
+                          const url = typeof mc === 'string' ? mc : mc?.Url;
+                          const label = typeof mc === 'string' ? `Link ${idx + 1}` : (mc?.TenFile || `Link ${idx + 1}`);
+                          return (
+                            <a key={idx} href={url} target="_blank" rel="noreferrer" style={{ marginRight: 8 }}>
+                              {label}
+                            </a>
+                          );
+                        })}
+                      </Paragraph>
+                    )}
+
+                    {item.CanhBaoTienDo?.length > 0 && (
+                      <div style={{ marginTop: 8, padding: 10, background: '#fff1f0', borderRadius: 6, border: '1px solid #ffccc7' }}>
+                        <Text strong style={{ color: '#a8071a' }}>Cảnh báo:</Text>
+                        <ul style={{ margin: '6px 0 0 18px' }}>
+                          {item.CanhBaoTienDo.map((warn, idx) => (
+                            <li key={idx}><Text>{formatWarningLabel(warn)}</Text></li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <Divider style={{ margin: '12px 0' }} />
+                    <Space direction="vertical" style={{ width: '100%' }}>
+                      {item.NhanXetGV ? (
+                        <div style={{ padding: 8, background: '#f6ffed', borderRadius: 4 }}>
+                          <Text strong style={{ color: '#389e0d' }}>Nhận xét GV: </Text>
+                          <Text>{item.NhanXetGV}</Text>
+                        </div>
+                      ) : (
+                        <Text type="secondary">Chưa có nhận xét của giảng viên.</Text>
+                      )}
+                      <Button type="primary" onClick={() => openWeeklyEvaluation(item)}>Đánh Giá Tuần</Button>
+                    </Space>
+                  </div>
+                ))}
               </div>
+            )}
 
-              <Paragraph style={{ fontSize: 15 }}>{item.NoiDung}</Paragraph>
+            {groupedProgressLogs.legacy.length > 0 && (
+              <div>
+                <Title level={5} style={{ marginBottom: 12 }}>Cập nhật khác</Title>
+                {groupedProgressLogs.legacy.map(item => (
+                  <div key={item._id} style={{ marginBottom: 16, padding: '16px', border: '1px solid #e8e8e8', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                      <Space size={[8, 6]} wrap>
+                        <Tag color="cyan">{item.LoaiCapNhat}</Tag>
+                        <Tag color={item.PhanTramHoanThanh === 100 ? 'success' : 'processing'}>
+                          {item.PhanTramHoanThanh}% Hoàn thành
+                        </Tag>
+                      </Space>
+                      <Text type="secondary" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Clock size={14} /> {new Date(item.createdAt).toLocaleString('vi-VN')}
+                      </Text>
+                    </div>
 
-              {item.FileDinhKem && (
-                <Paragraph>Link đính kèm: <a href={item.FileDinhKem} target="_blank" rel="noreferrer">Xem file</a></Paragraph>
-              )}
+                    <Paragraph style={{ fontSize: 15 }}>{item.NoiDung}</Paragraph>
 
-              <Divider style={{ margin: '12px 0' }} />
+                    {item.FileDinhKem && (
+                      <Paragraph>Link đính kèm: <a href={item.FileDinhKem} target="_blank" rel="noreferrer">Xem file</a></Paragraph>
+                    )}
 
-              {item.NhanXetGV ? (
-                <div style={{ padding: 8, background: '#f6ffed', borderRadius: 4 }}>
-                  <Text strong style={{ color: '#389e0d' }}>Đã nhận xét: </Text>
-                  <Text>{item.NhanXetGV}</Text>
-                </div>
-              ) : (
-                <Space.Compact style={{ width: '100%' }}>
-                  <Input
-                    placeholder="Nhập nhận xét..."
-                    onChange={e => setCommentText(e.target.value)}
-                  />
-                  <Button
-                    type="primary"
-                    onClick={() => handleCommentProgress(item._id)}
-                    loading={commentingId === item._id}
-                  >
-                    Gửi
-                  </Button>
-                </Space.Compact>
-              )}
-            </div>
-          )}
-        />
+                    <Divider style={{ margin: '12px 0' }} />
+
+                    {item.NhanXetGV ? (
+                      <div style={{ padding: 8, background: '#f6ffed', borderRadius: 4 }}>
+                        <Text strong style={{ color: '#389e0d' }}>Đã nhận xét: </Text>
+                        <Text>{item.NhanXetGV}</Text>
+                      </div>
+                    ) : (
+                      <Space.Compact style={{ width: '100%' }}>
+                        <Input
+                          placeholder="Nhập nhận xét..."
+                          value={commentDrafts[item._id] || ''}
+                          onChange={e => setCommentDrafts(prev => ({ ...prev, [item._id]: e.target.value }))}
+                        />
+                        <Button
+                          type="primary"
+                          onClick={() => handleCommentProgress(item._id)}
+                          loading={commentingId === item._id}
+                        >
+                          Gửi
+                        </Button>
+                      </Space.Compact>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </Drawer>
+
+      <Modal
+        title={`Đánh giá tuần ${weeklyTarget?.TuanSo || ''} - ${selectedSubmission?.student?.HoTen || ''}`}
+        open={weeklyModalVisible}
+        onCancel={() => setWeeklyModalVisible(false)}
+        footer={[
+          <Button key="quick" onClick={() => saveWeeklyEvaluation(false)} loading={weeklySaving}>
+            Lưu nhanh
+          </Button>,
+          <Button key="rubrics" type="primary" onClick={() => saveWeeklyEvaluation(true)} loading={weeklySaving}>
+            Lưu kèm Rubrics
+          </Button>
+        ]}
+        width={700}
+      >
+        {weeklyTarget && (
+          <div>
+            <div style={{ marginBottom: 12 }}>
+              <Text type="secondary">Thời gian tuần:</Text>{' '}
+              <Text>
+                {weeklyTarget.NgayBatDauTuan ? new Date(weeklyTarget.NgayBatDauTuan).toLocaleDateString('vi-VN') : '—'}
+                {' '}→{' '}
+                {weeklyTarget.NgayKetThucTuan ? new Date(weeklyTarget.NgayKetThucTuan).toLocaleDateString('vi-VN') : '—'}
+              </Text>
+            </div>
+            {weeklyTarget.MucTieuTuan && <Paragraph><Text strong>Mục tiêu tuần:</Text> {weeklyTarget.MucTieuTuan}</Paragraph>}
+            {weeklyTarget.NoiDungDaLam && <Paragraph><Text strong>Đã làm:</Text> {weeklyTarget.NoiDungDaLam}</Paragraph>}
+            {weeklyTarget.KhoKhan && <Paragraph><Text strong>Khó khăn:</Text> {weeklyTarget.KhoKhan}</Paragraph>}
+            {weeklyTarget.KeHoachTuanSau && <Paragraph><Text strong>Kế hoạch tuần sau:</Text> {weeklyTarget.KeHoachTuanSau}</Paragraph>}
+
+            {weeklyWarnings?.length > 0 && (
+              <div style={{ marginBottom: 12, padding: 10, background: '#fff1f0', borderRadius: 6, border: '1px solid #ffccc7' }}>
+                <Text strong style={{ color: '#a8071a' }}>Cảnh báo:</Text>
+                <ul style={{ margin: '6px 0 0 18px' }}>
+                  {weeklyWarnings.map((warn, idx) => (
+                    <li key={idx}><Text>{formatWarningLabel(warn)}</Text></li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <Divider style={{ margin: '12px 0' }} />
+            <div style={{ marginBottom: 12 }}>
+              <Text strong>Trạng thái đánh giá:</Text>
+              <Select
+                value={weeklyStatus}
+                onChange={setWeeklyStatus}
+                style={{ width: 220, marginLeft: 8 }}
+                options={[
+                  { value: 'ChoDanhGia', label: 'Chờ đánh giá' },
+                  { value: 'Dat', label: 'Đạt' },
+                  { value: 'CanBoSung', label: 'Cần bổ sung' },
+                  { value: 'KhongDat', label: 'Không đạt' },
+                ]}
+              />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <Text strong>Nhận xét:</Text>
+              <Input.TextArea
+                rows={3}
+                value={weeklyComment}
+                onChange={(e) => setWeeklyComment(e.target.value)}
+                placeholder="Nhập nhận xét cho tuần này..."
+                style={{ marginTop: 8 }}
+              />
+            </div>
+
+            <Divider style={{ margin: '12px 0' }} />
+            <Title level={5} style={{ marginBottom: 12 }}>Rubrics tuần</Title>
+            {weeklyRubrics.map((criteria, idx) => (
+              <div key={idx} style={{ padding: 12, marginBottom: 8, background: '#fafafa', borderRadius: 6, border: '1px solid #f0f0f0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Space>
+                    <Text strong>{criteria.TenTieuChi}</Text>
+                    <Tag color="blue">{criteria.TrongSo}%</Tag>
+                  </Space>
+                  <Space>
+                    <InputNumber
+                      min={0}
+                      max={criteria.DiemToiDa || 10}
+                      step={0.5}
+                      size="small"
+                      value={criteria.DiemGV}
+                      style={{ width: 80 }}
+                      onChange={v => {
+                        const updated = [...weeklyRubrics];
+                        updated[idx] = { ...updated[idx], DiemGV: v || 0 };
+                        setWeeklyRubrics(updated);
+                        setWeeklyScore(calcWeeklyScore(updated));
+                      }}
+                    />
+                    <Text type="secondary">/ {criteria.DiemToiDa || 10}</Text>
+                  </Space>
+                </div>
+                {criteria.NhanXetTieuChi && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>{criteria.NhanXetTieuChi}</Text>
+                )}
+                <Input.TextArea
+                  rows={1}
+                  placeholder="Nhận xét tiêu chí (tùy chọn)"
+                  value={criteria.NhanXetTieuChi || ''}
+                  style={{ marginTop: 8 }}
+                  onChange={e => {
+                    const updated = [...weeklyRubrics];
+                    updated[idx] = { ...updated[idx], NhanXetTieuChi: e.target.value };
+                    setWeeklyRubrics(updated);
+                  }}
+                />
+              </div>
+            ))}
+            <div style={{ textAlign: 'right', marginTop: 8, padding: 8, background: '#f0f5ff', borderRadius: 6 }}>
+              <Text strong style={{ color: '#1d39c4', fontSize: 14 }}>
+                Điểm tuần (rubrics): {weeklyScore} / 10
+              </Text>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

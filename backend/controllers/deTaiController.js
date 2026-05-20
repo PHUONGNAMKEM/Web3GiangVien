@@ -200,9 +200,9 @@ exports.cancelRegistration = async (req, res) => {
             return res.status(404).json({ error: 'Không tìm thấy lượt đăng ký' });
         }
 
-        // (Tuỳ chọn) Chỉ cho hủy khi đang chờ duyệt
-        if (dangKy.TrangThai !== 'ChoDuyet') {
-            return res.status(400).json({ error: 'Chỉ có thể hủy đăng ký khi trạng thái là Chờ duyệt' });
+        // Cho phep huy khi dang cho duyet hoac dang trong vong bai test canh tranh
+        if (!['ChoDuyet', 'ChoTest'].includes(dangKy.TrangThai)) {
+            return res.status(400).json({ error: 'Chỉ có thể hủy đăng ký khi trạng thái là Chờ duyệt hoặc Chờ làm bài test' });
         }
 
         await DangKyDeTai.findByIdAndDelete(id);
