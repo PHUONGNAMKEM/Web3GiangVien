@@ -1133,3 +1133,77 @@
 2026-05-19 16:58:53 [INFO ] [HTTP] GET /api/rubrics/giangvien/69cab756026550c0e19d57ac 304 - - 53.492 ms
 2026-05-19 16:58:53 [INFO ] [HTTP] GET /api/baocao/giangvien/69cab756026550c0e19d57ac 304 - - 352.445 ms
 2026-05-19 16:58:53 [INFO ] [HTTP] GET /api/baocao/giangvien/69cab756026550c0e19d57ac 304 - - 323.885 ms
+2026-05-20 23:17:29 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-05-20 23:17:29 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net
+2026-05-20 23:21:12 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 200 4783 - 317.932 ms
+2026-05-20 23:21:12 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 299.002 ms
+2026-05-20 23:21:55 [INFO ] [HTTP] GET /api/detai 200 20431 - 196.853 ms
+2026-05-20 23:21:55 [INFO ] [HTTP] GET /api/detai 304 - - 147.580 ms
+2026-05-20 23:21:55 [INFO ] [HTTP] GET /api/dangky/giangvien/69e335fac15c496105bc2a2f 200 1593 - 145.175 ms
+2026-05-20 23:21:55 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 49.156 ms
+2026-05-20 23:21:55 [INFO ] [HTTP] GET /api/dangky/giangvien/69e335fac15c496105bc2a2f 304 - - 149.738 ms
+2026-05-20 23:21:55 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 47.959 ms
+2026-05-20 23:21:56 [INFO ] [GRADE] Comparison for GV 69e335fac15c496105bc2a2f | total=1 | avgDiff=0
+2026-05-20 23:21:56 [INFO ] [HTTP] GET /api/diemso/comparison/69e335fac15c496105bc2a2f 200 810 - 148.799 ms
+2026-05-20 23:21:56 [INFO ] [GRADE] Comparison for GV 69e335fac15c496105bc2a2f | total=1 | avgDiff=0
+2026-05-20 23:21:56 [INFO ] [HTTP] GET /api/diemso/comparison/69e335fac15c496105bc2a2f 304 - - 149.020 ms
+2026-05-20 23:22:02 [INFO ] [HTTP] GET /api/detai 304 - - 192.925 ms
+2026-05-20 23:22:03 [INFO ] [HTTP] GET /api/detai 304 - - 146.020 ms
+2026-05-20 23:22:03 [INFO ] [HTTP] GET /api/dangky/giangvien/69e335fac15c496105bc2a2f 304 - - 147.991 ms
+2026-05-20 23:22:03 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 46.893 ms
+2026-05-20 23:22:03 [INFO ] [HTTP] GET /api/dangky/giangvien/69e335fac15c496105bc2a2f 304 - - 148.427 ms
+2026-05-20 23:22:03 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 47.368 ms
+2026-05-20 23:22:03 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 691.315 ms
+2026-05-20 23:22:04 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 294.462 ms
+2026-05-20 23:22:05 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 47.921 ms
+2026-05-20 23:22:05 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 47.321 ms
+2026-05-20 23:22:06 [INFO ] [HTTP] GET /api/detai 304 - - 193.373 ms
+2026-05-20 23:22:06 [INFO ] [HTTP] GET /api/detai 304 - - 146.530 ms
+2026-05-20 23:22:06 [INFO ] [HTTP] GET /api/dangky/giangvien/69e335fac15c496105bc2a2f 304 - - 148.888 ms
+2026-05-20 23:22:06 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 48.207 ms
+2026-05-20 23:22:06 [INFO ] [HTTP] GET /api/dangky/giangvien/69e335fac15c496105bc2a2f 304 - - 151.047 ms
+2026-05-20 23:22:06 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 49.484 ms
+2026-05-20 23:22:10 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 292.388 ms
+2026-05-20 23:22:10 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 290.225 ms
+2026-05-20 23:22:13 [INFO ] [HTTP] GET /api/detai 304 - - 190.994 ms
+2026-05-20 23:22:14 [INFO ] [HTTP] GET /api/detai 304 - - 148.340 ms
+2026-05-20 23:22:14 [INFO ] [HTTP] GET /api/dangky/giangvien/69e335fac15c496105bc2a2f 304 - - 146.919 ms
+2026-05-20 23:22:14 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 47.064 ms
+2026-05-20 23:22:14 [INFO ] [HTTP] GET /api/dangky/giangvien/69e335fac15c496105bc2a2f 304 - - 144.256 ms
+2026-05-20 23:22:14 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 48.349 ms
+2026-05-20 23:23:25 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 284.261 ms
+2026-05-20 23:23:25 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 287.459 ms
+2026-05-20 23:23:26 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 46.727 ms
+2026-05-20 23:23:26 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 49.874 ms
+2026-05-20 23:23:27 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 285.719 ms
+2026-05-20 23:23:27 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 290.183 ms
+2026-05-20 23:23:30 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 47.113 ms
+2026-05-20 23:23:30 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 48.051 ms
+2026-05-20 23:23:31 [INFO ] [HTTP] GET /api/detai 304 - - 212.980 ms
+2026-05-20 23:23:32 [INFO ] [HTTP] GET /api/detai 304 - - 150.140 ms
+2026-05-20 23:23:32 [INFO ] [HTTP] GET /api/dangky/giangvien/69e335fac15c496105bc2a2f 304 - - 149.250 ms
+2026-05-20 23:23:32 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 46.751 ms
+2026-05-20 23:23:32 [INFO ] [HTTP] GET /api/dangky/giangvien/69e335fac15c496105bc2a2f 304 - - 146.908 ms
+2026-05-20 23:23:32 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 47.052 ms
+2026-05-20 23:23:34 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 287.799 ms
+2026-05-20 23:23:34 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 293.971 ms
+2026-05-20 23:23:37 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 46.709 ms
+2026-05-20 23:23:37 [INFO ] [HTTP] GET /api/rubrics/giangvien/69e335fac15c496105bc2a2f 304 - - 47.616 ms
+2026-05-20 23:23:38 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 285.801 ms
+2026-05-20 23:23:39 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 285.432 ms
+2026-05-20 23:23:40 [INFO ] [GRADE] Comparison for GV 69e335fac15c496105bc2a2f | total=1 | avgDiff=0
+2026-05-20 23:23:40 [INFO ] [HTTP] GET /api/diemso/comparison/69e335fac15c496105bc2a2f 304 - - 143.286 ms
+2026-05-20 23:23:40 [INFO ] [GRADE] Comparison for GV 69e335fac15c496105bc2a2f | total=1 | avgDiff=0
+2026-05-20 23:23:40 [INFO ] [HTTP] GET /api/diemso/comparison/69e335fac15c496105bc2a2f 304 - - 144.565 ms
+2026-05-20 23:23:42 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 287.871 ms
+2026-05-20 23:23:43 [INFO ] [HTTP] GET /api/baocao/giangvien/69e335fac15c496105bc2a2f 304 - - 286.776 ms
+2026-05-20 23:28:58 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-05-20 23:28:58 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net
+2026-05-20 23:29:05 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-05-20 23:29:05 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net
+2026-05-20 23:29:14 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-05-20 23:29:14 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net
+2026-05-20 23:29:34 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-05-20 23:29:34 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net
+2026-05-20 23:30:10 [INFO ] [SERVER] Web3 Giảng Viên API running on port 5000
+2026-05-20 23:30:11 [INFO ] [DB] MongoDB Connected: cluster0-shard-00-00.2sa07.mongodb.net

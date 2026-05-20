@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Menu, Button, Avatar, theme, Dropdown } from 'antd';
-import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award, ClipboardList, BarChart2 } from 'lucide-react';
+import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award, ClipboardList, BarChart2, School, Users, GraduationCap } from 'lucide-react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import authService from '../../services/authService';
 
@@ -41,6 +41,9 @@ const MainLayout = () => {
   const lecturerMenuItems = [
     { key: '/lecturer', icon: <Monitor size={18} />, label: 'Dashboard Giảng Viên' },
     { key: '/lecturer/topics', icon: <Award size={18} />, label: 'Quản Lý Đề Tài' },
+    { key: '/lecturer/courses', icon: <BookOpen size={18} />, label: 'Quản Lý Môn Học' },
+    { key: '/lecturer/classes', icon: <School size={18} />, label: 'Quản Lý Lớp Học' },
+    { key: '/lecturer/students', icon: <Users size={18} />, label: 'Quản Lý Sinh Viên' },
     { key: '/lecturer/rubrics', icon: <ClipboardList size={18} />, label: 'Quản Lý Rubrics' },
     { key: '/lecturer/review', icon: <FileText size={18} />, label: 'Chấm Điểm (AI)' },
     { key: '/lecturer/comparison', icon: <BarChart2 size={18} />, label: 'So Sánh AI vs GV' }
