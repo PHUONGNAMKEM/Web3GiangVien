@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Typography, Row, Col, Statistic, Alert, Spin, Tag, Tooltip, Form, Input, InputNumber, Select, Button, Modal, message, Divider } from 'antd';
+import { Card, Typography, Row, Col, Statistic, Alert, Spin, Tag, Tooltip, Form, Input, InputNumber, Select, Button, Modal, message, Divider, Space } from 'antd';
 import { Target, Award, BookOpen, ShieldCheck, BrainCircuit, ExternalLink, Edit2, User, Save } from 'lucide-react';
 import authService from '../../services/authService';
 import aiApiService from '../../services/aiService';
@@ -14,6 +14,8 @@ const StudentDashboard = () => {
   const [editingProfile, setEditingProfile] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [invitations, setInvitations] = useState([]);
+  const [progressAverage, setProgressAverage] = useState(null);
+  const [progressCount, setProgressCount] = useState(0);
   const [form] = Form.useForm();
   const user = authService.getCurrentUser();
 
@@ -54,6 +56,19 @@ const StudentDashboard = () => {
             }
           } catch (e) {
             console.warn('Không lấy được điểm:', e);
+          }
+
+          try {
+            const progressRes = await aiApiService.getProgressBySinhVien(user.id, regData.registration.DeTai?._id);
+            const logs = progressRes?.data || [];
+            const graded = logs.filter(item => item.TrangThaiDanhGia === 'Dat' && item.DiemTienDo != null);
+            const avg = graded.length > 0
+              ? Math.round((graded.reduce((sum, item) => sum + (item.DiemTienDo || 0), 0) / graded.length) * 100) / 100
+              : null;
+            setProgressAverage(avg);
+            setProgressCount(graded.length);
+          } catch (e) {
+            console.warn('Không lấy được điểm tiến độ tuần:', e);
           }
         }
       }
@@ -250,6 +265,13 @@ const StudentDashboard = () => {
                   </div>
                 )}
 
+                {progressCount > 0 && progressAverage != null && (
+                  <div style={{ marginTop: 8 }}>
+                    <Text type="secondary">Điểm quá trình TB: </Text>
+                    <Text strong style={{ color: '#13c2c2' }}>{progressAverage}/10</Text>
+                  </div>
+                )}
+
                 {grade.NhanXet && (
                   <div style={{ marginTop: 8, padding: 8, background: '#f6ffed', borderRadius: 6, borderLeft: '3px solid #52c41a' }}>
                     <Text type="secondary" style={{ fontSize: 12 }}>Nhận xét GV: </Text>
@@ -281,6 +303,12 @@ const StudentDashboard = () => {
               <div>
                 <Statistic title="Điểm Số On-chain" value="Chưa Tích Lũy" valueStyle={{ fontSize: 16, color: '#8c8c8c' }} />
                 <Paragraph style={{ marginTop: 8 }}><Text type="warning">Đang thực hiện đồ án</Text></Paragraph>
+                {progressCount > 0 && progressAverage != null && (
+                  <Paragraph style={{ marginTop: 8 }}>
+                    <Text type="secondary">Điểm quá trình TB: </Text>
+                    <Text strong style={{ color: '#13c2c2' }}>{progressAverage}/10</Text>
+                  </Paragraph>
+                )}
               </div>
             ) : (
               <Statistic title="Điểm Số On-chain" value="—" valueStyle={{ color: '#d9d9d9' }} />

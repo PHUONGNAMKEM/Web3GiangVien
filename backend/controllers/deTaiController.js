@@ -248,7 +248,7 @@ exports.cancelRegistration = async (req, res) => {
             return res.status(404).json({ error: 'Không tìm thấy lượt đăng ký' });
         }
 
-        // Chỉ cho hủy khi chưa submit bài test
+        // Cho phép hủy khi đang chờ duyệt, chờ test, hoặc đang làm bài test (chưa submit)
         if (!['ChoDuyet', 'ChoTest', 'DangLamTest'].includes(dangKy.TrangThai)) {
             return res.status(400).json({ error: 'Không thể hủy đăng ký khi đã submit bài test hoặc đề tài đã được duyệt.' });
         }

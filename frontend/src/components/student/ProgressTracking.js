@@ -12,6 +12,8 @@ const ProgressTracking = () => {
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [finalGrade, setFinalGrade] = useState(null);
+  const [latestProgress, setLatestProgress] = useState(null);
+  const [progressLoading, setProgressLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,6 +40,22 @@ const ProgressTracking = () => {
           }
         } catch (e) {
           console.warn('Lỗi lấy điểm sinh viên:', e);
+        }
+
+        // Lấy tiến độ tuần gần nhất
+        if (activeReg?.TrangThai === 'DaDuyet') {
+          try {
+            setProgressLoading(true);
+            const progressRes = await aiApiService.getProgressBySinhVien(user.id, activeReg.DeTai?._id);
+            const logs = progressRes?.data || [];
+            const latest = [...logs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+            setLatestProgress(latest || null);
+          } catch (err) {
+            console.warn('Lỗi lấy tiến độ gần nhất:', err);
+            setLatestProgress(null);
+          } finally {
+            setProgressLoading(false);
+          }
         }
 
         // Nếu đề tài đã duyệt, KHÔNG gọi AI ngay mà phải chờ có bài nộp
@@ -164,7 +182,7 @@ const ProgressTracking = () => {
       </Card>
 
       <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
-        <Col span={16}>
+        <Col span={12}>
           <Card
             title={<span><BrainCircuit size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} /> Đánh giá từ AI (PhoBERT - Local FastAPI Port 8001)</span>}
             bordered={false}
@@ -211,7 +229,34 @@ const ProgressTracking = () => {
           </Card>
         </Col>
 
-        <Col span={8}>
+        <Col span={6}>
+          <Card title="Tiến độ tuần gần nhất" bordered={false} style={{ height: '100%' }}>
+            {progressLoading ? (
+              <Skeleton active paragraph={{ rows: 3 }} />
+            ) : latestProgress ? (
+              <div>
+                <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                  <Tag color="geekblue">Tuần {latestProgress.TuanSo || '—'}</Tag>
+                  <Text strong>{latestProgress.PhanTramHoanThanh || 0}% hoàn thành</Text>
+                  <Tag color={latestProgress.TrangThaiDanhGia === 'Dat' ? 'success' : latestProgress.TrangThaiDanhGia === 'CanBoSung' ? 'warning' : 'default'}>
+                    {latestProgress.TrangThaiDanhGia || 'Chờ đánh giá'}
+                  </Tag>
+                  {latestProgress.DiemTienDo != null && (
+                    <Text type="secondary">Điểm tuần: {latestProgress.DiemTienDo}</Text>
+                  )}
+                </Space>
+              </div>
+            ) : (
+              <Alert
+                message={regStatus === 'DaDuyet' ? 'Chưa có nhật ký tuần' : 'Chờ duyệt đề tài'}
+                type="info"
+                showIcon
+              />
+            )}
+          </Card>
+        </Col>
+
+        <Col span={6}>
           <Card title="Khối Lập Phương Điểm" bordered={false} style={{ height: '100%', textAlign: 'center' }}>
             <AntProgress
               type="dashboard"
