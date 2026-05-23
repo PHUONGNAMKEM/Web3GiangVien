@@ -91,6 +91,13 @@ const baiTestController = require('./controllers/baiTestController');
 const blockchainController = require('./controllers/blockchainController');
 const nhomController = require('./controllers/nhomController');
 
+// Middleware xác thực & phân quyền
+const { authenticateToken } = authController;
+const { requireRole } = require('./middleware/authz');
+const requireLecturer = [authenticateToken, requireRole('LECTURER_ROLE')];
+const requireStudent = [authenticateToken, requireRole('STUDENT_ROLE')];
+const requireAuth = [authenticateToken];
+
 
 // 1. Root verify
 app.get('/', (req, res) => {
@@ -121,34 +128,34 @@ app.delete('/api/giangvien/:id', giangVienController.delete);
 // 5. Đề Tài
 app.get('/api/detai', deTaiController.getAll);
 app.get('/api/detai/:id', deTaiController.getById);
-app.post('/api/detai', deTaiController.create);
-app.put('/api/detai/:id', deTaiController.update);
-app.delete('/api/detai/:id', deTaiController.delete);
-app.post('/api/detai/:id/register', deTaiController.registerTopic);
+app.post('/api/detai', ...requireLecturer, deTaiController.create);
+app.put('/api/detai/:id', ...requireLecturer, deTaiController.update);
+app.delete('/api/detai/:id', ...requireLecturer, deTaiController.delete);
+app.post('/api/detai/:id/register', ...requireStudent, deTaiController.registerTopic);
 
 // 5b. Đăng Ký Đề Tài (quản lý)
-app.get('/api/dangky/sinhvien/:svId', deTaiController.getMyRegistration);
-app.get('/api/dangky/giangvien/:gvId', deTaiController.getRegistrationsByLecturer);
-app.put('/api/dangky/:id/approve', deTaiController.approveRegistration);
-app.delete('/api/dangky/:id', deTaiController.cancelRegistration);
+app.get('/api/dangky/sinhvien/:svId', ...requireAuth, deTaiController.getMyRegistration);
+app.get('/api/dangky/giangvien/:gvId', ...requireLecturer, deTaiController.getRegistrationsByLecturer);
+app.put('/api/dangky/:id/approve', ...requireLecturer, deTaiController.approveRegistration);
+app.delete('/api/dangky/:id', ...requireStudent, deTaiController.cancelRegistration);
 
 // 5c. Nhóm sinh viên
-app.post('/api/detai/:id/invite', authController.authenticateToken, deTaiController.inviteMember);
-app.get('/api/detai/invitations/:svId', deTaiController.getMyInvitations);
-app.post('/api/detai/invitation/:id/respond', authController.authenticateToken, deTaiController.respondToInvitation);
+app.post('/api/detai/:id/invite', ...requireStudent, deTaiController.inviteMember);
+app.get('/api/detai/invitations/:svId', ...requireAuth, deTaiController.getMyInvitations);
+app.post('/api/detai/invitation/:id/respond', ...requireStudent, deTaiController.respondToInvitation);
 
 // 6. Báo Cáo
-app.post('/api/baocao/upload', authController.authenticateToken, upload.single('file'), baoCaoController.uploadBaoCao);
+app.post('/api/baocao/upload', ...requireStudent, upload.single('file'), baoCaoController.uploadBaoCao);
 app.get('/api/baocao/detai/:deTaiId', baoCaoController.getBaoCaoByDeTai);
 app.get('/api/baocao/sinhvien/:svId', baoCaoController.getMyBaoCao);
-app.delete('/api/baocao/:id', authController.authenticateToken, baoCaoController.deleteBaoCao);
-app.get('/api/baocao/giangvien/:gvId', baoCaoController.getBaoCaoByLecturer);
+app.delete('/api/baocao/:id', ...requireStudent, baoCaoController.deleteBaoCao);
+app.get('/api/baocao/giangvien/:gvId', ...requireLecturer, baoCaoController.getBaoCaoByLecturer);
 
 // 7. Điểm Số
-app.post('/api/diemso', diemSoController.chamDiem);
-app.put('/api/diemso/:id/retry-blockchain', diemSoController.retryBlockchain);
-app.get('/api/diemso/sinhvien/:svId', diemSoController.getDiemBySinhVien);
-app.get('/api/diemso/comparison/:gvId', diemSoController.getComparison);
+app.post('/api/diemso', ...requireLecturer, diemSoController.chamDiem);
+app.put('/api/diemso/:id/retry-blockchain', ...requireLecturer, diemSoController.retryBlockchain);
+app.get('/api/diemso/sinhvien/:svId', ...requireAuth, diemSoController.getDiemBySinhVien);
+app.get('/api/diemso/comparison/:gvId', ...requireLecturer, diemSoController.getComparison);
 
 // 7.1. Blockchain read-only debug routes (khong hien tren UI)
 app.get('/api/blockchain/contracts', blockchainController.getContracts);
@@ -158,50 +165,52 @@ app.get('/api/blockchain/thesis/topic/:topicId', blockchainController.getThesisT
 app.get('/api/blockchain/thesis/submissions', blockchainController.getThesisSubmissions);
 
 // 8. Tiến Độ
-app.post('/api/tiendo', tienDoController.createProgressEntry);
-app.get('/api/tiendo/sinhvien/:svId', tienDoController.getProgressBySinhVien);
-app.get('/api/tiendo/detail/:id', tienDoController.getProgressDetail);
-app.put('/api/tiendo/:id', tienDoController.updateProgressEntry);
-app.put('/api/tiendo/:id/danhgia', tienDoController.evaluateProgress);
-app.get('/api/tiendo/:svId', tienDoController.getProgressBySV);
-app.get('/api/tiendo/detai/:deTaiId', tienDoController.getProgressByTopic);
-app.put('/api/tiendo/:id/nhanxet', tienDoController.commentProgress);
+app.post('/api/tiendo', ...requireStudent, tienDoController.createProgressEntry);
+app.get('/api/tiendo/sinhvien/:svId', ...requireAuth, tienDoController.getProgressBySinhVien);
+app.get('/api/tiendo/detail/:id', ...requireAuth, tienDoController.getProgressDetail);
+app.put('/api/tiendo/:id', ...requireStudent, tienDoController.updateProgressEntry);
+app.put('/api/tiendo/:id/danhgia', ...requireLecturer, tienDoController.evaluateProgress);
+app.get('/api/tiendo/:id/ai-suggest', ...requireLecturer, tienDoController.aiSuggestProgress);
+app.get('/api/tiendo/:svId', ...requireAuth, tienDoController.getProgressBySV);
+app.get('/api/tiendo/detai/:deTaiId', ...requireAuth, tienDoController.getProgressByTopic);
+app.put('/api/tiendo/:id/nhanxet', ...requireLecturer, tienDoController.commentProgress);
 
 // 9. AI / ML Services
-app.post('/api/ai/analyze-report', aiController.analyzeReport);
-app.post('/api/ai/analyze-rubrics', aiController.analyzeReportWithRubrics);
-app.post('/api/ai/match-student', aiController.matchStudent);
+app.post('/api/ai/analyze-report', ...requireLecturer, aiController.analyzeReport);
+app.post('/api/ai/analyze-rubrics', ...requireLecturer, aiController.analyzeReportWithRubrics);
+app.post('/api/ai/match-student', ...requireStudent, aiController.matchStudent);
 
 // 10. Rubrics Template
-app.get('/api/rubrics/giangvien/:gvId', rubricsController.getTemplatesByGV);
-app.post('/api/rubrics', rubricsController.createTemplate);
-app.put('/api/rubrics/:id', rubricsController.updateTemplate);
-app.delete('/api/rubrics/:id', rubricsController.deleteTemplate);
-app.put('/api/rubrics/:id/default', rubricsController.setDefaultTemplate);
-app.post('/api/rubrics/:id/apply/:deTaiId', rubricsController.applyTemplate);
+app.get('/api/rubrics/giangvien/:gvId', ...requireLecturer, rubricsController.getTemplatesByGV);
+app.post('/api/rubrics', ...requireLecturer, rubricsController.createTemplate);
+app.put('/api/rubrics/:id', ...requireLecturer, rubricsController.updateTemplate);
+app.delete('/api/rubrics/:id', ...requireLecturer, rubricsController.deleteTemplate);
+app.put('/api/rubrics/:id/default', ...requireLecturer, rubricsController.setDefaultTemplate);
+app.post('/api/rubrics/:id/apply/:deTaiId', ...requireLecturer, rubricsController.applyTemplate);
 
 // 11. Bài Test Cạnh Tranh Đầu Vào
-app.post('/api/baitest', baiTestController.createTest);
-app.get('/api/baitest/detai/:deTaiId', baiTestController.getTestByTopic);
-app.get('/api/baitest/detai/:deTaiId/student', baiTestController.getTestForStudent);
-app.post('/api/baitest/:id/submit', baiTestController.submitTest);
-app.get('/api/baitest/:id/results', baiTestController.getTestResults);
-app.post('/api/baitest/:id/select-winner', baiTestController.selectWinner);
-app.delete('/api/baitest/:id', baiTestController.deleteTest);
-app.get('/api/baitest/check/:deTaiId/:sinhVienId', baiTestController.checkSubmitted);
+app.post('/api/baitest', ...requireLecturer, baiTestController.createTest);
+app.get('/api/baitest/detai/:deTaiId', ...requireLecturer, baiTestController.getTestByTopic);
+app.get('/api/baitest/detai/:deTaiId/student', ...requireStudent, baiTestController.getTestForStudent);
+app.post('/api/baitest/:id/start', ...requireStudent, baiTestController.startTest);
+app.post('/api/baitest/:id/submit', ...requireStudent, baiTestController.submitTest);
+app.get('/api/baitest/:id/results', ...requireLecturer, baiTestController.getTestResults);
+app.post('/api/baitest/:id/select-winner', ...requireLecturer, baiTestController.selectWinner);
+app.delete('/api/baitest/:id', ...requireLecturer, baiTestController.deleteTest);
+app.get('/api/baitest/check/:deTaiId/:sinhVienId', ...requireAuth, baiTestController.checkSubmitted);
 
 // 12. Quản Lý Nhóm
-app.post('/api/nhom', nhomController.createNhom);
-app.get('/api/nhom/sinhvien/:svId', nhomController.getNhomBySinhVien);
-app.get('/api/nhom/invites/:svId', nhomController.getPendingInvites);
-app.get('/api/nhom/:id', nhomController.getNhomById);
-app.post('/api/nhom/:id/invite', nhomController.inviteMember);
-app.post('/api/nhom/:id/respond', nhomController.respondToInvite);
-app.delete('/api/nhom/:id/kick/:svId', nhomController.kickMember);
-app.post('/api/nhom/:id/leave', nhomController.leaveNhom);
-app.post('/api/nhom/:id/transfer-leader', nhomController.transferLeader);
-app.post('/api/nhom/:id/chot', nhomController.chotNhom);
-app.delete('/api/nhom/:id', nhomController.deleteNhom);
+app.post('/api/nhom', ...requireStudent, nhomController.createNhom);
+app.get('/api/nhom/sinhvien/:svId', ...requireAuth, nhomController.getNhomBySinhVien);
+app.get('/api/nhom/invites/:svId', ...requireAuth, nhomController.getPendingInvites);
+app.get('/api/nhom/:id', ...requireAuth, nhomController.getNhomById);
+app.post('/api/nhom/:id/invite', ...requireStudent, nhomController.inviteMember);
+app.post('/api/nhom/:id/respond', ...requireStudent, nhomController.respondToInvite);
+app.delete('/api/nhom/:id/kick/:svId', ...requireStudent, nhomController.kickMember);
+app.post('/api/nhom/:id/leave', ...requireStudent, nhomController.leaveNhom);
+app.post('/api/nhom/:id/transfer-leader', ...requireStudent, nhomController.transferLeader);
+app.post('/api/nhom/:id/chot', ...requireStudent, nhomController.chotNhom);
+app.delete('/api/nhom/:id', ...requireStudent, nhomController.deleteNhom);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

@@ -26,3 +26,11 @@ dataset/*.json
 dataset/*.joblib
 dataset/models/*.joblib
 dataset/models/*.json
+
+# Log files (auto-generated, không cần track)
+backend/logs/
+ml-service/logs/
+
+# Hardhat build artifacts & cache (auto-generated khi compile contract)
+backend/artifacts/
+backend/cache/

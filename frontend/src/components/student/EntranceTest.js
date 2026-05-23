@@ -111,7 +111,20 @@ const EntranceTest = () => {
     }
   };
 
-  const handleStart = () => {
+  const isLeader = !myNhom || String(myNhom.TruongNhom?._id || myNhom.TruongNhom) === String(user.id);
+
+  const handleStart = async () => {
+    // #13: chỉ trưởng nhóm được làm bài test đại diện nhóm
+    if (!isLeader) {
+      message.warning('Chỉ trưởng nhóm được làm bài test đại diện cho nhóm.');
+      return;
+    }
+    try {
+      await aiApiService.startBaiTest(baiTest._id, myNhom?._id || null);
+    } catch (e) {
+      message.error(e.response?.data?.error || 'Không thể bắt đầu làm bài test.');
+      return;
+    }
     setStarted(true);
     setStartTime(new Date());
   };
@@ -254,9 +267,16 @@ const EntranceTest = () => {
 
           <Alert message="Lưu ý: Bạn chỉ được nộp 1 lần. Ai submit sớm nhất + đạt ngưỡng = Thắng!" type="warning" showIcon style={{ marginBottom: 16, textAlign: 'left' }} />
 
-          <Button type="primary" size="large" onClick={handleStart}
-            style={{ width: '100%', height: 50, fontSize: 16, background: '#722ed1', borderColor: '#722ed1' }}>
-            Bắt Đầu Làm Bài
+          {!isLeader && (
+            <Alert
+              message="Chỉ trưởng nhóm được làm bài test đại diện cho cả nhóm."
+              type="info" showIcon style={{ marginBottom: 16, textAlign: 'left' }}
+            />
+          )}
+
+          <Button type="primary" size="large" onClick={handleStart} disabled={!isLeader}
+            style={{ width: '100%', height: 50, fontSize: 16, background: isLeader ? '#722ed1' : undefined, borderColor: isLeader ? '#722ed1' : undefined }}>
+            {isLeader ? 'Bắt Đầu Làm Bài' : 'Chờ trưởng nhóm làm bài'}
           </Button>
         </Card>
       </div>

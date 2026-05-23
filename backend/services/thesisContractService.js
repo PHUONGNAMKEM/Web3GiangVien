@@ -217,4 +217,32 @@ exports.submitTestResultOnChain = async (topicId, studentDID, score) => {
     }
 };
 
+// #18: Ghi đánh giá tiến độ tuần lên blockchain.
+// YÊU CẦU: contract V2 phải có hàm submitProgress(topicHash, studentHash, week, score) sau khi redeploy.
+exports.submitProgressOnChain = async (topicId, studentDID, week, score) => {
+    try {
+        logger.info(`[BLOCKCHAIN] submitProgress | topic=${topicId} | student=${studentDID} | week=${week} | score=${score}`);
+        const { contract, version } = await getContractInstance();
+        if (version !== 'v2') {
+            throw new Error('Contract V1 khong ho tro submitProgress');
+        }
+        if (typeof contract.submitProgress !== 'function') {
+            throw new Error('Contract chua co ham submitProgress (can recompile + redeploy)');
+        }
+
+        const topicHash = toBytes32(topicId);
+        const studentHash = toBytes32(studentDID);
+        const scoreInt = Math.round(parseFloat(score) * 10);
+
+        const tx = await contract.submitProgress(topicHash, studentHash, Math.round(week) || 0, scoreInt);
+        const receipt = await tx.wait();
+        const txHash = receipt.hash || receipt.transactionHash;
+        logger.info(`[BLOCKCHAIN] submitProgress success | txHash=${txHash}`);
+        return txHash;
+    } catch (error) {
+        logger.error(`[BLOCKCHAIN] submitProgress failed: ${error.message}`);
+        throw error;
+    }
+};
+
 exports.toBytes32 = toBytes32;

@@ -86,6 +86,61 @@ exports.getTestForStudent = async (req, res) => {
     }
 };
 
+// SV (trưởng nhóm) bắt đầu làm bài → ChoTest chuyển sang DangLamTest
+exports.startTest = async (req, res) => {
+    try {
+        const sinhVienId = req.user?.id || req.body.sinhVienId;
+        const { nhomId } = req.body;
+
+        const baiTest = await BaiTest.findById(req.params.id);
+        if (!baiTest) return res.status(404).json({ error: 'Không tìm thấy bài test.' });
+        if (baiTest.TrangThai === 'DaDong') return res.status(400).json({ error: 'Bài test đã đóng.' });
+
+        // Tìm đăng ký hợp lệ của nhóm/SV cho đề tài
+        let dangKy = null;
+        if (nhomId) {
+            dangKy = await DangKyDeTai.findOne({
+                DeTai: baiTest.DeTai, Nhom: nhomId,
+                TrangThai: { $in: ['ChoTest', 'DangLamTest'] }
+            });
+        }
+        if (!dangKy) {
+            dangKy = await DangKyDeTai.findOne({
+                DeTai: baiTest.DeTai,
+                TrangThai: { $in: ['ChoTest', 'DangLamTest'] },
+                $or: [
+                    { SinhVien: sinhVienId },
+                    { TruongNhom: sinhVienId },
+                    { 'ThanhVien.SinhVien': sinhVienId }
+                ]
+            });
+        }
+        if (!dangKy) {
+            return res.status(404).json({ error: 'Không tìm thấy đăng ký hợp lệ để làm bài test.' });
+        }
+
+        // #13: chỉ trưởng nhóm được làm/nộp bài test đại diện nhóm
+        if (String(dangKy.TruongNhom) !== String(sinhVienId)) {
+            return res.status(403).json({ error: 'Chỉ trưởng nhóm được làm bài test đại diện cho nhóm.', code: 'KHONG_PHAI_TRUONG_NHOM' });
+        }
+
+        if (dangKy.TrangThai === 'ChoTest') {
+            await DangKyDeTai.findByIdAndUpdate(dangKy._id, { TrangThai: 'DangLamTest' });
+        }
+
+        logger.info(`[TEST] DangKy ${dangKy._id} started test for topic ${baiTest.DeTai}`);
+        res.json({
+            message: 'Bắt đầu làm bài test.',
+            thoiGianBatDau: new Date(),
+            thoiGianLam: baiTest.ThoiGianLam,
+            dangKyId: dangKy._id
+        });
+    } catch (err) {
+        logger.error(`[TEST] Start test failed: ${err.message}`);
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // === HELPER: Xác định nhóm thắng (Hybrid) ===
 async function tryClaimWinner(dangKyId, deTaiId, thoiGianSubmit, io) {
     // 1. Đã có nhóm thắng chưa?
@@ -174,7 +229,8 @@ async function resolveWaitingGroups(deTaiId, io) {
 // SV nộp bài test → AI chấm tự động → Hybrid competition logic
 exports.submitTest = async (req, res) => {
     try {
-        const { sinhVienId, nhomId, traLoi, thoiGianBatDau } = req.body;
+        const { nhomId, traLoi, thoiGianBatDau } = req.body;
+        const sinhVienId = req.user?.id || req.body.sinhVienId;
         const baiTest = await BaiTest.findById(req.params.id);
         if (!baiTest) return res.status(404).json({ error: 'Không tìm thấy bài test.' });
         if (baiTest.TrangThai === 'DaDong') return res.status(400).json({ error: 'Bài test đã đóng.' });
@@ -205,6 +261,11 @@ exports.submitTest = async (req, res) => {
                     { 'ThanhVien.SinhVien': sinhVienId }
                 ]
             });
+        }
+
+        // #13: chỉ trưởng nhóm được nộp bài test đại diện cho cả nhóm
+        if (dangKy && String(dangKy.TruongNhom) !== String(sinhVienId)) {
+            return res.status(403).json({ error: 'Chỉ trưởng nhóm được nộp bài test đại diện cho nhóm.', code: 'KHONG_PHAI_TRUONG_NHOM' });
         }
 
         // Cập nhật ThoiGianSubmit + TrangThai = DaSubmit

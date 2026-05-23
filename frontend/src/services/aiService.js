@@ -194,6 +194,11 @@ const aiApiService = {
         const response = await axios.put(`${API_URL}/tiendo/${tienDoId}/nhanxet`, { nhanXet }, { headers: getAuthHeaders() });
         return response.data;
     },
+    // GV: AI (PhoBERT) gợi ý điểm tiến độ tuần — chỉ tham khảo
+    aiSuggestProgress: async (tienDoId) => {
+        const response = await axios.get(`${API_URL}/tiendo/${tienDoId}/ai-suggest`, { headers: getAuthHeaders() });
+        return response.data;
+    },
 
     // === RUBRICS TEMPLATE ===
 
@@ -255,6 +260,12 @@ const aiApiService = {
 
     getBaiTestForStudent: async (deTaiId) => {
         const response = await axios.get(`${API_URL}/baitest/detai/${deTaiId}/student`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // SV (trưởng nhóm) bắt đầu làm bài → chuyển ChoTest sang DangLamTest
+    startBaiTest: async (testId, nhomId) => {
+        const response = await axios.post(`${API_URL}/baitest/${testId}/start`, { nhomId }, { headers: getAuthHeaders() });
         return response.data;
     },
 

@@ -1,6 +1,8 @@
 const TienDo = require('../models/TienDo');
 const DangKyDeTai = require('../models/DangKyDeTai');
 const DeTai = require('../models/DeTai');
+const aiService = require('../services/aiService');
+const logger = require('../config/logger');
 
 const isNumber = (value) => typeof value === 'number' && !Number.isNaN(value);
 
@@ -174,7 +176,6 @@ exports.createProgressEntry = async (req, res) => {
     try {
         const {
             deTaiId,
-            sinhVienId,
             noiDung,
             phanTramHoanThanh,
             loaiCapNhat,
@@ -189,6 +190,7 @@ exports.createProgressEntry = async (req, res) => {
             minhChung,
             confirmGiam
         } = req.body;
+        const sinhVienId = req.user?.id || req.body.sinhVienId;
 
         const registrationCheck = await assertSinhVienBelongsToDangKy(deTaiId, sinhVienId);
         if (!registrationCheck.ok) {
@@ -478,7 +480,8 @@ exports.updateProgressEntry = async (req, res) => {
 exports.evaluateProgress = async (req, res) => {
     try {
         const { id } = req.params;
-        const { giangVienId, trangThaiDanhGia, nhanXetGV, rubricsTuan } = req.body;
+        const { trangThaiDanhGia, nhanXetGV, rubricsTuan } = req.body;
+        const giangVienId = req.user?.id || req.body.giangVienId;
 
         const progress = await TienDo.findById(id);
         if (!progress) {
@@ -526,6 +529,25 @@ exports.evaluateProgress = async (req, res) => {
         progress.GiangVienDanhGia = giangVienId;
         progress.NgayDanhGia = new Date();
 
+        // #18: ghi vết đánh giá tiến độ lên blockchain (chỉ khi bật flag + đánh giá Đạt) — non-blocking
+        if (process.env.PROGRESS_ONCHAIN_ENABLED === 'true' && progress.TrangThaiDanhGia === 'Dat') {
+            progress.TrangThaiBlockchain = 'Pending';
+            try {
+                const contractService = require('../services/thesisContractService');
+                const txHash = await contractService.submitProgressOnChain(
+                    String(progress.DeTai), String(progress.SinhVien),
+                    progress.TuanSo || 0, progress.DiemTienDo || 0
+                );
+                progress.TxHash = txHash;
+                progress.TrangThaiBlockchain = 'DaGhi';
+                progress.LoiBlockchain = undefined;
+            } catch (bcErr) {
+                progress.TrangThaiBlockchain = 'LoiGhi';
+                progress.LoiBlockchain = bcErr.message;
+                logger.warn(`[TIENDO] Blockchain progress write failed (non-blocking): ${bcErr.message}`);
+            }
+        }
+
         await progress.save();
         res.json({ message: 'Đánh giá tiến độ thành công', data: progress });
     } catch (err) {
@@ -558,5 +580,62 @@ exports.commentProgress = async (req, res) => {
         res.json({ message: 'Thêm nhận xét thành công', data: updated });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+};
+
+// #16. AI gợi ý điểm tiến độ tuần (PhoBERT) — GV tham khảo, KHÔNG tự lưu
+exports.aiSuggestProgress = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const giangVienId = req.user?.id || req.body.giangVienId || req.query.giangVienId;
+
+        const progress = await TienDo.findById(id);
+        if (!progress) {
+            return res.status(404).json({ error: 'Không tìm thấy nhật ký tiến độ' });
+        }
+
+        const ownerCheck = await assertGiangVienOwnsDeTai(progress.DeTai, giangVienId);
+        if (!ownerCheck.ok) {
+            const status = ownerCheck.code === 'DETAI_KHONG_TON_TAI' ? 404 : 403;
+            return res.status(status).json({ error: ownerCheck.error, code: ownerCheck.code });
+        }
+
+        // Ghép nội dung tuần để AI phân tích
+        const text = [
+            progress.MucTieuTuan ? `Mục tiêu tuần: ${progress.MucTieuTuan}` : '',
+            progress.NoiDungDaLam ? `Nội dung đã làm: ${progress.NoiDungDaLam}` : '',
+            progress.KhoKhan ? `Khó khăn: ${progress.KhoKhan}` : '',
+            progress.KeHoachTuanSau ? `Kế hoạch tuần sau: ${progress.KeHoachTuanSau}` : ''
+        ].filter(Boolean).join('\n\n');
+
+        if (!text.trim()) {
+            return res.status(400).json({ error: 'Tiến độ chưa có nội dung để AI phân tích', code: 'THIEU_NOI_DUNG' });
+        }
+
+        // Dùng RubricsTuan của entry, fallback rubrics mặc định
+        const baseRubrics = (Array.isArray(progress.RubricsTuan) && progress.RubricsTuan.length > 0)
+            ? progress.RubricsTuan
+            : defaultRubricsTuan;
+
+        const rubrics = baseRubrics.map(tc => ({
+            TenTieuChi: tc.TenTieuChi || tc.MaTieuChi || 'Tiêu chí',
+            MoTa: tc.MoTa || progress.MucTieuTuan || '',
+            TrongSo: isNumber(tc.TrongSo) ? tc.TrongSo : 0,
+            DiemToiDa: isNumber(tc.DiemToiDa) ? tc.DiemToiDa : 10,
+            GoiYChoAI: Array.isArray(tc.GoiYChoAI) ? tc.GoiYChoAI : []
+        }));
+
+        const aiResult = await aiService.analyzeWithRubrics(text, rubrics);
+
+        res.json({
+            message: 'AI đã gợi ý điểm tiến độ (chỉ tham khảo)',
+            aiScore: aiResult.score,
+            aiRubrics: aiResult.rubrics_result || [],
+            aiFeedback: aiResult.feedback || '',
+            model: aiResult.model || 'vinai/phobert-base'
+        });
+    } catch (err) {
+        logger.error(`[TIENDO] AI suggest failed: ${err.message}`);
+        res.status(500).json({ error: err.message || 'Lỗi khi gọi AI gợi ý điểm tiến độ' });
     }
 };

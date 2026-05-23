@@ -151,6 +151,8 @@ const TopicManagement = () => {
         ChiTietBoSung: chiTietBoSung.filter(item => item.TieuDe && item.NoiDung),
         SoLuongSinhVien: values.soLuongSV || 1,
         Deadline: deadlineDate,
+        HanDangKy: values.hanDangKy ? values.hanDangKy.toDate() : undefined,
+        HanNopBaoCao: values.hanNopBaoCao ? values.hanNopBaoCao.toDate() : undefined,
         GiangVienHuongDan: user.id,
         TrangThai: editingTopic ? editingTopic.TrangThai : 'MoDangKy',
         // Rubrics
@@ -188,6 +190,8 @@ const TopicManagement = () => {
       requires: record.YeuCau || [],
       soLuongSV: record.SoLuongSinhVien,
       deadline: record.Deadline ? dayjs(record.Deadline) : null,
+      hanDangKy: record.HanDangKy ? dayjs(record.HanDangKy) : null,
+      hanNopBaoCao: record.HanNopBaoCao ? dayjs(record.HanNopBaoCao) : null,
     });
     setChiTietBoSung(record.ChiTietBoSung || []);
     setSuDungRubrics(record.SuDungRubrics || false);
@@ -504,8 +508,20 @@ const TopicManagement = () => {
               <InputNumber min={1} style={{ width: '100%' }} size="large" placeholder="1" />
             </Form.Item>
 
-            <Form.Item name="deadline" label="Deadline" style={{ flex: 1 }}>
+            <Form.Item name="deadline" label="Deadline (chung)" style={{ flex: 1 }}>
               <DatePicker style={{ width: '100%' }} size="large" placeholder="Chọn deadline" />
+            </Form.Item>
+          </div>
+
+          <div style={{ display: 'flex', gap: 16 }}>
+            <Form.Item name="hanDangKy" label="Hạn đăng ký" style={{ flex: 1 }}
+              tooltip="Sau mốc này SV không thể đăng ký. Bỏ trống = dùng Deadline chung.">
+              <DatePicker showTime style={{ width: '100%' }} size="large" placeholder="Hạn chót đăng ký" />
+            </Form.Item>
+
+            <Form.Item name="hanNopBaoCao" label="Hạn nộp báo cáo" style={{ flex: 1 }}
+              tooltip="Sau mốc này SV không thể nộp báo cáo. Bỏ trống = dùng Deadline chung.">
+              <DatePicker showTime style={{ width: '100%' }} size="large" placeholder="Hạn chót nộp báo cáo" />
             </Form.Item>
           </div>
 

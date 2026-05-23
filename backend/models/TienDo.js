@@ -40,7 +40,15 @@ const tienDoSchema = new mongoose.Schema({
     GiangVienDanhGia: { type: mongoose.Schema.Types.ObjectId, ref: 'GiangVien' },
     NgayDanhGia: { type: Date },
     LanNopLai: { type: Number, default: 0 },
-    CanhBaoTienDo: [{ type: String }]
+    CanhBaoTienDo: [{ type: String }],
+    // #18: lưu vết đánh giá tiến độ trên blockchain (bật khi PROGRESS_ONCHAIN_ENABLED=true + contract đã hỗ trợ)
+    TxHash: { type: String },
+    TrangThaiBlockchain: {
+        type: String,
+        enum: ['ChuaGhi', 'Pending', 'DaGhi', 'LoiGhi'],
+        default: 'ChuaGhi'
+    },
+    LoiBlockchain: { type: String }
 }, { timestamps: true });
 
 tienDoSchema.index(

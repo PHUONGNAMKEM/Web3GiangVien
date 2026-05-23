@@ -40,6 +40,12 @@ exports.uploadBaoCao = async (req, res) => {
             return res.status(404).json({ error: 'Không tìm thấy đề tài.' });
         }
 
+        // #7: chặn nộp báo cáo sau hạn nộp
+        const hanNopBaoCao = deTai.HanNopBaoCao || deTai.Deadline;
+        if (hanNopBaoCao && new Date() > new Date(hanNopBaoCao)) {
+            return res.status(400).json({ error: 'Đã quá hạn nộp báo cáo cho đề tài này.', code: 'QUA_HAN_NOP_BAO_CAO' });
+        }
+
         const dangKy = await DangKyDeTai.findOne({
             DeTai: deTaiId,
             TrangThai: 'DaDuyet',

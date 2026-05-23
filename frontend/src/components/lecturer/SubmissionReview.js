@@ -64,6 +64,8 @@ const SubmissionReview = () => {
   const [weeklyScore, setWeeklyScore] = useState(0);
   const [weeklyWarnings, setWeeklyWarnings] = useState([]);
   const [weeklySaving, setWeeklySaving] = useState(false);
+  const [weeklyAiLoading, setWeeklyAiLoading] = useState(false);
+  const [weeklyAiScore, setWeeklyAiScore] = useState(null);
 
   const viewProgress = async (record) => {
     setSelectedSubmission(record);
@@ -371,6 +373,7 @@ const SubmissionReview = () => {
     setWeeklyStatus(log.TrangThaiDanhGia || 'ChoDanhGia');
     setWeeklyComment(log.NhanXetGV || '');
     setWeeklyWarnings(log.CanhBaoTienDo || []);
+    setWeeklyAiScore(null);
     setWeeklyModalVisible(true);
 
     try {
@@ -386,6 +389,30 @@ const SubmissionReview = () => {
       console.error('Lỗi lấy chi tiết tiến độ:', err);
       setWeeklyRubrics(defaultWeeklyRubrics);
       setWeeklyScore(calcWeeklyScore(defaultWeeklyRubrics));
+    }
+  };
+
+  const handleAiSuggestWeekly = async () => {
+    if (!weeklyTarget) return;
+    try {
+      setWeeklyAiLoading(true);
+      const res = await aiApiService.aiSuggestProgress(weeklyTarget._id);
+      const aiRubrics = res.aiRubrics || [];
+      const updated = weeklyRubrics.map((c, idx) => {
+        const ai = aiRubrics.find(a => a.TenTieuChi === c.TenTieuChi) || aiRubrics[idx];
+        if (!ai) return c;
+        const maxScore = c.DiemToiDa || 10;
+        const suggested = Math.min(maxScore, Math.round((ai.AI_DiemTieuChi || 0) * 2) / 2);
+        return { ...c, DiemGV: suggested, NhanXetTieuChi: c.NhanXetTieuChi || ai.AI_NhanXetTieuChi || '' };
+      });
+      setWeeklyRubrics(updated);
+      setWeeklyScore(calcWeeklyScore(updated));
+      setWeeklyAiScore(res.aiScore);
+      message.success(`AI gợi ý điểm tuần ${res.aiScore}/10 (chỉ tham khảo — GV có thể chỉnh lại)`);
+    } catch (err) {
+      message.error(err.response?.data?.error || 'AI gợi ý điểm tuần thất bại');
+    } finally {
+      setWeeklyAiLoading(false);
     }
   };
 
@@ -1072,7 +1099,18 @@ const SubmissionReview = () => {
             </div>
 
             <Divider style={{ margin: '12px 0' }} />
-            <Title level={5} style={{ marginBottom: 12 }}>Rubrics tuần</Title>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Title level={5} style={{ margin: 0 }}>Rubrics tuần</Title>
+              <Button size="small" onClick={handleAiSuggestWeekly} loading={weeklyAiLoading}>
+                AI gợi ý điểm (PhoBERT)
+              </Button>
+            </div>
+            {weeklyAiScore != null && (
+              <Alert
+                type="info" showIcon style={{ marginBottom: 12 }}
+                message={`AI gợi ý: ${weeklyAiScore}/10 — chỉ tham khảo, giảng viên quyết định điểm cuối.`}
+              />
+            )}
             {weeklyRubrics.map((criteria, idx) => (
               <div key={idx} style={{ padding: 12, marginBottom: 8, background: '#fafafa', borderRadius: 6, border: '1px solid #f0f0f0' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
