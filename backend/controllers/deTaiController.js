@@ -1,12 +1,34 @@
 const DeTai = require('../models/DeTai');
 const DangKyDeTai = require('../models/DangKyDeTai');
+const Nhom = require('../models/Nhom');
 const SinhVien = require('../models/SinhVien');
 const logger = require('../config/logger');
 
 exports.getAll = async (req, res) => {
     try {
-        const list = await DeTai.find({}).populate('GiangVienHuongDan');
-        res.json(list);
+        const list = await DeTai.find({}).populate('GiangVienHuongDan').lean();
+
+        // Đếm số nhóm đang đăng ký (active) cho mỗi đề tài
+        const activeRegs = await DangKyDeTai.find({ 
+            TrangThai: { $nin: ['TuChoi', 'Thua'] } 
+        }).select('DeTai Nhom TrangThai');
+
+        // Map: deTaiId -> số nhóm đang đăng ký
+        const regCountMap = {};
+        const chotMap = {};
+        activeRegs.forEach(r => {
+            const deTaiId = r.DeTai.toString();
+            regCountMap[deTaiId] = (regCountMap[deTaiId] || 0) + 1;
+            if (r.TrangThai === 'DaDuyet') chotMap[deTaiId] = true;
+        });
+
+        const result = list.map(t => ({
+            ...t,
+            SoDangKy: regCountMap[t._id.toString()] || 0,
+            DaChotNhom: !!chotMap[t._id.toString()]
+        }));
+
+        res.json(result);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -91,46 +113,69 @@ exports.delete = async (req, res) => {
     }
 };
 
-// Sinh viên đăng ký đề tài
+// Sinh viên đăng ký đề tài (theo nhóm)
 exports.registerTopic = async (req, res) => {
     try {
-        const { sinhVienId } = req.body;
+        const { sinhVienId, nhomId } = req.body;
         const deTaiId = req.params.id;
 
-        // Kiểm tra SV đã đăng ký đề tài nào chưa (kể cả với tư cách thành viên)
-        const existing = await DangKyDeTai.findOne({ 
-            TrangThai: { $ne: 'TuChoi' },
-            $or: [
-                { SinhVien: sinhVienId },
-                { 'ThanhVien.SinhVien': sinhVienId, 'ThanhVien.TrangThaiTV': { $in: ['DaMoi', 'DaChapNhan'] } }
-            ]
-        });
-
-        if (existing) {
-            return res.status(400).json({ error: 'Bạn đã đăng ký hoặc đang trong nhóm của một đề tài. Không thể đăng ký thêm.' });
-        }
-
-        // Kiểm tra đề tài có bài test cạnh tranh không
+        // 1. Kiểm tra đề tài tồn tại + chưa bị chốt
         const deTai = await DeTai.findById(deTaiId);
         if (!deTai) return res.status(404).json({ error: 'Không tìm thấy đề tài.' });
+        if (deTai.TrangThai === 'DaChot') {
+            return res.status(400).json({ error: 'Đề tài này đã được chốt cho một nhóm khác.' });
+        }
+
+        // 2. Kiểm tra nhóm tồn tại + đã chốt
+        if (!nhomId) {
+            return res.status(400).json({ error: 'Bạn cần tạo và chốt nhóm trước khi đăng ký đề tài.' });
+        }
+        const nhom = await Nhom.findById(nhomId);
+        if (!nhom) return res.status(400).json({ error: 'Không tìm thấy nhóm.' });
+        if (!nhom.DaChot) {
+            return res.status(400).json({ error: 'Nhóm chưa được chốt. Hãy chốt nhóm trước khi đăng ký đề tài.' });
+        }
+
+        // 3. Kiểm tra SoLuongSinhVien đề tài === SoLuong nhóm
+        const acceptedCount = nhom.ThanhVien.filter(tv => tv.TrangThai === 'DaChapNhan').length;
+        if (deTai.SoLuongSinhVien !== acceptedCount) {
+            return res.status(400).json({ 
+                error: `Đề tài yêu cầu ${deTai.SoLuongSinhVien} sinh viên, nhóm bạn có ${acceptedCount} thành viên.` 
+            });
+        }
+
+        // 4. Kiểm tra nhóm đã đăng ký đề tài khác chưa
+        const existingReg = await DangKyDeTai.findOne({ 
+            Nhom: nhomId, 
+            TrangThai: { $nin: ['TuChoi', 'Thua'] } 
+        });
+        if (existingReg) {
+            return res.status(400).json({ error: 'Nhóm đã đăng ký một đề tài khác. Hãy hủy đăng ký cũ trước.' });
+        }
+
+        // 5. CHO PHÉP nhiều nhóm đăng ký cùng 1 đề tài (cạnh tranh Kaggle-style)
         const trangThai = deTai.CoBaiTest ? 'ChoTest' : 'ChoDuyet';
 
         const dangKy = new DangKyDeTai({ 
             DeTai: deTaiId, 
-            SinhVien: sinhVienId, 
-            ThanhVien: [{
-                SinhVien: sinhVienId,
-                VaiTro: 'TruongNhom',
-                TrangThaiTV: 'DaChapNhan'
-            }],
+            Nhom: nhomId,
+            TruongNhom: sinhVienId,
+            SinhVien: sinhVienId,  // backward compat
+            ThanhVien: nhom.ThanhVien
+                .filter(tv => tv.TrangThai === 'DaChapNhan')
+                .map(tv => ({
+                    SinhVien: tv.SinhVien,
+                    VaiTro: tv.VaiTro,
+                    TrangThaiTV: 'DaChapNhan'
+                })),
             TrangThai: trangThai 
         });
 
         await dangKy.save();
-        logger.info(`[TOPIC] Student ${sinhVienId} registered for topic ${deTaiId} | status=${trangThai}`);
+        logger.info(`[TOPIC] Nhom ${nhomId} registered for topic ${deTaiId} | status=${trangThai}`);
         const msg = deTai.CoBaiTest 
-            ? 'Đăng ký thành công! Bạn cần hoàn thành bài test cạnh tranh.' 
-            : 'Đăng ký đề tài thành công (Trưởng nhóm)!';
+            ? 'Đăng ký thành công! Trưởng nhóm cần hoàn thành bài test cạnh tranh.' 
+            : 'Đăng ký đề tài thành công! Chờ Giảng viên duyệt.';
         res.status(201).json({ message: msg, data: dangKy });
     } catch (err) {
         logger.error(`[TOPIC] Registration failed: ${err.message}`);
@@ -143,12 +188,13 @@ exports.getMyRegistration = async (req, res) => {
     try {
         const svId = req.params.svId;
         const registration = await DangKyDeTai.findOne({
-            TrangThai: { $ne: 'TuChoi' },
+            TrangThai: { $nin: ['TuChoi', 'Thua'] },
             $or: [
                 { SinhVien: svId },
+                { TruongNhom: svId },
                 { 'ThanhVien.SinhVien': svId, 'ThanhVien.TrangThaiTV': 'DaChapNhan' }
             ]
-        }).populate('DeTai').populate('ThanhVien.SinhVien');
+        }).populate('DeTai').populate('Nhom').populate('ThanhVien.SinhVien');
 
         res.json({ registration: registration || null });
     } catch (err) {
@@ -181,6 +227,8 @@ exports.getRegistrationsByLecturer = async (req, res) => {
         // Tìm tất cả đăng ký cho các đề tài đó
         const registrations = await DangKyDeTai.find({ DeTai: { $in: topicIds } })
             .populate('SinhVien')
+            .populate('Nhom')
+            .populate('TruongNhom')
             .populate('ThanhVien.SinhVien')
             .populate('DeTai');
 
@@ -200,9 +248,9 @@ exports.cancelRegistration = async (req, res) => {
             return res.status(404).json({ error: 'Không tìm thấy lượt đăng ký' });
         }
 
-        // Cho phep huy khi dang cho duyet hoac dang trong vong bai test canh tranh
-        if (!['ChoDuyet', 'ChoTest'].includes(dangKy.TrangThai)) {
-            return res.status(400).json({ error: 'Chỉ có thể hủy đăng ký khi trạng thái là Chờ duyệt hoặc Chờ làm bài test' });
+        // Cho phép hủy khi đang chờ duyệt, chờ test, hoặc đang làm bài test (chưa submit)
+        if (!['ChoDuyet', 'ChoTest', 'DangLamTest'].includes(dangKy.TrangThai)) {
+            return res.status(400).json({ error: 'Không thể hủy đăng ký khi đã submit bài test hoặc đề tài đã được duyệt.' });
         }
 
         await DangKyDeTai.findByIdAndDelete(id);

@@ -5,6 +5,7 @@ const ketQuaTestSchema = new mongoose.Schema({
   DeTai: { type: mongoose.Schema.Types.ObjectId, ref: 'DeTai', required: true },
   SinhVien: { type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien', required: true },
   DangKyDeTai: { type: mongoose.Schema.Types.ObjectId, ref: 'DangKyDeTai' },
+  Nhom: { type: mongoose.Schema.Types.ObjectId, ref: 'Nhom' },
   TraLoi: [{
     CauHoiIndex: { type: Number, required: true },
     LoaiCauHoi: { type: String, enum: ['TracNghiem', 'Code'] },

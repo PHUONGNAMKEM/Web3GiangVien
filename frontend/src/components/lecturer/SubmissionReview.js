@@ -746,9 +746,12 @@ const SubmissionReview = () => {
                         onChange={setScore}
                         size="large"
                         style={{ width: 100 }}
-                        disabled={analyzing}
+                        disabled={analyzing || selectedSubmission?.status === 'DaCham'}
                       />
-                      {aiAnalysis && <Text type="secondary" style={{ marginLeft: 16 }}>(Có thể sửa đè điểm AI {aiAnalysis.score})</Text>}
+                      {selectedSubmission?.status === 'DaCham'
+                        ? <Text type="secondary" style={{ marginLeft: 16 }}>(Đã chấm — không thể thay đổi)</Text>
+                        : aiAnalysis && <Text type="secondary" style={{ marginLeft: 16 }}>(Có thể sửa đè điểm AI {aiAnalysis.score})</Text>
+                      }
 
                       <div style={{ marginTop: 24 }}>
                         {selectedSubmission.status === 'DaCham' ? (

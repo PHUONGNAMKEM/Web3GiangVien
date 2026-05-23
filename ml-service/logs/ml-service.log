@@ -43,3 +43,37 @@
 2026-04-18 16:20:43 [INFO ] [AI] /analyze-report response | score=6.11
 2026-05-04 13:18:27 [INFO ] [SERVER] ML Service started | FastAPI ready
 2026-05-04 14:08:34 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-05-09 09:58:07 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-05-09 10:34:56 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-05-09 10:48:05 [INFO ] [AI] Loading SBERT model for code comparison...
+2026-05-09 10:48:11 [INFO ] [AI] SBERT model loaded for code comparison
+2026-05-09 10:48:12 [INFO ] [AI] Code comparison | similarity=0.9942 | student_len=20 | answer_len=20
+2026-05-09 14:40:37 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-05-09 14:40:39 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=1810ms
+2026-05-09 14:40:39 [INFO ] [AI] /analyze-report response | score=6.11
+2026-05-09 14:40:42 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-05-09 14:40:42 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=632ms
+2026-05-09 14:40:42 [INFO ] [AI] /analyze-report response | score=6.31
+2026-05-09 14:41:03 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-05-09 14:41:03 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=576ms
+2026-05-09 14:41:03 [INFO ] [AI] /analyze-report response | score=6.31
+2026-05-19 16:24:19 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-05-19 16:44:04 [INFO ] [SERVER] ML Service started | FastAPI ready
+2026-05-19 16:50:54 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-05-19 16:50:56 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=1772ms
+2026-05-19 16:50:56 [INFO ] [AI] /analyze-report response | score=6.11
+2026-05-19 16:53:11 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-05-19 16:53:12 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=892ms
+2026-05-19 16:53:12 [INFO ] [AI] /analyze-report response | score=6.31
+2026-05-19 16:53:17 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-05-19 16:53:18 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=280ms
+2026-05-19 16:53:18 [INFO ] [AI] /analyze-report response | score=6.11
+2026-05-19 16:58:22 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-05-19 16:58:22 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=202ms
+2026-05-19 16:58:22 [INFO ] [AI] /analyze-report response | score=6.11
+2026-05-19 16:58:31 [INFO ] [AI] POST /analyze-report | textLength=82 | requirements=2
+2026-05-19 16:58:31 [INFO ] [AI] Report analysis completed | score=6.11 | requirements=2 | textLength=88 | time=178ms
+2026-05-19 16:58:31 [INFO ] [AI] /analyze-report response | score=6.11
+2026-05-19 16:58:46 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
+2026-05-19 16:58:47 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=512ms
+2026-05-19 16:58:47 [INFO ] [AI] /analyze-report response | score=6.31

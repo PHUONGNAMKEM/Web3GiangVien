@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider, Descriptions, Switch, Alert } from 'antd';
-import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle, NotebookText, ListChecks } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle, NotebookText, ListChecks, Trophy, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
@@ -677,79 +677,88 @@ const TopicManagement = () => {
         {selectedTopic && (
           <>
             {selectedTopic.SoLuongSinhVien > 1 && (
-              <Tag color="blue" style={{ marginBottom: 16 }}>
+              <Tag color="blue" style={{ marginBottom: 8 }}>
                 Đề tài nhóm: Tối đa {selectedTopic.SoLuongSinhVien} SV
+              </Tag>
+            )}
+            {selectedTopic.CoBaiTest && (
+              <Tag color="volcano" style={{ marginBottom: 16, marginLeft: 4 }}>
+                🏆 Có bài test cạnh tranh
               </Tag>
             )}
             <List
               dataSource={getRegistrationsForTopic(selectedTopic._id)}
-              renderItem={(reg) => (
-                <List.Item
-                  actions={
-                    reg.TrangThai === 'ChoDuyet' ? [
-                      <Button
-                        type="primary"
-                        size="small"
-                        icon={<CheckCircle size={14} />}
-                        loading={approvingId === reg._id}
-                        onClick={() => handleApprove(reg._id, 'DaDuyet')}
-                        style={{ background: '#52c41a', borderColor: '#52c41a' }}
-                      >
-                        Duyệt
-                      </Button>,
-                      <Button
-                        danger
-                        size="small"
-                        icon={<XCircle size={14} />}
-                        loading={approvingId === reg._id}
-                        onClick={() => handleApprove(reg._id, 'TuChoi')}
-                      >
-                        Từ Chối
-                      </Button>
-                    ] : [
-                      <Tag color={reg.TrangThai === 'DaDuyet' ? 'success' : 'error'}>
-                        {reg.TrangThai === 'DaDuyet' ? '✓ Đã Duyệt Nhóm' : '✗ Đã Từ Chối Nhóm'}
-                      </Tag>
-                    ]
-                  }
-                >
-                  <List.Item.Meta
-                    title={<Text strong>Nhóm của {reg.SinhVien?.HoTen}</Text>}
-                    description={
-                      <div style={{ marginTop: 8 }}>
-                        <Text type="secondary">Trạng thái: {(reg.ThanhVien || []).filter(tv => tv.TrangThaiTV === 'DaChapNhan').length} / {selectedTopic.SoLuongSinhVien} thành viên đã tham gia</Text>
-                        <List
-                          size="small"
-                          dataSource={reg.ThanhVien || []}
-                          renderItem={tv => (
-                            <List.Item style={{ padding: '4px 0', borderBottom: 'none' }}>
-                              <Space>
-                                <Tag color={tv.VaiTro === 'TruongNhom' ? 'gold' : 'blue'}>
-                                  {tv.VaiTro === 'TruongNhom' ? 'Trưởng Nhóm' : 'Thành Viên'}
-                                </Tag>
-                                <Text>{tv.SinhVien?.HoTen} ({tv.SinhVien?.MaSV})</Text>
-                                {tv.TrangThaiTV !== 'DaChapNhan' && (
-                                  <Tag color="orange">Chờ phản hồi</Tag>
-                                )}
-                                <Space split={<Divider type="vertical" />} style={{ marginLeft: 8 }}>
-                                  {tv.SinhVien?.GPA !== undefined && (
-                                    <Text type="secondary" style={{ fontSize: 12 }}>GPA: <Text strong>{tv.SinhVien.GPA.toFixed(2)}</Text></Text>
-                                  )}
-                                  {tv.SinhVien?.KyNang && tv.SinhVien.KyNang.length > 0 && (
-                                    <Text type="secondary" style={{ fontSize: 12 }}>Dự kiến: <Text strong>{tv.SinhVien.KyNang.join(', ')}</Text></Text>
-                                  )}
-                                </Space>
-                              </Space>
-                            </List.Item>
-                          )}
-                        />
-                        <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>Nộp lúc: {new Date(reg.createdAt).toLocaleString('vi-VN')}</Text>
-                      </div>
+              renderItem={(reg) => {
+                const trangThaiColor = {
+                  'ChoDuyet': 'orange', 'ChoTest': 'gold', 'DangLamTest': 'processing',
+                  'DaSubmit': 'cyan', 'ChoDoi': 'blue', 'DaDuyet': 'success', 'TuChoi': 'error', 'Thua': 'default'
+                };
+                const trangThaiLabel = {
+                  'ChoDuyet': '⏳ Chờ Duyệt', 'ChoTest': '📝 Chờ Test', 'DangLamTest': '✍️ Đang Làm',
+                  'DaSubmit': '📤 Đã Submit', 'ChoDoi': '⏳ Chờ Kết Quả', 'DaDuyet': '✅ Đã Duyệt (Thắng)',
+                  'TuChoi': '❌ Từ Chối', 'Thua': '😞 Thua'
+                };
+                const nhomName = reg.Nhom?.TenNhom || `Nhóm của ${reg.TruongNhom?.HoTen || reg.SinhVien?.HoTen || 'N/A'}`;
+
+                return (
+                  <List.Item
+                    actions={
+                      reg.TrangThai === 'ChoDuyet' ? [
+                        <Button type="primary" size="small" icon={<CheckCircle size={14} />}
+                          loading={approvingId === reg._id}
+                          onClick={() => handleApprove(reg._id, 'DaDuyet')}
+                          style={{ background: '#52c41a', borderColor: '#52c41a' }}>Duyệt</Button>,
+                        <Button danger size="small" icon={<XCircle size={14} />}
+                          loading={approvingId === reg._id}
+                          onClick={() => handleApprove(reg._id, 'TuChoi')}>Từ Chối</Button>
+                      ] : [
+                        <Tag color={trangThaiColor[reg.TrangThai] || 'default'}>
+                          {trangThaiLabel[reg.TrangThai] || reg.TrangThai}
+                        </Tag>
+                      ]
                     }
-                  />
-                </List.Item>
-              )}
-              locale={{ emptyText: 'Chưa có sinh viên nào đăng ký đề tài này.' }}
+                  >
+                    <List.Item.Meta
+                      avatar={<div style={{ fontSize: 24 }}>{reg.TrangThai === 'DaDuyet' ? '🏆' : '👥'}</div>}
+                      title={
+                        <Space>
+                          <Text strong>{nhomName}</Text>
+                          {reg.TrangThai === 'DaDuyet' && <Tag color="gold">WINNER</Tag>}
+                        </Space>
+                      }
+                      description={
+                        <div style={{ marginTop: 4 }}>
+                          {/* Thành viên nhóm */}
+                          <List
+                            size="small"
+                            dataSource={reg.ThanhVien || []}
+                            renderItem={tv => (
+                              <List.Item style={{ padding: '2px 0', borderBottom: 'none' }}>
+                                <Space>
+                                  <Tag color={tv.VaiTro === 'TruongNhom' ? 'gold' : 'blue'} style={{ fontSize: 10, lineHeight: '14px', padding: '0 4px' }}>
+                                    {tv.VaiTro === 'TruongNhom' ? '👑' : '👤'}
+                                  </Tag>
+                                  <Text style={{ fontSize: 13 }}>{tv.SinhVien?.HoTen || 'N/A'} ({tv.SinhVien?.MaSV || ''})</Text>
+                                </Space>
+                              </List.Item>
+                            )}
+                          />
+                          {reg.ThoiGianSubmit && (
+                            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 4 }}>
+                              <Clock size={10} style={{ marginRight: 4 }} />
+                              Submit: {new Date(reg.ThoiGianSubmit).toLocaleString('vi-VN')}
+                            </Text>
+                          )}
+                          <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
+                            Đăng ký: {new Date(reg.createdAt).toLocaleString('vi-VN')}
+                          </Text>
+                        </div>
+                      }
+                    />
+                  </List.Item>
+                );
+              }}
+              locale={{ emptyText: 'Chưa có nhóm nào đăng ký đề tài này.' }}
             />
           </>
         )}

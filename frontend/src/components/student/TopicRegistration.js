@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Typography, Tag, Badge, message, Row, Col, Modal, Skeleton, Alert, Input, Space, List, Divider } from 'antd';
-import { CheckCircle, Code, Zap, Lock, ListChecks } from 'lucide-react';
+import { Card, Button, Typography, Tag, Badge, message, Row, Col, Modal, Skeleton, Alert, Input, Space, List, Divider, Tooltip } from 'antd';
+import { CheckCircle, Code, Zap, Lock, ListChecks, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import aiApiService from '../../services/aiService';
+import nhomService from '../../services/nhomService';
 import authService from '../../services/authService';
 
 const { Title, Paragraph, Text } = Typography;
@@ -18,6 +19,8 @@ const TopicRegistration = () => {
   const [fullRegistration, setFullRegistration] = useState(null);
   const [inviteMaSV, setInviteMaSV] = useState('');
   const [inviting, setInviting] = useState(false);
+  const [testSubmitted, setTestSubmitted] = useState(false);
+  const [myNhom, setMyNhom] = useState(null); // Nhóm của SV
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,6 +29,14 @@ const TopicRegistration = () => {
         const user = authService.getCurrentUser();
         if (!user) return;
 
+        // 0. Lấy nhóm của SV
+        try {
+          const nhomRes = await nhomService.getNhomBySinhVien(user.id);
+          setMyNhom(nhomRes.nhom);
+        } catch (e) {
+          console.warn('Không lấy được thông tin nhóm');
+        }
+
         // 1. Kiểm tra SV đã đăng ký đề tài nào chưa
         const regRes = await aiApiService.getMyRegistration(user.id);
         if (regRes.registration) {
@@ -33,6 +44,19 @@ const TopicRegistration = () => {
           setRegistrationStatus(regRes.registration.TrangThai);
           setRegistrationId(regRes.registration._id);
           setFullRegistration(regRes.registration);
+
+          // Kiểm tra đã nộp bài test chưa
+          if (regRes.registration.TrangThai === 'ChoTest') {
+            const deTaiIdForTest = regRes.registration.DeTai?._id || regRes.registration.DeTai;
+            try {
+              const checkTest = await aiApiService.checkTestSubmitted(deTaiIdForTest, user.id);
+              if (checkTest.submitted) {
+                setTestSubmitted(true);
+              }
+            } catch (e) {
+              console.warn('Không kiểm tra được trạng thái test');
+            }
+          }
         }
 
         // 2. Lấy danh sách đề tài từ DB
@@ -78,7 +102,9 @@ const TopicRegistration = () => {
           console.warn('SBERT matching failed, hiển thị không có điểm AI');
         }
 
-        setTopics(enriched.sort((a, b) => parseFloat(b.ai_score) - parseFloat(a.ai_score)));
+        setTopics(enriched
+          .sort((a, b) => parseFloat(b.ai_score) - parseFloat(a.ai_score))
+        );
       } catch (error) {
         console.error("Lỗi lấy đề tài:", error);
         message.warning("Có lỗi khi tải dữ liệu đề tài.");
@@ -98,21 +124,41 @@ const TopicRegistration = () => {
     }
 
     if (registeredTopicId) {
-      message.warning('Bạn đã đăng ký một đề tài rồi. Không thể đăng ký thêm.');
+      message.warning('Nhóm của bạn đã đăng ký một đề tài rồi.');
+      return;
+    }
+
+    if (!myNhom || !myNhom.DaChot) {
+      message.warning('Bạn cần tạo và chốt nhóm trước khi đăng ký đề tài.');
       return;
     }
 
     Modal.confirm({
       title: 'Xác nhận Đăng ký Đề tài',
-      content: `Bạn có chắc chắn muốn đăng ký đề tài "${topic.TenDeTai}"? Mỗi sinh viên chỉ được đăng ký 1 đề tài duy nhất.`,
+      content: `Nhóm "${myNhom.TenNhom || 'Nhóm của bạn'}" sẽ đăng ký đề tài "${topic.TenDeTai}". ${topic.CoBaiTest ? 'Trưởng nhóm sẽ cần làm bài test cạnh tranh.' : ''}`,
       okText: 'Xác Nhận Đăng Ký',
       cancelText: 'Hủy',
       onOk: async () => {
         setLoadingId(topic._id);
-        try {
-          await aiApiService.registerTopic(topic._id, user.id);
-          setRegisteredTopicId(topic._id);
-          message.success('Đã gửi yêu cầu đăng ký đề tài thành công! Chờ Giảng viên duyệt.');
+         try {
+          await aiApiService.registerTopic(topic._id, user.id, myNhom._id);
+          // Reload đầy đủ state đăng ký
+          const regRes = await aiApiService.getMyRegistration(user.id);
+          if (regRes.registration) {
+            setRegisteredTopicId(regRes.registration.DeTai?._id || regRes.registration.DeTai);
+            setRegistrationStatus(regRes.registration.TrangThai);
+            setRegistrationId(regRes.registration._id);
+            setFullRegistration(regRes.registration);
+          } else {
+            setRegisteredTopicId(topic._id);
+          }
+          const msg = topic.CoBaiTest
+            ? 'Đăng ký thành công! Trưởng nhóm cần hoàn thành bài test đầu vào.'
+            : 'Đã gửi yêu cầu đăng ký đề tài thành công! Chờ Giảng viên duyệt.';
+          message.success(msg);
+          if (topic.CoBaiTest) {
+            setTimeout(() => navigate(`/student/entrance-test/${topic._id}`), 1500);
+          }
         } catch (err) {
           const errMsg = err.response?.data?.error || 'Đăng ký thất bại';
           message.error(errMsg);
@@ -182,6 +228,27 @@ const TopicRegistration = () => {
         </Paragraph>
       </Typography>
 
+      {/* Alert khi chưa có nhóm hoặc nhóm chưa chốt */}
+      {!hasAnyRegistration && (!myNhom || !myNhom.DaChot) && (
+        <Alert
+          message={!myNhom ? 'Bạn chưa có nhóm' : 'Nhóm chưa được chốt'}
+          description={
+            <span>
+              {!myNhom 
+                ? 'Hãy tạo nhóm trước khi đăng ký đề tài. '
+                : 'Nhóm cần được chốt (đủ thành viên) trước khi đăng ký đề tài. '
+              }
+              <Button type="link" size="small" onClick={() => navigate('/student/group')} style={{ padding: 0 }}>
+                <Users size={14} style={{ marginRight: 4 }} />Quản lý nhóm
+              </Button>
+            </span>
+          }
+          type="warning"
+          showIcon
+          style={{ marginBottom: 24 }}
+        />
+      )}
+
       {hasAnyRegistration && fullRegistration && (
         <Card style={{ marginBottom: 24, border: '1px solid #91caff', background: '#e6f4ff' }}>
           <Space direction="vertical" style={{ width: '100%' }}>
@@ -205,17 +272,22 @@ const TopicRegistration = () => {
             {/* Alert khi cần làm bài test cạnh tranh */}
             {registrationStatus === 'ChoTest' && (
               <Alert
-                message="Đề tài yêu cầu Bài Test Cạnh Tranh"
-                description="Giảng viên đã tạo bài test đầu vào. Bạn cần hoàn thành bài test để cạnh tranh giành đề tài này."
-                type="warning"
+                message={testSubmitted ? "Bạn đã hoàn thành bài test" : "Đề tài yêu cầu Bài Test Đầu Vào"}
+                description={testSubmitted
+                  ? "Kết quả bài test của bạn đang được xử lý. Vui lòng chờ hệ thống duyệt tự động."
+                  : "Giảng viên đã tạo bài test đầu vào. Bạn cần hoàn thành bài test để được duyệt đề tài."
+                }
+                type={testSubmitted ? 'info' : 'warning'}
                 showIcon
                 icon={<ListChecks size={20} />}
                 action={
-                  <Button type="primary" size="small"
-                    style={{ background: '#722ed1', borderColor: '#722ed1' }}
-                    onClick={() => navigate(`/student/entrance-test/${registeredTopicId}`)}>
-                    Bắt Đầu Làm Bài Test
-                  </Button>
+                  !testSubmitted ? (
+                    <Button type="primary" size="small"
+                      style={{ background: '#722ed1', borderColor: '#722ed1' }}
+                      onClick={() => navigate(`/student/entrance-test/${registeredTopicId}`)}>
+                      Bắt Đầu Làm Bài Test
+                    </Button>
+                  ) : null
                 }
               />
             )}
@@ -282,12 +354,13 @@ const TopicRegistration = () => {
         <Row gutter={[24, 24]} style={{ marginTop: 24 }}>
           {topics.map(topic => {
             const thisRegistered = isRegistered(topic._id);
-            const disabled = hasAnyRegistration;
+            const disabled = hasAnyRegistration || !myNhom || !myNhom.DaChot || topic.DaChotNhom;
+            const sizeMismatch = myNhom && myNhom.DaChot && (topic.SoLuongSinhVien || 1) !== (myNhom.ThanhVien?.filter(tv => tv.TrangThai === 'DaChapNhan').length || 0);
 
             const cardContent = (
               <Card
                 title={<Text strong style={{ fontSize: 16, whiteSpace: 'normal' }}>{topic.TenDeTai}</Text>}
-                hoverable={!disabled}
+                hoverable={!disabled && !sizeMismatch}
                 actions={[
                   thisRegistered ? (
                     <Button
@@ -296,19 +369,25 @@ const TopicRegistration = () => {
                       disabled
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', background: registrationStatus === 'DaDuyet' ? '#52c41a' : '#1677ff', borderColor: registrationStatus === 'DaDuyet' ? '#52c41a' : '#1677ff', color: '#fff', opacity: 0.8 }}
                     >
-                      {registrationStatus === 'DaDuyet' ? 'Đã Được Duyệt' : 'Đã Đăng Ký (Chờ Duyệt)'}
+                      {registrationStatus === 'DaDuyet' ? 'Đã Được Duyệt' : 'Đã Đăng Ký'}
+                    </Button>
+                  ) : topic.DaChotNhom ? (
+                    <Button disabled style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
+                      Đã chốt cho nhóm khác
                     </Button>
                   ) : (
-                    <Button
-                      type={topic.isRecommended ? 'primary' : 'default'}
-                      icon={<CheckCircle size={16} />}
-                      onClick={() => handleRegister(topic)}
-                      loading={loadingId === topic._id}
-                      disabled={disabled}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}
-                    >
-                      {disabled ? 'Không khả dụng' : 'Đăng Ký'}
-                    </Button>
+                    <Tooltip title={sizeMismatch ? `Đề tài cần ${topic.SoLuongSinhVien} SV, nhóm bạn có ${myNhom?.ThanhVien?.filter(tv => tv.TrangThai === 'DaChapNhan').length || 0}` : ''}>
+                      <Button
+                        type={topic.isRecommended ? 'primary' : 'default'}
+                        icon={<CheckCircle size={16} />}
+                        onClick={() => handleRegister(topic)}
+                        loading={loadingId === topic._id}
+                        disabled={disabled || sizeMismatch}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}
+                      >
+                        {!myNhom ? 'Cần tạo nhóm' : sizeMismatch ? 'Số SV không khớp' : disabled ? 'Không khả dụng' : 'Đăng Ký'}
+                      </Button>
+                    </Tooltip>
                   )
                 ]}
                 style={{
@@ -317,7 +396,7 @@ const TopicRegistration = () => {
                   flexDirection: 'column',
                   border: thisRegistered ? '2px solid #52c41a' : (topic.isRecommended ? '2px solid #1677ff' : '1px solid #f0f0f0'),
                   boxShadow: thisRegistered ? '0 4px 12px rgba(82, 196, 26, 0.2)' : (topic.isRecommended ? '0 4px 12px rgba(22, 119, 255, 0.15)' : 'none'),
-                  opacity: (disabled && !thisRegistered) ? 0.6 : 1
+                  opacity: (disabled && !thisRegistered) || sizeMismatch ? 0.6 : 1
                 }}
                 headStyle={{ minHeight: 80 }}
                 bodyStyle={{ flexGrow: 1 }}
@@ -329,6 +408,13 @@ const TopicRegistration = () => {
                   <Text type="secondary">Sinh viên tối đa:</Text>
                   <Tag color="geekblue" style={{ marginLeft: 8, marginTop: 4 }}>{topic.SoLuongSinhVien || 1} SV</Tag>
                   {topic.CoBaiTest && <Tag color="volcano" style={{ marginLeft: 4, marginTop: 4 }}>🏆 Có bài test</Tag>}
+                  {topic.SoDangKy > 0 && (
+                    <Tag color="magenta" style={{ marginLeft: 4, marginTop: 4 }}>
+                      <Users size={12} style={{ marginRight: 4 }} />
+                      {topic.SoDangKy} nhóm đang cạnh tranh
+                    </Tag>
+                  )}
+                  {topic.DaChotNhom && <Tag color="red" style={{ marginLeft: 4, marginTop: 4 }}>Đã chốt</Tag>}
                   <br />
                   <br />
                   <Text type="secondary">Mô tả cốt lõi:</Text>

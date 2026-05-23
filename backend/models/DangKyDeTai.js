@@ -2,7 +2,11 @@ const mongoose = require('mongoose');
 
 const dangKyDeTaiSchema = new mongoose.Schema({
   DeTai: { type: mongoose.Schema.Types.ObjectId, ref: 'DeTai', required: true },
-  SinhVien: { type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien', required: true },
+  // --- Nhóm mới (Phase 2) ---
+  Nhom: { type: mongoose.Schema.Types.ObjectId, ref: 'Nhom' },
+  TruongNhom: { type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien' },
+  // --- Backward compat (cũ) ---
+  SinhVien: { type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien' },
   ThanhVien: [{
     SinhVien: { type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien' },
     VaiTro: { type: String, enum: ['TruongNhom', 'ThanhVien'], default: 'ThanhVien' },
@@ -13,10 +17,17 @@ const dangKyDeTaiSchema = new mongoose.Schema({
     },
     NgayThamGia: { type: Date, default: Date.now }
   }],
-  TrangThai: { type: String, enum: ['ChoDuyet', 'ChoTest', 'DaDuyet', 'TuChoi'], default: 'ChoDuyet' }
+  TrangThai: { 
+    type: String, 
+    enum: ['ChoDuyet', 'ChoTest', 'DangLamTest', 'DaSubmit', 'ChoDoi', 'DaDuyet', 'TuChoi', 'Thua'], 
+    default: 'ChoDuyet' 
+  },
+  ThoiGianSubmit: { type: Date },  // Ghi ngay khi nhận submit (Phase 3)
 }, { timestamps: true });
 
-// Một sinh viên chỉ đăng ký 1 đề tài 1 lần
-dangKyDeTaiSchema.index({ DeTai: 1, SinhVien: 1 }, { unique: true });
+// Một nhóm chỉ đăng ký 1 đề tài 1 lần
+dangKyDeTaiSchema.index({ DeTai: 1, Nhom: 1 }, { unique: true, sparse: true });
+// Backward compat: SinhVien index
+dangKyDeTaiSchema.index({ DeTai: 1, SinhVien: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('DangKyDeTai', dangKyDeTaiSchema);

@@ -16,6 +16,7 @@ const EntranceTestManager = () => {
   const [topic, setTopic] = useState(null);
   const [baiTest, setBaiTest] = useState(null);
   const [results, setResults] = useState([]);
+  const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -23,6 +24,7 @@ const EntranceTestManager = () => {
   const [tieuDe, setTieuDe] = useState('');
   const [moTa, setMoTa] = useState('');
   const [thoiGianLam, setThoiGianLam] = useState(30);
+  const [nguongDat, setNguongDat] = useState(75);
   const [cauHoi, setCauHoi] = useState([]);
 
   useEffect(() => { fetchData(); }, [deTaiId]);
@@ -42,6 +44,15 @@ const EntranceTestManager = () => {
         // Lấy kết quả
         const res = await aiApiService.getTestResults(test._id);
         setResults(res || []);
+        // Lấy đăng ký cho đề tài này
+        try {
+          const regs = await aiApiService.getRegistrationsByLecturer(user.id);
+          const topicRegs = (regs || []).filter(r => {
+            const rid = r.DeTai?._id || r.DeTai;
+            return rid && rid.toString() === deTaiId;
+          });
+          setRegistrations(topicRegs);
+        } catch (e) { setRegistrations([]); }
       } catch (e) {
         setBaiTest(null);
       }
@@ -101,7 +112,8 @@ const EntranceTestManager = () => {
         tieuDe: tieuDe || `Bài test: ${topic?.TenDeTai || ''}`,
         moTa,
         cauHoi,
-        thoiGianLam
+        thoiGianLam,
+        nguongDat
       });
       message.success('Tạo bài test thành công!');
       fetchData();
@@ -138,29 +150,57 @@ const EntranceTestManager = () => {
   // Bảng kết quả
   const resultColumns = [
     {
-      title: 'Hạng',
+      title: 'STT',
       key: 'rank',
-      width: 60,
-      render: (_, __, idx) => {
-        const icons = ['🥇', '🥈', '🥉'];
-        return <Text strong style={{ fontSize: 18 }}>{icons[idx] || idx + 1}</Text>;
-      }
+      width: 50,
+      render: (_, __, idx) => <Text strong>{idx + 1}</Text>
     },
     {
-      title: 'Sinh Viên',
+      title: 'Nhóm / Sinh Viên',
       key: 'student',
-      render: (_, r) => <Text strong>{r.SinhVien?.HoTen || 'N/A'} ({r.SinhVien?.MaSV})</Text>,
+      render: (_, r) => (
+        <div>
+          <Text strong>{r.SinhVien?.HoTen || 'N/A'} ({r.SinhVien?.MaSV})</Text>
+          {r.Nhom && <Tag color="blue" style={{ marginLeft: 6, fontSize: 10 }}>{r.Nhom.TenNhom || 'Nhóm'}</Tag>}
+        </div>
+      ),
     },
     {
       title: 'Tổng Điểm',
       key: 'score',
-      width: 120,
+      width: 110,
       align: 'center',
-      render: (_, r) => (
-        <Text strong style={{ fontSize: 18, color: '#eb2f96' }}>
-          {r.TongDiem} / {r.DiemToiDa}
-        </Text>
-      ),
+      render: (_, r) => {
+        const pct = r.DiemToiDa > 0 ? Math.round((r.TongDiem / r.DiemToiDa) * 100) : 0;
+        return (
+          <div>
+            <Text strong style={{ fontSize: 16, color: '#eb2f96' }}>{r.TongDiem} / {r.DiemToiDa}</Text>
+            <br />
+            <Text type="secondary" style={{ fontSize: 12 }}>{pct}%</Text>
+          </div>
+        );
+      },
+    },
+    {
+      title: 'Kết quả',
+      key: 'result',
+      width: 140,
+      align: 'center',
+      render: (_, r) => {
+        const pct = r.DiemToiDa > 0 ? Math.round((r.TongDiem / r.DiemToiDa) * 100) : 0;
+        const threshold = baiTest?.NguongDat || 75;
+        const passed = pct >= threshold;
+        // Check competition status from DangKyDeTai
+        const regStatus = registrations.find(reg => 
+          reg.Nhom?._id === r.Nhom?._id || reg.SinhVien?._id === r.SinhVien?._id
+        );
+        const isWinner = regStatus?.TrangThai === 'DaDuyet';
+        const isLost = regStatus?.TrangThai === 'Thua';
+        
+        if (isWinner) return <Tag color="gold" style={{ fontSize: 13 }}>🏆 WINNER</Tag>;
+        if (isLost) return <Tag color="default" style={{ fontSize: 13 }}>😞 Thua</Tag>;
+        return <Tag color={passed ? 'success' : 'error'} style={{ fontSize: 13 }}>{passed ? `✅ Đạt (≥${threshold}%)` : `❌ Không đạt`}</Tag>;
+      },
     },
     {
       title: 'Chi Tiết',
@@ -182,16 +222,6 @@ const EntranceTestManager = () => {
       render: (_, r) => r.TxHash
         ? <Tag color="green" icon={<ShieldCheck size={10} />}>On-chain</Tag>
         : <Tag color="default">Chưa ghi</Tag>,
-    },
-    {
-      title: '',
-      key: 'action',
-      width: 120,
-      render: (_, r, idx) => idx === 0 && baiTest?.TrangThai === 'MoNop' ? (
-        <Popconfirm title="Chọn nhóm này là người thắng?" onConfirm={() => handleSelectWinner(r)}>
-          <Button type="primary" size="small" icon={<Trophy size={14} />}>Chọn</Button>
-        </Popconfirm>
-      ) : null,
     },
   ];
 
@@ -218,11 +248,62 @@ const EntranceTestManager = () => {
                 <Descriptions column={2} bordered size="small">
                   <Descriptions.Item label="Tiêu đề">{baiTest.TieuDe}</Descriptions.Item>
                   <Descriptions.Item label="Trạng thái">
-                    <Tag color={baiTest.TrangThai === 'MoNop' ? 'green' : 'red'}>{baiTest.TrangThai}</Tag>
+                    <Tag color={baiTest.TrangThai === 'MoNop' ? 'green' : 'red'}>{baiTest.TrangThai === 'MoNop' ? 'Đang mở' : 'Đã đóng'}</Tag>
                   </Descriptions.Item>
                   <Descriptions.Item label="Thời gian">{baiTest.ThoiGianLam} phút</Descriptions.Item>
                   <Descriptions.Item label="Số câu">{baiTest.CauHoi?.length || 0}</Descriptions.Item>
+                  <Descriptions.Item label="Ngưỡng đạt" span={2}>
+                    <Tag color="blue" style={{ fontSize: 14 }}>≥ {baiTest.NguongDat || 75}%</Tag>
+                    <Text type="secondary" style={{ marginLeft: 8 }}>SV đạt ngưỡng sẽ được duyệt tự động</Text>
+                  </Descriptions.Item>
                 </Descriptions>
+
+                {/* Chi tiết câu hỏi */}
+                <Title level={5} style={{ marginTop: 20 }}>Chi tiết câu hỏi</Title>
+                {(baiTest.CauHoi || []).map((q, idx) => (
+                  <Card key={idx} size="small" style={{ marginBottom: 8, borderLeft: `4px solid ${q.LoaiCauHoi === 'TracNghiem' ? '#1677ff' : '#722ed1'}` }}>
+                    <Space style={{ marginBottom: 8 }}>
+                      <Tag color={q.LoaiCauHoi === 'TracNghiem' ? 'blue' : 'purple'}>
+                        {q.LoaiCauHoi === 'TracNghiem' ? 'Trắc Nghiệm' : 'Code'}
+                      </Tag>
+                      <Text strong>Câu {idx + 1}</Text>
+                      <Text type="secondary">({q.Diem} điểm)</Text>
+                    </Space>
+                    <Paragraph style={{ marginBottom: 8 }}>{q.NoiDung}</Paragraph>
+
+                    {q.LoaiCauHoi === 'TracNghiem' && (
+                      <div>
+                        {(q.LuaChon || []).map((lc, cIdx) => {
+                          const letter = String.fromCharCode(65 + cIdx);
+                          const isCorrect = q.DapAnDung === letter;
+                          return (
+                            <div key={cIdx} style={{
+                              padding: '4px 8px', marginBottom: 2, borderRadius: 4,
+                              background: isCorrect ? '#f6ffed' : 'transparent',
+                              border: isCorrect ? '1px solid #b7eb8f' : '1px solid #f0f0f0'
+                            }}>
+                              <Tag color={isCorrect ? 'green' : 'default'}>{letter}</Tag>
+                              {lc}
+                              {isCorrect && <Text type="success" style={{ marginLeft: 8 }}>✓ Đáp án đúng</Text>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {q.LoaiCauHoi === 'Code' && (
+                      <div>
+                        <Text type="secondary">Ngôn ngữ: {q.NgonNgu || 'python'}</Text>
+                        <div style={{ marginTop: 8 }}>
+                          <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>Đáp án mẫu:</Text>
+                          <Editor height="150px" language={q.NgonNgu || 'python'} value={q.DapAnMau || ''}
+                            theme="vs-dark" options={{ readOnly: true, minimap: { enabled: false }, fontSize: 13 }} />
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                ))}
+
                 <Popconfirm title="Xóa bài test này?" onConfirm={handleDelete}>
                   <Button danger style={{ marginTop: 16 }} icon={<Trash2 size={14} />}>Xóa bài test</Button>
                 </Popconfirm>
@@ -231,7 +312,7 @@ const EntranceTestManager = () => {
           },
           {
             key: 'results',
-            label: <Badge count={results.length} offset={[10, 0]}>🏆 Bảng Xếp Hạng</Badge>,
+            label: <Badge count={results.length} offset={[10, 0]}>📊 Kết Quả Test</Badge>,
             children: (
               <Table
                 columns={resultColumns}
@@ -252,6 +333,11 @@ const EntranceTestManager = () => {
             <Space>
               <Text>Thời gian làm bài:</Text>
               <InputNumber value={thoiGianLam} onChange={setThoiGianLam} min={5} max={180} addonAfter="phút" />
+            </Space>
+            <Space>
+              <Text>Ngưỡng đạt (auto-duyệt):</Text>
+              <InputNumber value={nguongDat} onChange={setNguongDat} min={0} max={100} addonAfter="%" />
+              <Text type="secondary" style={{ fontSize: 12 }}>SV đạt ngưỡng này sẽ được duyệt tự động</Text>
             </Space>
 
             <Title level={5}>Câu Hỏi ({cauHoi.length})</Title>

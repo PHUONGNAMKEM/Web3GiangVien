@@ -7,7 +7,7 @@ const logger = require('../config/logger');
 // GV tạo bài test cho đề tài
 exports.createTest = async (req, res) => {
     try {
-        const { deTaiId, tieuDe, moTa, cauHoi, thoiGianLam } = req.body;
+        const { deTaiId, tieuDe, moTa, cauHoi, thoiGianLam, nguongDat } = req.body;
 
         const deTai = await DeTai.findById(deTaiId);
         if (!deTai) return res.status(404).json({ error: 'Không tìm thấy đề tài.' });
@@ -21,7 +21,8 @@ exports.createTest = async (req, res) => {
             TieuDe: tieuDe || `Bài test: ${deTai.TenDeTai}`,
             MoTa: moTa || '',
             CauHoi: cauHoi || [],
-            ThoiGianLam: thoiGianLam || 30
+            ThoiGianLam: thoiGianLam || 30,
+            NguongDat: nguongDat != null ? nguongDat : 75
         });
 
         // Đánh dấu đề tài có bài test
@@ -77,6 +78,7 @@ exports.getTestForStudent = async (req, res) => {
             CauHoi: safeCauHoi,
             ThoiGianLam: baiTest.ThoiGianLam,
             TrangThai: baiTest.TrangThai,
+            NguongDat: baiTest.NguongDat,
             soCauHoi: baiTest.CauHoi.length
         });
     } catch (err) {
@@ -84,19 +86,136 @@ exports.getTestForStudent = async (req, res) => {
     }
 };
 
-// SV nộp bài test → AI chấm tự động
+// === HELPER: Xác định nhóm thắng (Hybrid) ===
+async function tryClaimWinner(dangKyId, deTaiId, thoiGianSubmit, io) {
+    // 1. Đã có nhóm thắng chưa?
+    const existingWinner = await DangKyDeTai.findOne({ DeTai: deTaiId, TrangThai: 'DaDuyet' });
+    if (existingWinner) {
+        await DangKyDeTai.findByIdAndUpdate(dangKyId, { TrangThai: 'Thua' });
+        return 'lost';
+    }
+
+    // 2. Có nhóm nào submit TRƯỚC mình mà chưa có kết quả không?
+    const earlierPending = await DangKyDeTai.findOne({
+        DeTai: deTaiId,
+        _id: { $ne: dangKyId },
+        TrangThai: 'DaSubmit',
+        ThoiGianSubmit: { $lt: thoiGianSubmit }
+    });
+
+    if (earlierPending) {
+        // Có người submit trước mình mà chưa biết pass/fail → chờ
+        await DangKyDeTai.findByIdAndUpdate(dangKyId, { TrangThai: 'ChoDoi' });
+        logger.info(`[TEST] DangKy ${dangKyId} waiting for earlier submission ${earlierPending._id}`);
+        return 'waiting';
+    }
+
+    // 3. Không ai trước mình → Claim winner (atomic)
+    const winner = await DangKyDeTai.findOneAndUpdate(
+        { _id: dangKyId, TrangThai: { $in: ['DaSubmit', 'ChoDoi'] } },
+        { TrangThai: 'DaDuyet' },
+        { new: true }
+    ).populate('Nhom');
+
+    if (!winner) {
+        // Ai đó đã claim trước → thua
+        return 'lost';
+    }
+
+    // THẮNG! → Đánh thua tất cả nhóm khác
+    await DangKyDeTai.updateMany(
+        { DeTai: deTaiId, _id: { $ne: dangKyId }, TrangThai: { $in: ['ChoTest', 'DangLamTest', 'DaSubmit', 'ChoDoi'] } },
+        { TrangThai: 'Thua' }
+    );
+
+    // Chốt đề tài + đóng bài test
+    await DeTai.findByIdAndUpdate(deTaiId, { TrangThai: 'DaChot' });
+    const baiTest = await BaiTest.findOne({ DeTai: deTaiId });
+    if (baiTest) await BaiTest.findByIdAndUpdate(baiTest._id, { TrangThai: 'DaDong' });
+
+    // Emit WebSocket
+    if (io) {
+        io.to(`competition:${deTaiId}`).emit('competition:winner', {
+            deTaiId,
+            winnerNhomId: winner.Nhom?._id?.toString(),
+            winnerName: winner.Nhom?.TenNhom || 'Nhóm thắng cuộc'
+        });
+    }
+
+    logger.info(`[TEST] 🏆 WINNER: DangKy ${dangKyId} for topic ${deTaiId}`);
+    return 'winner';
+}
+
+// === HELPER: Giải phóng nhóm đang ChoDoi khi nhóm trước đó có kết quả ===
+async function resolveWaitingGroups(deTaiId, io) {
+    // Lấy các nhóm đang ChoDoi, sắp xếp theo ThoiGianSubmit sớm nhất
+    const waitingGroups = await DangKyDeTai.find({
+        DeTai: deTaiId,
+        TrangThai: 'ChoDoi'
+    }).sort({ ThoiGianSubmit: 1 });
+
+    for (const group of waitingGroups) {
+        // Còn ai submit trước group mà chưa có kết quả?
+        const earlierPending = await DangKyDeTai.findOne({
+            DeTai: deTaiId,
+            _id: { $ne: group._id },
+            TrangThai: 'DaSubmit',
+            ThoiGianSubmit: { $lt: group.ThoiGianSubmit }
+        });
+
+        if (!earlierPending) {
+            // Không còn ai trước → nhóm này có thể claim winner
+            const result = await tryClaimWinner(group._id, deTaiId, group.ThoiGianSubmit, io);
+            if (result === 'winner') break; // Đã có winner, dừng
+        }
+    }
+}
+
+// SV nộp bài test → AI chấm tự động → Hybrid competition logic
 exports.submitTest = async (req, res) => {
     try {
-        const { sinhVienId, traLoi, thoiGianBatDau } = req.body;
+        const { sinhVienId, nhomId, traLoi, thoiGianBatDau } = req.body;
         const baiTest = await BaiTest.findById(req.params.id);
         if (!baiTest) return res.status(404).json({ error: 'Không tìm thấy bài test.' });
         if (baiTest.TrangThai === 'DaDong') return res.status(400).json({ error: 'Bài test đã đóng.' });
 
         // Kiểm tra đã nộp chưa
-        const existing = await KetQuaTest.findOne({ BaiTest: baiTest._id, SinhVien: sinhVienId });
-        if (existing) return res.status(400).json({ error: 'Bạn đã nộp bài test này rồi.' });
+        const existingResult = await KetQuaTest.findOne({ BaiTest: baiTest._id, SinhVien: sinhVienId });
+        if (existingResult) return res.status(400).json({ error: 'Bạn đã nộp bài test này rồi.' });
 
-        // Chấm điểm tự động
+        // === 1. GHI ThoiGianSubmit NGAY LẬP TỨC (trước khi AI chấm) ===
+        const thoiGianSubmit = new Date();
+
+        // Tìm đăng ký của nhóm/SV cho đề tài này
+        let dangKy = null;
+        if (nhomId) {
+            dangKy = await DangKyDeTai.findOne({
+                DeTai: baiTest.DeTai,
+                Nhom: nhomId,
+                TrangThai: { $in: ['ChoTest', 'DangLamTest'] }
+            });
+        }
+        if (!dangKy) {
+            dangKy = await DangKyDeTai.findOne({
+                DeTai: baiTest.DeTai,
+                TrangThai: { $in: ['ChoTest', 'DangLamTest'] },
+                $or: [
+                    { SinhVien: sinhVienId },
+                    { TruongNhom: sinhVienId },
+                    { 'ThanhVien.SinhVien': sinhVienId }
+                ]
+            });
+        }
+
+        // Cập nhật ThoiGianSubmit + TrangThai = DaSubmit
+        if (dangKy) {
+            await DangKyDeTai.findByIdAndUpdate(dangKy._id, {
+                ThoiGianSubmit: thoiGianSubmit,
+                TrangThai: 'DaSubmit'
+            });
+        }
+
+        // === 2. AI CHẤM ĐIỂM ===
         const ketQuaTraLoi = [];
         let tongDiem = 0;
         let diemToiDa = 0;
@@ -107,51 +226,39 @@ exports.submitTest = async (req, res) => {
             diemToiDa += cauHoi.Diem || 1;
 
             if (cauHoi.LoaiCauHoi === 'TracNghiem') {
-                // So khớp đáp án trực tiếp
                 const isCorrect = svAnswer.toUpperCase().trim() === (cauHoi.DapAnDung || '').toUpperCase().trim();
                 const diem = isCorrect ? (cauHoi.Diem || 1) : 0;
                 tongDiem += diem;
                 ketQuaTraLoi.push({
-                    CauHoiIndex: i,
-                    LoaiCauHoi: 'TracNghiem',
-                    TraLoiText: svAnswer,
-                    Diem: diem,
-                    DiemToiDa: cauHoi.Diem || 1,
-                    DungSai: isCorrect
+                    CauHoiIndex: i, LoaiCauHoi: 'TracNghiem',
+                    TraLoiText: svAnswer, Diem: diem, DiemToiDa: cauHoi.Diem || 1, DungSai: isCorrect
                 });
             } else if (cauHoi.LoaiCauHoi === 'Code') {
-                // Dùng SBERT so sánh code SV vs code mẫu GV
                 let similarity = 0;
                 try {
                     const axios = require('axios');
                     const response = await axios.post('http://127.0.0.1:8001/compare-code', {
-                        student_code: svAnswer,
-                        answer_code: cauHoi.DapAnMau || ''
+                        student_code: svAnswer, answer_code: cauHoi.DapAnMau || ''
                     }, { timeout: 15000 });
                     similarity = response.data.similarity || 0;
                 } catch (aiErr) {
                     logger.warn(`[TEST] SBERT compare-code failed: ${aiErr.message}`);
-                    similarity = 0;
                 }
-
                 const diem = Math.round(similarity * (cauHoi.Diem || 1) * 100) / 100;
                 tongDiem += diem;
                 ketQuaTraLoi.push({
-                    CauHoiIndex: i,
-                    LoaiCauHoi: 'Code',
-                    TraLoiText: svAnswer,
-                    Diem: diem,
-                    DiemToiDa: cauHoi.Diem || 1,
+                    CauHoiIndex: i, LoaiCauHoi: 'Code',
+                    TraLoiText: svAnswer, Diem: diem, DiemToiDa: cauHoi.Diem || 1,
                     AI_Similarity: Math.round(similarity * 100) / 100
                 });
             }
         }
 
-        // Ghi kết quả blockchain (non-blocking)
+        // === 3. GHI BLOCKCHAIN (non-blocking) ===
         let txHash = null;
         try {
             const contractService = require('../services/thesisContractService');
-            const scoreForChain = Math.round((tongDiem / diemToiDa) * 100); // 0-100
+            const scoreForChain = Math.round((tongDiem / diemToiDa) * 100);
             txHash = await contractService.submitTestResultOnChain(
                 baiTest.DeTai.toString(), sinhVienId, scoreForChain / 10
             );
@@ -159,23 +266,73 @@ exports.submitTest = async (req, res) => {
             logger.warn(`[TEST] Blockchain submit failed (non-blocking): ${bcErr.message}`);
         }
 
+        // === 4. LƯU KẾT QUẢ ===
         const ketQua = await KetQuaTest.create({
             BaiTest: baiTest._id,
             DeTai: baiTest.DeTai,
             SinhVien: sinhVienId,
+            Nhom: nhomId || dangKy?.Nhom || null,
+            DangKyDeTai: dangKy?._id || null,
             TraLoi: ketQuaTraLoi,
             TongDiem: Math.round(tongDiem * 100) / 100,
             DiemToiDa: diemToiDa,
             TxHash: txHash,
             ThoiGianBatDau: thoiGianBatDau ? new Date(thoiGianBatDau) : null,
-            ThoiGianNop: new Date()
+            ThoiGianNop: thoiGianSubmit
         });
 
+        // === 5. HYBRID COMPETITION LOGIC ===
+        const phanTram = diemToiDa > 0 ? Math.round((tongDiem / diemToiDa) * 100) : 0;
+        const nguongDat = baiTest.NguongDat || 75;
+        const isDat = phanTram >= nguongDat;
+        const io = req.app.get('io');
+        let competitionResult = 'none';
+
+        if (dangKy) {
+            if (!isDat) {
+                // Không đạt ngưỡng → TuChoi
+                await DangKyDeTai.findByIdAndUpdate(dangKy._id, { TrangThai: 'TuChoi' });
+                competitionResult = 'rejected';
+                logger.info(`[TEST] REJECTED: ${sinhVienId} scored ${phanTram}% < ${nguongDat}%`);
+
+                // Kiểm tra nhóm ChoDoi có thể claim winner
+                await resolveWaitingGroups(baiTest.DeTai, io);
+
+                // Emit status update
+                if (io) {
+                    io.to(`competition:${baiTest.DeTai}`).emit('competition:status', {
+                        deTaiId: baiTest.DeTai.toString(),
+                        nhomId: (nhomId || dangKy.Nhom || '').toString(),
+                        status: 'TuChoi'
+                    });
+                }
+            } else {
+                // Đạt ngưỡng → tryClaimWinner (Hybrid)
+                competitionResult = await tryClaimWinner(dangKy._id, baiTest.DeTai, thoiGianSubmit, io);
+                logger.info(`[TEST] ${sinhVienId} scored ${phanTram}% >= ${nguongDat}% | competition=${competitionResult}`);
+            }
+        }
+
         logger.info(`[TEST] Student ${sinhVienId} submitted test | score=${tongDiem}/${diemToiDa} | txHash=${txHash || 'N/A'}`);
+
+        // === 6. TRẢ KẾT QUẢ ===
+        const messageMap = {
+            'winner': '🏆 Chúc mừng! Nhóm bạn giành được đề tài!',
+            'waiting': '⏳ Đạt ngưỡng! Đang chờ kết quả nhóm submit trước...',
+            'lost': '😞 Đạt ngưỡng nhưng đã có nhóm khác thắng trước.',
+            'rejected': '❌ Bạn chưa đạt ngưỡng yêu cầu.',
+            'none': isDat ? 'Đạt ngưỡng yêu cầu!' : 'Chưa đạt ngưỡng yêu cầu.'
+        };
+
         res.status(201).json({
-            message: 'Nộp bài test thành công!',
+            message: messageMap[competitionResult] || messageMap.none,
             data: ketQua,
-            blockchainStatus: txHash ? 'success' : 'failed'
+            blockchainStatus: txHash ? 'success' : 'failed',
+            autoResult: competitionResult,
+            phanTram,
+            nguongDat,
+            isDat,
+            competitionResult
         });
     } catch (err) {
         logger.error(`[TEST] Submit failed: ${err.message}`);
@@ -188,6 +345,7 @@ exports.getTestResults = async (req, res) => {
     try {
         const results = await KetQuaTest.find({ BaiTest: req.params.id })
             .populate('SinhVien', 'HoTen MaSV Email')
+            .populate('Nhom', 'TenNhom')
             .sort({ TongDiem: -1 });
         res.json(results);
     } catch (err) {

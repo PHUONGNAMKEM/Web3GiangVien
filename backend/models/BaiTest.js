@@ -17,6 +17,7 @@ const baiTestSchema = new mongoose.Schema({
     Diem: { type: Number, default: 1 }               // Điểm tối đa câu này
   }],
   ThoiGianLam: { type: Number, default: 30 },       // Phút
+  NguongDat: { type: Number, default: 75, min: 0, max: 100 }, // Ngưỡng đạt (%), >= thì auto-approve
   TrangThai: { type: String, enum: ['MoNop', 'DaDong'], default: 'MoNop' }
 }, { timestamps: true });
 
