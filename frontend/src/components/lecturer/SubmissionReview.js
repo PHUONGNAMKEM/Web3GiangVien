@@ -3,6 +3,7 @@ import { Table, Button, Badge, Drawer, Alert, Typography, InputNumber, Space, me
 import { CheckSquare, ShieldCheck, BrainCircuit, ScanSearch, Fingerprint, ExternalLink, Download, Clock, RefreshCw } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
+import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -46,6 +47,7 @@ const getBlockchainStatusMeta = (status) => {
 };
 
 const SubmissionReview = () => {
+  const isMobile = useIsMobile();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -167,25 +169,52 @@ const SubmissionReview = () => {
     setGvRubricsScores([]);
     setProgressSummary(null);
 
-    // Nếu đã chấm điểm rồi, lấy thông tin điểm đã lưu
-    if (record.status === 'DaCham' && record.grade) {
-      setExistingGrade(record.grade);
-      setScore(record.grade.Diem || 0);
-      if (record.grade.RubricsResult && record.grade.RubricsResult.length > 0) {
-        setRubricsResult(record.grade.RubricsResult);
-        setGvRubricsScores(record.grade.RubricsResult);
+    let workingRecord = record;
+    if (record.submission?._id) {
+      try {
+        const extractedData = await aiApiService.getExtractedText(record.submission._id);
+        workingRecord = {
+          ...record,
+          submission: {
+            ...record.submission,
+            ...extractedData
+          }
+        };
+        setSelectedSubmission(workingRecord);
+        setSubmissions(prev => prev.map(item =>
+          item.submission?._id === record.submission._id ? workingRecord : item
+        ));
+      } catch (err) {
+        console.warn('Khong lay duoc ExtractedText:', err);
       }
     }
 
-    if (record.submission) {
-      const topic = record.topic;
+    // Nếu đã chấm điểm rồi, lấy thông tin điểm đã lưu
+    if (workingRecord.status === 'DaCham' && workingRecord.grade) {
+      setExistingGrade(workingRecord.grade);
+      setScore(workingRecord.grade.Diem || 0);
+      if (workingRecord.grade.RubricsResult && workingRecord.grade.RubricsResult.length > 0) {
+        setRubricsResult(workingRecord.grade.RubricsResult);
+        setGvRubricsScores(workingRecord.grade.RubricsResult);
+      }
+    }
+
+    if (workingRecord.submission) {
+      const topic = workingRecord.topic;
       const hasSuDungRubrics = topic?.SuDungRubrics && topic?.Rubrics && topic.Rubrics.length > 0;
 
       setAnalyzing(true);
       try {
+        const extractedText = workingRecord.submission.ExtractedText;
+        const metadataFallback = [
+          `Đề tài: ${topic?.TenDeTai || ''}`,
+          topic?.MoTa ? `Mô tả: ${topic.MoTa}` : '',
+          (topic?.YeuCau || []).length > 0 ? `Yêu cầu: ${topic.YeuCau.join(', ')}` : ''
+        ].filter(Boolean).join('\n');
+        const textForAI = extractedText || metadataFallback;
+
         if (hasSuDungRubrics) {
           // === RUBRICS MODE: gọi analyze-with-rubrics ===
-          const textForAI = `Báo cáo Đồ án: ${topic?.TenDeTai || ''}. ${topic?.MoTa || ''}. Sinh viên sử dụng các công nghệ: ${(topic?.YeuCau || []).join(', ')}.`;
           const aiResult = await aiApiService.analyzeReportWithRubrics(textForAI, topic.Rubrics);
 
           setAiAnalysis({
@@ -193,6 +222,8 @@ const SubmissionReview = () => {
             feedback: aiResult.feedback,
             model: aiResult.model || 'vinai/phobert-base',
             chunks_info: aiResult.chunks_info || [],
+            security_flags: aiResult.security_flags || [],
+            repetition_rate: aiResult.repetition_rate ?? null,
           });
           setRubricsResult(aiResult.rubrics_result || []);
           // Init GV scores from AI suggestions
@@ -208,14 +239,15 @@ const SubmissionReview = () => {
           setScore(initScore);
         } else {
           // === LEGACY MODE: chấm tự do ===
-          const textForAI = `Báo cáo Đồ án: ${topic?.TenDeTai || ''}. ${topic?.MoTa || ''}. Sinh viên sử dụng các công nghệ: ${(topic?.YeuCau || []).join(', ')}.`;
           const topicReqs = topic?.YeuCau || [];
           const aiResult = await aiApiService.analyzeReportAI(textForAI, topicReqs);
           setAiAnalysis({
             score: aiResult.score,
             feedback: aiResult.feedback,
             issues: aiResult.issues || [],
-            model: aiResult.model || 'vinai/phobert-base'
+            model: aiResult.model || 'vinai/phobert-base',
+            security_flags: aiResult.security_flags || [],
+            repetition_rate: aiResult.repetition_rate ?? null,
           });
           setScore(aiResult.score);
         }
@@ -234,7 +266,7 @@ const SubmissionReview = () => {
     }
 
     try {
-      const progressRes = await aiApiService.getProgressBySinhVien(record.student?._id, record.topic?._id);
+      const progressRes = await aiApiService.getProgressBySinhVien(workingRecord.student?._id, workingRecord.topic?._id);
       setProgressSummary(buildProgressSummary(progressRes.data || []));
     } catch (err) {
       console.error('Lỗi lấy tóm tắt tiến độ:', err);
@@ -264,6 +296,8 @@ const SubmissionReview = () => {
         nhanXet: aiAnalysis?.feedback || "",
         aiScore: aiAnalysis?.score || 0,
         aiFeedback: aiAnalysis?.feedback || "",
+        aiSecurityFlags: aiAnalysis?.security_flags || [],
+        aiRepetitionRate: aiAnalysis?.repetition_rate ?? null,
         rubricsResult: gvRubricsScores.length > 0 ? gvRubricsScores : undefined,
       };
 
@@ -501,6 +535,7 @@ const SubmissionReview = () => {
       title: 'Thời Gian Nộp',
       key: 'submitDate',
       width: 160,
+      className: 'hide-on-mobile',
       render: (_, record) => (
         record.submission
           ? new Date(record.submission.NgayNop || record.submission.createdAt).toLocaleString('vi-VN')
@@ -582,7 +617,7 @@ const SubmissionReview = () => {
         rowKey="_id"
         loading={loading}
         locale={{ emptyText: <Empty description="Chưa có sinh viên nào được duyệt đề tài. Hãy duyệt đề tài ở trang Quản Lý Đề Tài trước." /> }}
-        scroll={{ x: 1100 }}
+        scroll={{ x: 'max-content' }}
       />
 
       <Drawer
@@ -592,7 +627,7 @@ const SubmissionReview = () => {
             <span>Đánh Giá Báo Cáo Môn Học</span>
           </Space>
         }
-        width={650}
+        width={isMobile ? '100vw' : 650}
         placement="right"
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
@@ -627,6 +662,51 @@ const SubmissionReview = () => {
                   <Tag color="cyan">CID: {selectedSubmission.submission.IPFS_CID.substring(0, 16)}...</Tag>
                 </Space>
               </div>
+            )}
+
+            {/* Cảnh báo trạng thái trích xuất PDF */}
+            {selectedSubmission.submission && (
+              (() => {
+                const extractedText = selectedSubmission.submission.ExtractedText;
+                const isUsingFallback = !extractedText;
+                const method = selectedSubmission.submission.ExtractionMethod;
+                const pageCount = selectedSubmission.submission.PageCount;
+                const warnings = selectedSubmission.submission.ExtractionWarnings || [];
+
+                return (
+                  <div style={{ marginBottom: 16 }}>
+                    {isUsingFallback ? (
+                      <Alert
+                        type="warning"
+                        message="Chưa trích xuất được nội dung bài làm từ file PDF nộp"
+                        description="Hệ thống PhoBERT AI sẽ chấm điểm dựa trên mô tả đề tài thay thế. Điểm đánh giá có thể không phản ánh chính xác bài làm thực tế của sinh viên."
+                        showIcon
+                      />
+                    ) : (
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <Alert
+                          type="success"
+                          message={`Đã đọc thành công báo cáo PDF (${method === 'ocr' ? 'OCR quét ảnh' : 'văn bản native'})`}
+                          description={`Hệ thống đã đọc ${pageCount || '?'} trang bài làm thực tế của sinh viên. Đã sẵn sàng phân tích.`}
+                          showIcon
+                        />
+                        {warnings.length > 0 && (
+                          <Alert
+                            type="warning"
+                            message="Phát hiện cảnh báo bảo mật/nội dung"
+                            description={
+                              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                                {warnings.map((w, i) => <li key={i}>{w}</li>)}
+                              </ul>
+                            }
+                            showIcon
+                          />
+                        )}
+                      </Space>
+                    )}
+                  </div>
+                );
+              })()
             )}
 
             <div style={{ padding: 16, background: '#f8f9fa', borderRadius: 8, marginBottom: 24, borderLeft: '4px solid #1677ff' }}>
@@ -888,7 +968,7 @@ const SubmissionReview = () => {
       {/* Drawer xem Tiến Độ */}
       <Drawer
         title={`Tiến độ của sinh viên: ${selectedSubmission?.student?.HoTen || 'N/A'}`}
-        width={550}
+        width={isMobile ? '100vw' : 550}
         placement="right"
         onClose={() => setProgressDrawerVisible(false)}
         open={progressDrawerVisible}
@@ -1044,7 +1124,7 @@ const SubmissionReview = () => {
             Lưu kèm Rubrics
           </Button>
         ]}
-        width={700}
+        width={isMobile ? '95vw' : 700}
       >
         {weeklyTarget && (
           <div>

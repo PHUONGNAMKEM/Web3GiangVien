@@ -19,7 +19,8 @@ exports.analyzeReport = async (text, topicRequirements) => {
             },
             {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Internal-Token': process.env.INTERNAL_TOKEN || ''
                 }
             }
         );
@@ -32,6 +33,9 @@ exports.analyzeReport = async (text, topicRequirements) => {
             score: data.score,
             feedback: data.feedback,
             issues: data.issues || [],
+            security_flags: data.security_flags || [],
+            repetition_rate: data.repetition_rate ?? null,
+            trigram_repetition_rate: data.trigram_repetition_rate ?? null,
             aiProvider: 'local-fastapi',
             model: 'vinai/phobert-base'
         };
@@ -52,7 +56,8 @@ exports.analyzeWithRubrics = async (text, rubrics) => {
             { text, rubrics },
             {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Internal-Token': process.env.INTERNAL_TOKEN || ''
                 },
                 timeout: 60000  // 60s timeout cho phân tích nhiều chunks
             }
@@ -64,6 +69,36 @@ exports.analyzeWithRubrics = async (text, rubrics) => {
     } catch (error) {
         logger.error(`[AI] Rubrics analysis error: ${error.response?.data ? JSON.stringify(error.response.data) : error.message}`);
         throw error;
+    }
+};
+
+const FormData = require('form-data');
+const fs = require('fs');
+
+const EXTRACT_PDF_ENDPOINT = process.env.ML_SERVICE_URL 
+    ? `${process.env.ML_SERVICE_URL}/extract-pdf` 
+    : 'http://127.0.0.1:8001/extract-pdf';
+
+exports.extractPdf = async (filePath) => {
+    try {
+        const form = new FormData();
+        form.append('file', fs.createReadStream(filePath), {
+            filename: 'report.pdf',
+            contentType: 'application/pdf'
+        });
+        
+        const response = await axios.post(EXTRACT_PDF_ENDPOINT, form, {
+            headers: {
+                ...form.getHeaders(),
+                'X-Internal-Token': process.env.INTERNAL_TOKEN || ''
+            },
+            timeout: 120000 // 2 phút cho OCR
+        });
+        
+        return response.data; // { text, page_count, method, warnings }
+    } catch (error) {
+        logger.warn(`[AI] PDF extraction failed: ${error.message}`);
+        return { text: '', page_count: 0, method: 'failed', warnings: [error.message] };
     }
 };
 

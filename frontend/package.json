@@ -1,7 +1,7 @@
 {
-  "name": "web3-hr-frontend",
+  "name": "web3giangvien-frontend",
   "version": "1.0.0",
-  "description": "Modern React frontend for Web3 HR Management System with MetaMask authentication",
+  "description": "Modern React frontend for Web3 GiangVien with MetaMask authentication",
   "main": "src/index.js",
   "scripts": {
     "start": "react-scripts start",

@@ -3,10 +3,12 @@ import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, mess
 import { Plus, Edit2, Trash2, Star, Lock, Eye, Copy } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
+import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Title, Text } = Typography;
 
 const RubricsManagement = () => {
+  const isMobile = useIsMobile();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -151,12 +153,13 @@ const RubricsManagement = () => {
           {record.MacDinh && <Tag color="gold" icon={<Star size={10} style={{ marginRight: 2 }} />}>Mặc định</Tag>}
         </Space>
       ),
-      width: '25%',
+      width: 200,
     },
     {
       title: 'Số Tiêu Chí',
       key: 'soTieuChi',
-      width: '12%',
+      width: 100,
+      responsive: ['sm'],
       render: (_, record) => (
         <Tag color="blue">{record.TieuChi?.length || 0} tiêu chí</Tag>
       ),
@@ -164,7 +167,8 @@ const RubricsManagement = () => {
     {
       title: 'Đã Sử Dụng',
       key: 'daDung',
-      width: '12%',
+      width: 120,
+      responsive: ['md'],
       render: (_, record) => (
         <Badge count={record.SoLuotDung || 0} showZero
           color={record.DaApDung ? '#1677ff' : '#d9d9d9'}
@@ -179,7 +183,8 @@ const RubricsManagement = () => {
     {
       title: 'Trạng Thái',
       key: 'trangThai',
-      width: '12%',
+      width: 120,
+      responsive: ['sm'],
       render: (_, record) => (
         record.DaApDung
           ? <Tag icon={<Lock size={10} style={{ marginRight: 2 }} />} color="volcano">Đã khóa</Tag>
@@ -189,6 +194,7 @@ const RubricsManagement = () => {
     {
       title: 'Thao Tác',
       key: 'action',
+      width: 150,
       render: (_, record) => (
         <Space size="small">
           {!record.MacDinh && (
@@ -245,26 +251,42 @@ const RubricsManagement = () => {
         loading={loading}
         pagination={{ pageSize: 8 }}
         locale={{ emptyText: <Empty description="Chưa có Rubrics Template nào. Hãy tạo mẫu đầu tiên!" /> }}
+        scroll={{ x: 'max-content' }}
         expandable={{
           expandedRowRender: record => (
             <div style={{ padding: '8px 24px', background: '#fafafa', borderRadius: 8 }}>
               {record.MoTaMau && <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>{record.MoTaMau}</Text>}
-              <Table
-                size="small"
-                dataSource={record.TieuChi}
-                pagination={false}
-                rowKey={(_, idx) => idx}
-                columns={[
-                  { title: 'Tiêu chí', dataIndex: 'TenTieuChi', key: 'ten', render: t => <strong>{t}</strong> },
-                  { title: 'Mô tả', dataIndex: 'MoTa', key: 'mota', ellipsis: true },
-                  { title: 'Trọng số', dataIndex: 'TrongSo', key: 'ts', width: 80, render: v => <Tag color="blue">{v}%</Tag> },
-                  { title: 'Điểm tối đa', dataIndex: 'DiemToiDa', key: 'dtd', width: 90, render: v => v || 10 },
-                  {
-                    title: 'Gợi ý AI', dataIndex: 'GoiYChoAI', key: 'ai', width: 200,
-                    render: tags => (tags || []).map((t, i) => <Tag key={i} color="geekblue">{t}</Tag>)
-                  },
-                ]}
-              />
+              <div style={{ overflowX: 'auto' }}>
+                <Table
+                  size="small"
+                  dataSource={record.TieuChi}
+                  pagination={false}
+                  rowKey={(_, idx) => idx}
+                  scroll={{ x: 'max-content' }}
+                  columns={[
+                    { title: 'Tiêu chí', dataIndex: 'TenTieuChi', key: 'ten', render: t => <strong>{t}</strong> },
+                    { title: 'Mô tả', dataIndex: 'MoTa', key: 'mota', ellipsis: true },
+                    { title: 'Trọng số', dataIndex: 'TrongSo', key: 'ts', width: 80, render: v => <Tag color="blue">{v}%</Tag> },
+                    { title: 'Điểm tối đa', dataIndex: 'DiemToiDa', key: 'dtd', width: 90, render: v => v || 10 },
+                    {
+                      title: 'Gợi ý AI', dataIndex: 'GoiYChoAI', key: 'ai', width: 200,
+                      render: tags => {
+                        const validTags = tags || [];
+                        if (validTags.length === 0) return '—';
+                        if (validTags.length <= 2) return validTags.map((t, i) => <Tag key={i} color="geekblue">{t}</Tag>);
+                        return (
+                          <Tooltip title={validTags.join(', ')}>
+                            <Space size={2} wrap>
+                              {validTags.slice(0, 2).map((t, i) => <Tag key={i} color="geekblue">{t}</Tag>)}
+                              <Tag color="purple">+{validTags.length - 2}</Tag>
+                            </Space>
+                          </Tooltip>
+                        );
+                      }
+                    },
+                  ]}
+                />
+              </div>
             </div>
           ),
         }}
@@ -278,7 +300,7 @@ const RubricsManagement = () => {
         onOk={() => form.submit()}
         okText={editingTemplate ? 'Cập Nhật' : 'Tạo Template'}
         cancelText="Hủy"
-        width={800}
+        width={isMobile ? '95vw' : 800}
         destroyOnClose
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>

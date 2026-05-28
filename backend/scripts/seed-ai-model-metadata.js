@@ -38,26 +38,26 @@ const CAC_GIOI_TINH = ['Nam', 'Nữ', 'Khác'];
 const CAC_TRINH_DO = ['Trung cấp', 'Cao đẳng', 'Đại học', 'Thạc sĩ', 'Tiến sĩ'];
 const CAC_TINH_TRANG_HON_NHAN = ['Độc thân', 'Đã kết hôn', 'Khác'];
 const CAC_PHONG_BAN = [
-  'Kỹ thuật',
-  'Sản phẩm',
-  'Nhân sự',
-  'Tài chính',
-  'Kinh doanh',
-  'Marketing',
-  'Vận hành',
-  'Chăm sóc khách hàng',
+  'Công nghệ thông tin',
+  'Khoa học máy tính',
+  'Hệ thống thông tin',
+  'Kỹ thuật phần mềm',
+  'Mạng máy tính',
+  'An toàn thông tin',
+  'Trí tuệ nhân tạo',
+  'Khoa học dữ liệu',
 ];
 const CAC_VAI_TRO = [
   'Lập trình Backend',
   'Lập trình Frontend',
-  'Nhà khoa học dữ liệu',
+  'Nhà nghiên cứu',
   'Kỹ sư QA',
-  'Quản lý sản phẩm',
-  'Chuyên viên nhân sự',
-  'Chuyên viên kinh doanh',
+  'Sinh viên Khóa luận',
+  'Trợ giảng',
+  'Trợ lý nghiên cứu',
   'Kỹ sư DevOps',
   'Thiết kế UI/UX',
-  'Chuyên viên phân tích nghiệp vụ',
+  'Phân tích nghiệp vụ',
 ];
 const CAC_CAP_BAC = ['Thực tập', 'Junior', 'Middle', 'Senior', 'Lead', 'Manager', 'Director'];
 const CAC_XEP_LOAI = ['Xuất sắc', 'Tốt', 'Đạt', 'Chưa đạt'];
@@ -111,7 +111,7 @@ function buildRecord(index) {
   const f1 = Math.max(0.7, Number((accuracy - randomFloat(0.0, 0.05)).toFixed(4)));
   const trainedDate = randomDateWithinDays(540);
 
-  const tenMoHinh = `MoHinhNhanSu-${String(index).padStart(5, '0')}`;
+  const tenMoHinh = `MoHinhHoTroHocTap-${String(index).padStart(5, '0')}`;
   const phienBan = `v${1 + Math.floor(index / 1000)}.${(index % 1000) + 1}.0`;
   const duLieuGiaLap = taoBanGhiGiaLap(index);
 
@@ -121,12 +121,12 @@ function buildRecord(index) {
     loai_mo_hinh: loaiMoHinh,
     ung_dung: ungDung,
     tom_tat_du_lieu: [
-      'Bao gồm 4 nhóm dữ liệu: thông tin cá nhân, công việc, hiệu suất, thái độ & phúc lợi',
-      `Ví dụ nhân viên: ${duLieuGiaLap.thong_tin_ca_nhan.ma_nhan_vien}, phòng ${duLieuGiaLap.thong_tin_ca_nhan.phong_ban}, vai trò ${duLieuGiaLap.thong_tin_cong_viec.vi_tri_cong_viec}`,
+      'Bao gồm 4 nhóm dữ liệu: thông tin cá nhân, học tập, hiệu suất, nghiên cứu & hoạt động',
+      `Ví dụ sinh viên: ${duLieuGiaLap.thong_tin_ca_nhan.ma_nhan_vien}, khóa ${duLieuGiaLap.thong_tin_ca_nhan.phong_ban}, vai trò ${duLieuGiaLap.thong_tin_cong_viec.vi_tri_cong_viec}`,
     ].join('. ') + '.',
     accuracy: Number(accuracy.toFixed(4)),
     f1_score: Number(f1.toFixed(4)),
-    mo_ta_model_uri: `https://models.hr.local/${slugify(ungDung)}/${tenMoHinh}/${phienBan}`,
+    mo_ta_model_uri: `https://models.learning.local/${slugify(ungDung)}/${tenMoHinh}/${phienBan}`,
     last_trained: trainedDate,
     trang_thai: trangThai,
     du_lieu_gia_lap: duLieuGiaLap,

@@ -157,6 +157,14 @@ const web3Theme = createTheme({
             fontSize: '14px',
           },
         },
+        '@media (max-width: 768px)': {
+          '.hide-on-mobile': {
+            display: 'none !important',
+          },
+          '.ant-table-wrapper': {
+            overflowX: 'auto !important',
+          },
+        },
       },
     },
     MuiButton: {

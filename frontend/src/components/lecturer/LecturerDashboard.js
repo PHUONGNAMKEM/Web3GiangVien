@@ -3,10 +3,12 @@ import { Card, Typography, Row, Col, Statistic, Spin } from 'antd';
 import { BookOpen, Users } from 'lucide-react';
 import authService from '../../services/authService';
 import aiApiService from '../../services/aiService';
+import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Title } = Typography;
 
 const LecturerDashboard = () => {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ topics: 0, students: 0 });
   const fetchData = useCallback(async () => {
@@ -41,8 +43,8 @@ const LecturerDashboard = () => {
   return (
     <div>
       <Title level={2}>Dashboard Giảng Viên</Title>
-      <Row gutter={16} style={{ marginTop: 24 }}>
-        <Col span={8}>
+      <Row gutter={[{ xs: 8, sm: 16 }, { xs: 8, sm: 16 }]} style={{ marginTop: 24 }}>
+        <Col xs={24} sm={12} lg={8}>
           <Card bordered={false}>
             <Statistic
               title="Tổng Đề Tài Quản Lý"
@@ -51,7 +53,7 @@ const LecturerDashboard = () => {
             />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={12} lg={8}>
           <Card bordered={false}>
             <Statistic
               title="Sinh Viên Đã Hướng Dẫn"

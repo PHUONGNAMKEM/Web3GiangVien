@@ -9,10 +9,14 @@ const logger = require('./config/logger');
 require('dotenv').config();
 
 const app = express();
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: allowedOrigins,
     methods: ["GET", "POST"]
   }
 });
@@ -21,13 +25,52 @@ const io = socketIo(server, {
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    logger.warn(`[CORS] Blocked origin: ${origin}`);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // HTTP Request Logging (Morgan → Winston)
 const morganStream = { write: (message) => logger.info(`[HTTP] ${message.trim()}`) };
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms', { stream: morganStream }));
+
+const rateLimit = require('express-rate-limit');
+
+// Rate limiter cho upload báo cáo (ngăn spam file)
+const uploadLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 phút
+    max: 3,              // tối đa 3 lần upload/phút/IP
+    message: { error: 'Quá nhiều lần upload. Vui lòng thử lại sau 1 phút.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Rate limiter cho AI scoring
+const aiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    message: { error: 'Quá nhiều yêu cầu chấm điểm. Vui lòng thử lại sau.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Rate limiter cho login (chống brute force)
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 phút
+    max: 20,
+    message: { error: 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau 15 phút.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 // Socket.IO
 io.on('connection', (socket) => {
@@ -70,11 +113,18 @@ const upload = multer({
     },
     filename: function (req, file, cb) {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const ext = path.extname(file.originalname);
-      cb(null, `report-${uniqueSuffix}${ext}`);
+      cb(null, `report-${uniqueSuffix}.pdf`); // Luôn đặt extension .pdf, bỏ qua extension gốc
     }
   }),
-  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+  limits: { fileSize: 20 * 1024 * 1024 }, // Giảm từ 50MB → 20MB
+  fileFilter: function (req, file, cb) {
+    // Chỉ chấp nhận MIME type PDF
+    const allowedMimes = ['application/pdf'];
+    if (!allowedMimes.includes(file.mimetype)) {
+      return cb(new Error('Chỉ chấp nhận file PDF.'), false);
+    }
+    cb(null, true);
+  }
 });
 
 // Import Controllers
@@ -105,8 +155,8 @@ app.get('/', (req, res) => {
 });
 
 // 2. Auth routes
-app.post('/api/auth/challenge', authController.generateChallenge);
-app.post('/api/auth/verify', authController.verifySignature);
+app.post('/api/auth/challenge', loginLimiter, authController.generateChallenge);
+app.post('/api/auth/verify', loginLimiter, authController.verifySignature);
 app.post('/api/auth/logout', authController.authenticateToken, authController.logout);
 
 // 3. Sinh Viên
@@ -145,15 +195,16 @@ app.get('/api/detai/invitations/:svId', ...requireAuth, deTaiController.getMyInv
 app.post('/api/detai/invitation/:id/respond', ...requireStudent, deTaiController.respondToInvitation);
 
 // 6. Báo Cáo
-app.post('/api/baocao/upload', ...requireStudent, upload.single('file'), baoCaoController.uploadBaoCao);
+app.post('/api/baocao/upload', ...requireStudent, uploadLimiter, upload.single('file'), baoCaoController.uploadBaoCao);
 app.get('/api/baocao/detai/:deTaiId', baoCaoController.getBaoCaoByDeTai);
 app.get('/api/baocao/sinhvien/:svId', baoCaoController.getMyBaoCao);
 app.delete('/api/baocao/:id', ...requireStudent, baoCaoController.deleteBaoCao);
 app.get('/api/baocao/giangvien/:gvId', ...requireLecturer, baoCaoController.getBaoCaoByLecturer);
+app.get('/api/baocao/:id/extracted', ...requireLecturer, baoCaoController.getExtractedText);
 
 // 7. Điểm Số
-app.post('/api/diemso', ...requireLecturer, diemSoController.chamDiem);
-app.put('/api/diemso/:id/retry-blockchain', ...requireLecturer, diemSoController.retryBlockchain);
+app.post('/api/diemso', ...requireLecturer, aiLimiter, diemSoController.chamDiem);
+app.put('/api/diemso/:id/retry-blockchain', ...requireLecturer, aiLimiter, diemSoController.retryBlockchain);
 app.get('/api/diemso/sinhvien/:svId', ...requireAuth, diemSoController.getDiemBySinhVien);
 app.get('/api/diemso/comparison/:gvId', ...requireLecturer, diemSoController.getComparison);
 
@@ -176,9 +227,9 @@ app.get('/api/tiendo/detai/:deTaiId', ...requireAuth, tienDoController.getProgre
 app.put('/api/tiendo/:id/nhanxet', ...requireLecturer, tienDoController.commentProgress);
 
 // 9. AI / ML Services
-app.post('/api/ai/analyze-report', ...requireLecturer, aiController.analyzeReport);
-app.post('/api/ai/analyze-rubrics', ...requireLecturer, aiController.analyzeReportWithRubrics);
-app.post('/api/ai/match-student', ...requireStudent, aiController.matchStudent);
+app.post('/api/ai/analyze-report', ...requireLecturer, aiLimiter, aiController.analyzeReport);
+app.post('/api/ai/analyze-rubrics', ...requireLecturer, aiLimiter, aiController.analyzeReportWithRubrics);
+app.post('/api/ai/match-student', ...requireStudent, aiLimiter, aiController.matchStudent);
 
 // 10. Rubrics Template
 app.get('/api/rubrics/giangvien/:gvId', ...requireLecturer, rubricsController.getTemplatesByGV);
@@ -211,6 +262,40 @@ app.post('/api/nhom/:id/leave', ...requireStudent, nhomController.leaveNhom);
 app.post('/api/nhom/:id/transfer-leader', ...requireStudent, nhomController.transferLeader);
 app.post('/api/nhom/:id/chot', ...requireStudent, nhomController.chotNhom);
 app.delete('/api/nhom/:id', ...requireStudent, nhomController.deleteNhom);
+
+// Multer error handler
+app.use((err, req, res, next) => {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+            error: 'File qua lon. Toi da 20MB.',
+            code: 'FILE_TOO_LARGE'
+        });
+    }
+    if (err.message && err.message.includes('PDF')) {
+        return res.status(400).json({
+            error: err.message,
+            code: 'INVALID_FILE_TYPE'
+        });
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+        return res.status(400).json({
+            error: 'File khong hop le.',
+            code: 'UNEXPECTED_FILE'
+        });
+    }
+    if (err.message === 'Not allowed by CORS') {
+        return res.status(403).json({
+            error: 'Origin khong duoc phep',
+            code: 'CORS_BLOCKED'
+        });
+    }
+    logger.error(`[SERVER] Unhandled error: ${err.message}`);
+    res.status(500).json({
+        error: process.env.NODE_ENV === 'production'
+            ? 'Co loi xay ra tren server.'
+            : err.message
+    });
+});
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

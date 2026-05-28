@@ -1,7 +1,7 @@
 {
-  "name": "web3-hr-backend",
+  "name": "web3giangvien-backend",
   "version": "1.0.0",
-  "description": "Web3 HR Management System Backend",
+  "description": "Web3 Learning Support & Thesis Management Backend",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -36,6 +36,8 @@
     "dotenv": "^16.3.1",
     "ethers": "^6.8.0",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.5.2",
+    "form-data": "^4.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.0",
     "morgan": "^1.10.1",

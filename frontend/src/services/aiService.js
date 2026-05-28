@@ -118,6 +118,11 @@ const aiApiService = {
         return response.data;
     },
 
+    getExtractedText: async (baoCaoId) => {
+        const response = await axios.get(`${API_URL}/baocao/${baoCaoId}/extracted`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
     // GV chấm điểm
     chamDiem: async (diemData) => {
         const response = await axios.post(`${API_URL}/diemso`, diemData, { headers: getAuthHeaders() });

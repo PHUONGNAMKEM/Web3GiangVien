@@ -3,6 +3,7 @@ import { Card, Typography, List, Tag, Button, Spin, Modal, Form, Input, InputNum
 import { PlusCircle, Clock, CheckCircle } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
+import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -21,6 +22,7 @@ const WARNING_LABELS = {
 const formatWarningLabel = (warning) => WARNING_LABELS[warning] || warning;
 
 const ProgressLog = () => {
+    const isMobile = useIsMobile();
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [registration, setRegistration] = useState(null);
@@ -451,6 +453,7 @@ const ProgressLog = () => {
                 }}
                 footer={null}
                 destroyOnClose
+                width={isMobile ? '95vw' : 600}
             >
                 <Form form={form} layout="vertical" onFinish={handleCreateLog}>
                     <Divider orientation="left">Báo cáo tuần</Divider>

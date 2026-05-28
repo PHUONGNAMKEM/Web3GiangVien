@@ -3,11 +3,13 @@ import { Upload, message, Typography, Card, Progress, Button, Alert, Skeleton, T
 import { UploadCloud, BookOpen, Trash2, CheckCircle, ExternalLink, ShieldCheck } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
+import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Title, Paragraph, Text } = Typography;
 const { Dragger } = Upload;
 
 const ReportUpload = () => {
+  const isMobile = useIsMobile();
   const [fileList, setFileList] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -155,14 +157,14 @@ const ReportUpload = () => {
 
   if (loadingData) {
     return (
-      <div style={{ maxWidth: 800, margin: '0 auto' }}>
+      <div style={{ maxWidth: isMobile ? '100%' : 800, margin: '0 auto', padding: isMobile ? '0 12px' : 0 }}>
         <Card><Skeleton active paragraph={{ rows: 4 }} /></Card>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ maxWidth: isMobile ? '100%' : 800, margin: '0 auto', padding: isMobile ? '0 12px' : 0 }}>
       <Typography>
         <Title level={2}>Nộp Báo Cáo Đồ Án</Title>
         <Paragraph>
@@ -251,7 +253,7 @@ const ReportUpload = () => {
               {isGroupTopic && (
                 <Alert message="Trưởng nhóm nộp cho cả nhóm" description="File báo cáo bạn nộp sẽ được dùng chung cho tất cả các thành viên trong nhóm." type="info" showIcon style={{ marginBottom: 16 }} />
               )}
-              <Dragger {...props} height={250} style={{ padding: 24, background: '#fafafa' }} disabled={!isApproved}>
+              <Dragger {...props} height={isMobile ? 180 : 250} style={{ padding: isMobile ? 12 : 24, background: '#fafafa' }} disabled={!isApproved}>
                 <p className="ant-upload-drag-icon" style={{ marginBottom: 16 }}>
                   <UploadCloud size={64} color={isApproved ? "#1677ff" : "#d9d9d9"} style={{ opacity: 0.8 }} />
                 </p>
