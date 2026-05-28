@@ -5,11 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import dayjs from 'dayjs';
+import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
 const TopicManagement = () => {
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [topics, setTopics] = useState([]);
   const [registrations, setRegistrations] = useState([]);
@@ -151,6 +153,8 @@ const TopicManagement = () => {
         ChiTietBoSung: chiTietBoSung.filter(item => item.TieuDe && item.NoiDung),
         SoLuongSinhVien: values.soLuongSV || 1,
         Deadline: deadlineDate,
+        HanDangKy: values.hanDangKy ? values.hanDangKy.toDate() : undefined,
+        HanNopBaoCao: values.hanNopBaoCao ? values.hanNopBaoCao.toDate() : undefined,
         GiangVienHuongDan: user.id,
         TrangThai: editingTopic ? editingTopic.TrangThai : 'MoDangKy',
         // Rubrics
@@ -188,6 +192,8 @@ const TopicManagement = () => {
       requires: record.YeuCau || [],
       soLuongSV: record.SoLuongSinhVien,
       deadline: record.Deadline ? dayjs(record.Deadline) : null,
+      hanDangKy: record.HanDangKy ? dayjs(record.HanDangKy) : null,
+      hanNopBaoCao: record.HanNopBaoCao ? dayjs(record.HanNopBaoCao) : null,
     });
     setChiTietBoSung(record.ChiTietBoSung || []);
     setSuDungRubrics(record.SuDungRubrics || false);
@@ -273,6 +279,7 @@ const TopicManagement = () => {
       key: 'soLuong',
       width: 55,
       align: 'center',
+      responsive: ['sm'],
       render: (_, record) => (
         <Tag color={record.SoLuongSinhVien > 1 ? 'blue' : 'default'} style={{ margin: 0 }}>
           {record.SoLuongSinhVien || 1}
@@ -284,6 +291,7 @@ const TopicManagement = () => {
       dataIndex: 'YeuCau',
       key: 'YeuCau',
       width: 200,
+      responsive: ['md'],
       render: tags => (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
           {(tags || []).slice(0, 3).map(tag => (
@@ -298,6 +306,7 @@ const TopicManagement = () => {
       key: 'registrations',
       width: 75,
       align: 'center',
+      responsive: ['sm'],
       render: (_, record) => {
         const count = countRegistrations(record._id);
         return (
@@ -392,7 +401,7 @@ const TopicManagement = () => {
         loading={loading}
         pagination={{ pageSize: 5 }}
         size="small"
-        scroll={{ x: 900 }}
+        scroll={{ x: 'max-content' }}
         expandable={{
           expandedRowRender: record => (
             <div style={{ padding: '8px 24px', background: '#fafafa', borderRadius: 8 }}>
@@ -464,7 +473,7 @@ const TopicManagement = () => {
         onOk={() => form.submit()}
         okText={editingTopic ? "Cập Nhật" : "Lưu Đề Tài"}
         cancelText="Hủy"
-        width={750}
+        width={isMobile ? '95vw' : 750}
       >
         <Form form={form} layout="vertical" onFinish={handleAddSubmit}>
           <Form.Item
@@ -504,8 +513,20 @@ const TopicManagement = () => {
               <InputNumber min={1} style={{ width: '100%' }} size="large" placeholder="1" />
             </Form.Item>
 
-            <Form.Item name="deadline" label="Deadline" style={{ flex: 1 }}>
+            <Form.Item name="deadline" label="Deadline (chung)" style={{ flex: 1 }}>
               <DatePicker style={{ width: '100%' }} size="large" placeholder="Chọn deadline" />
+            </Form.Item>
+          </div>
+
+          <div style={{ display: 'flex', gap: 16 }}>
+            <Form.Item name="hanDangKy" label="Hạn đăng ký" style={{ flex: 1 }}
+              tooltip="Sau mốc này SV không thể đăng ký. Bỏ trống = dùng Deadline chung.">
+              <DatePicker showTime style={{ width: '100%' }} size="large" placeholder="Hạn chót đăng ký" />
+            </Form.Item>
+
+            <Form.Item name="hanNopBaoCao" label="Hạn nộp báo cáo" style={{ flex: 1 }}
+              tooltip="Sau mốc này SV không thể nộp báo cáo. Bỏ trống = dùng Deadline chung.">
+              <DatePicker showTime style={{ width: '100%' }} size="large" placeholder="Hạn chót nộp báo cáo" />
             </Form.Item>
           </div>
 
@@ -668,7 +689,7 @@ const TopicManagement = () => {
             <span>Danh sách Sinh viên Đăng ký</span>
           </Space>
         }
-        width={500}
+        width={isMobile ? '100vw' : 500}
         placement="right"
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}

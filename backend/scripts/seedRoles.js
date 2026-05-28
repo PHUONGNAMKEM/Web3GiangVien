@@ -60,7 +60,7 @@ const defaultRoles = [
   {
     role_id: '01926d2c-a8d1-7c3e-8f2a-1b3c4d5e6f7b', // Manager
     ten_vai_tro: 'Manager',
-    mo_ta: 'Quản lý phòng ban, nhân viên và phê duyệt các yêu cầu',
+    mo_ta: 'Quản lý khóa luận, sinh viên và phê duyệt tiến độ',
     cap_do_uu_tien: 50,
     trang_thai: 'Hoạt động',
     permissions: {
@@ -114,7 +114,7 @@ const defaultRoles = [
   {
     role_id: '01926d2c-a8d1-7c3e-8f2a-1b3c4d5e6f7c', // Employee
     ten_vai_tro: 'Employee',
-    mo_ta: 'Nhân viên cơ bản với quyền truy cập hạn chế',
+    mo_ta: 'Sinh viên với quyền truy cập theo vai trò',
     cap_do_uu_tien: 10,
     trang_thai: 'Hoạt động',
     permissions: {

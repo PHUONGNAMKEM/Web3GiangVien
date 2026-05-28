@@ -116,7 +116,8 @@ exports.delete = async (req, res) => {
 // Sinh viên đăng ký đề tài (theo nhóm)
 exports.registerTopic = async (req, res) => {
     try {
-        const { sinhVienId, nhomId } = req.body;
+        const { nhomId } = req.body;
+        const sinhVienId = req.user?.id || req.body.sinhVienId;
         const deTaiId = req.params.id;
 
         // 1. Kiểm tra đề tài tồn tại + chưa bị chốt
@@ -124,6 +125,11 @@ exports.registerTopic = async (req, res) => {
         if (!deTai) return res.status(404).json({ error: 'Không tìm thấy đề tài.' });
         if (deTai.TrangThai === 'DaChot') {
             return res.status(400).json({ error: 'Đề tài này đã được chốt cho một nhóm khác.' });
+        }
+        // #7: chặn đăng ký sau hạn đăng ký
+        const hanDangKy = deTai.HanDangKy || deTai.Deadline;
+        if (hanDangKy && new Date() > new Date(hanDangKy)) {
+            return res.status(400).json({ error: 'Đã quá hạn đăng ký đề tài này.', code: 'QUA_HAN_DANG_KY' });
         }
 
         // 2. Kiểm tra nhóm tồn tại + đã chốt
@@ -248,7 +254,18 @@ exports.cancelRegistration = async (req, res) => {
             return res.status(404).json({ error: 'Không tìm thấy lượt đăng ký' });
         }
 
-        // Chỉ cho hủy khi chưa submit bài test
+        // Chỉ thành viên thuộc đăng ký này mới được hủy
+        const sinhVienId = req.user?.id || req.body.sinhVienId;
+        if (sinhVienId) {
+            const thuocDangKy = String(dangKy.SinhVien) === String(sinhVienId)
+                || String(dangKy.TruongNhom) === String(sinhVienId)
+                || (dangKy.ThanhVien || []).some(tv => String(tv.SinhVien) === String(sinhVienId));
+            if (!thuocDangKy) {
+                return res.status(403).json({ error: 'Bạn không thuộc nhóm đăng ký này', code: 'KHONG_THUOC_DANGKY' });
+            }
+        }
+
+        // Cho phép hủy khi đang chờ duyệt, chờ test, hoặc đang làm bài test (chưa submit)
         if (!['ChoDuyet', 'ChoTest', 'DangLamTest'].includes(dangKy.TrangThai)) {
             return res.status(400).json({ error: 'Không thể hủy đăng ký khi đã submit bài test hoặc đề tài đã được duyệt.' });
         }
@@ -268,6 +285,16 @@ exports.approveRegistration = async (req, res) => {
 
         if (!['DaDuyet', 'TuChoi'].includes(trangThai)) {
             return res.status(400).json({ error: 'Trạng thái không hợp lệ' });
+        }
+
+        // Chỉ GV hướng dẫn của đề tài mới được duyệt/từ chối
+        const giangVienId = req.user?.id || req.body.giangVienId;
+        const dangKyHienTai = await DangKyDeTai.findById(id).populate('DeTai');
+        if (!dangKyHienTai) {
+            return res.status(404).json({ error: 'Không tìm thấy đăng ký' });
+        }
+        if (giangVienId && String(dangKyHienTai.DeTai?.GiangVienHuongDan) !== String(giangVienId)) {
+            return res.status(403).json({ error: 'Không phải giảng viên hướng dẫn của đề tài này', code: 'KHONG_PHAI_GV_HUONG_DAN' });
         }
 
         const updated = await DangKyDeTai.findByIdAndUpdate(id, { TrangThai: trangThai }, { new: true })

@@ -187,7 +187,7 @@ const TopicRegistration = () => {
           setFullRegistration(null);
           setTimeout(() => window.location.reload(), 1000); // Tải lại trang cho chắc ăn
         } catch (err) {
-          message.error('Hủy đăng ký thất bại');
+          message.error(err.response?.data?.error || 'Hủy đăng ký thất bại');
         }
       }
     });

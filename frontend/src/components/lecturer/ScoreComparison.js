@@ -4,10 +4,12 @@ import { BarChart2, TrendingUp, TrendingDown, Equal, ShieldCheck, BrainCircuit }
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
+import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Title, Text, Paragraph } = Typography;
 
 const ScoreComparison = () => {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [comparisons, setComparisons] = useState([]);
   const [stats, setStats] = useState({});
@@ -60,6 +62,7 @@ const ScoreComparison = () => {
       key: 'index',
       width: 40,
       align: 'center',
+      responsive: ['sm'],
       render: (_, __, idx) => <Text type="secondary">{idx + 1}</Text>,
     },
     {
@@ -104,6 +107,7 @@ const ScoreComparison = () => {
       key: 'diff',
       width: 90,
       align: 'center',
+      responsive: ['sm'],
       sorter: (a, b) => Math.abs(b.diff) - Math.abs(a.diff),
       render: (_, r) => getDiffTag(r.diff),
     },
@@ -112,6 +116,7 @@ const ScoreComparison = () => {
       key: 'rubrics',
       width: 80,
       align: 'center',
+      responsive: ['md'],
       render: (_, r) => r.rubricsDetail?.length > 0
         ? <Tag color="purple" style={{ margin: 0 }}>{r.rubricsDetail.length} TC</Tag>
         : <Text type="secondary">—</Text>,
@@ -142,37 +147,37 @@ const ScoreComparison = () => {
 
       {/* Thống kê tổng quan */}
       <Row gutter={[12, 12]} style={{ marginBottom: 24 }}>
-        <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
           <Card size="small" style={{ borderTop: '3px solid #1677ff' }}>
             <Statistic title="Số SV đã chấm" value={stats.totalGraded || 0} />
           </Card>
         </Col>
-        <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
           <Card size="small" style={{ borderTop: '3px solid #eb2f96' }}>
             <Statistic title="TB Điểm GV" value={stats.avgGV || 0} precision={2} valueStyle={{ color: '#eb2f96' }} />
           </Card>
         </Col>
-        <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
           <Card size="small" style={{ borderTop: '3px solid #1677ff' }}>
             <Statistic title="TB Điểm AI" value={stats.avgAI || 0} precision={2} valueStyle={{ color: '#1677ff' }} />
           </Card>
         </Col>
-        <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
           <Card size="small" style={{ borderTop: '3px solid #faad14' }}>
             <Statistic title="TB Chênh Lệch" value={stats.avgAbsDiff || 0} precision={2} prefix={<TrendingUp size={14} />} />
           </Card>
         </Col>
-        <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
           <Card size="small" style={{ borderTop: '3px solid #52c41a' }}>
             <Statistic title="Khớp (±0.5)" value={stats.matchCount || 0} suffix={`/ ${stats.totalGraded || 0}`} valueStyle={{ color: '#52c41a' }} />
           </Card>
         </Col>
-        <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
           <Card size="small" style={{ borderTop: '3px solid #722ed1' }}>
             <Statistic title="GV cao hơn" value={stats.gvHigherCount || 0} valueStyle={{ color: '#722ed1' }} prefix={<TrendingUp size={14} />} />
           </Card>
         </Col>
-        <Col xs={12} sm={8} md={6} lg={4} xl={3}>
+        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
           <Card size="small" style={{ borderTop: '3px solid #fa8c16' }}>
             <Statistic title="AI cao hơn" value={stats.aiHigherCount || 0} valueStyle={{ color: '#fa8c16' }} prefix={<TrendingDown size={14} />} />
           </Card>
@@ -182,7 +187,7 @@ const ScoreComparison = () => {
       {/* Biểu đồ */}
       {chartData.length > 0 && (
         <Card title="Biểu Đồ So Sánh" style={{ marginBottom: 24 }} size="small">
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={isMobile ? 200 : 300}>
             <BarChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" fontSize={12} />
@@ -217,7 +222,7 @@ const ScoreComparison = () => {
           rowKey="_id"
           pagination={{ pageSize: 10 }}
           size="small"
-          scroll={{ x: 800 }}
+          scroll={{ x: 'max-content' }}
           locale={{ emptyText: <Empty description="Chưa có dữ liệu chấm điểm nào có điểm AI." /> }}
         />
       </Card>
@@ -225,7 +230,7 @@ const ScoreComparison = () => {
       {/* Drawer chi tiết */}
       <Drawer
         title="Chi Tiết So Sánh"
-        width={500}
+        width={isMobile ? '100vw' : 500}
         open={drawerVisible}
         onClose={() => setDrawerVisible(false)}
       >

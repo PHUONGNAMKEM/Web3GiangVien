@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Typography, Row, Col, Statistic, Alert, Spin, Tag, Tooltip, Form, Input, InputNumber, Select, Button, Modal, message, Divider } from 'antd';
+import { Card, Typography, Row, Col, Statistic, Alert, Spin, Tag, Tooltip, Form, Input, InputNumber, Select, Button, Modal, message, Divider, Space } from 'antd';
 import { Target, Award, BookOpen, ShieldCheck, BrainCircuit, ExternalLink, Edit2, User, Save } from 'lucide-react';
 import authService from '../../services/authService';
 import aiApiService from '../../services/aiService';
+import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Title, Paragraph, Text } = Typography;
 
 const StudentDashboard = () => {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [registration, setRegistration] = useState(null);
   const [grade, setGrade] = useState(null);
@@ -14,6 +16,8 @@ const StudentDashboard = () => {
   const [editingProfile, setEditingProfile] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [invitations, setInvitations] = useState([]);
+  const [progressAverage, setProgressAverage] = useState(null);
+  const [progressCount, setProgressCount] = useState(0);
   const [form] = Form.useForm();
   const user = authService.getCurrentUser();
 
@@ -54,6 +58,19 @@ const StudentDashboard = () => {
             }
           } catch (e) {
             console.warn('Không lấy được điểm:', e);
+          }
+
+          try {
+            const progressRes = await aiApiService.getProgressBySinhVien(user.id, regData.registration.DeTai?._id);
+            const logs = progressRes?.data || [];
+            const graded = logs.filter(item => item.TrangThaiDanhGia === 'Dat' && item.DiemTienDo != null);
+            const avg = graded.length > 0
+              ? Math.round((graded.reduce((sum, item) => sum + (item.DiemTienDo || 0), 0) / graded.length) * 100) / 100
+              : null;
+            setProgressAverage(avg);
+            setProgressCount(graded.length);
+          } catch (e) {
+            console.warn('Không lấy được điểm tiến độ tuần:', e);
           }
         }
       }
@@ -173,9 +190,9 @@ const StudentDashboard = () => {
         />
       ))}
 
-      <Row gutter={16}>
+      <Row gutter={[16, 16]}>
         {/* Card 1: Hồ sơ cá nhân */}
-        <Col span={8}>
+        <Col xs={24} sm={12} lg={8}>
           <Card
             title={<span><User size={18} style={{ marginRight: 8, color: '#1677ff' }} />Hồ Sơ Cá Nhân</span>}
             bordered={false}
@@ -215,7 +232,7 @@ const StudentDashboard = () => {
         </Col>
 
         {/* Card 2: Trạng thái đồ án */}
-        <Col span={8}>
+        <Col xs={24} sm={12} lg={8}>
           <Card
             title={<span><BookOpen size={18} style={{ marginRight: 8, color: '#52c41a' }} />Trạng Thái Đồ Án</span>}
             bordered={false}
@@ -234,7 +251,7 @@ const StudentDashboard = () => {
         </Col>
 
         {/* Card 3: Điểm số */}
-        <Col span={8}>
+        <Col xs={24} sm={12} lg={8}>
           <Card
             title={<span><Award size={18} style={{ marginRight: 8, color: '#eb2f96' }} />Tiến Độ & Điểm</span>}
             bordered={false}
@@ -247,6 +264,13 @@ const StudentDashboard = () => {
                   <div style={{ marginTop: 8 }}>
                     <Text type="secondary"><BrainCircuit size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />Điểm AI gợi ý: </Text>
                     <Text strong style={{ color: '#1677ff' }}>{grade.AI_Score}/10</Text>
+                  </div>
+                )}
+
+                {progressCount > 0 && progressAverage != null && (
+                  <div style={{ marginTop: 8 }}>
+                    <Text type="secondary">Điểm quá trình TB: </Text>
+                    <Text strong style={{ color: '#13c2c2' }}>{progressAverage}/10</Text>
                   </div>
                 )}
 
@@ -281,6 +305,12 @@ const StudentDashboard = () => {
               <div>
                 <Statistic title="Điểm Số On-chain" value="Chưa Tích Lũy" valueStyle={{ fontSize: 16, color: '#8c8c8c' }} />
                 <Paragraph style={{ marginTop: 8 }}><Text type="warning">Đang thực hiện đồ án</Text></Paragraph>
+                {progressCount > 0 && progressAverage != null && (
+                  <Paragraph style={{ marginTop: 8 }}>
+                    <Text type="secondary">Điểm quá trình TB: </Text>
+                    <Text strong style={{ color: '#13c2c2' }}>{progressAverage}/10</Text>
+                  </Paragraph>
+                )}
               </div>
             ) : (
               <Statistic title="Điểm Số On-chain" value="—" valueStyle={{ color: '#d9d9d9' }} />
@@ -297,7 +327,7 @@ const StudentDashboard = () => {
         closable={!needsProfileUpdate}
         maskClosable={!needsProfileUpdate}
         footer={null}
-        width={600}
+        width={isMobile ? '95vw' : 600}
       >
         {needsProfileUpdate && (
           <Alert
@@ -324,13 +354,13 @@ const StudentDashboard = () => {
             <Input placeholder="Nguyễn Văn A" size="large" />
           </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={12}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12}>
               <Form.Item name="MaSV" label="Mã Sinh Viên" rules={[{ required: true, message: 'Vui lòng nhập mã SV!' }]}>
                 <Input placeholder="20110001" size="large" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="GPA" label="GPA (Thang 10)" rules={[{ required: true, message: 'Vui lòng nhập điểm GPA!' }]}>
                 <InputNumber min={0} max={10} step={0.1} style={{ width: '100%' }} size="large" placeholder="8.5" />
               </Form.Item>

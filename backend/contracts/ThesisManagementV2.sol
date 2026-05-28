@@ -41,17 +41,27 @@ contract ThesisManagementV2 {
         uint256 timestamp;
     }
 
+    struct ProgressRecord {
+        bytes32 studentDID;
+        bytes32 topicId;
+        uint16 week;            // Tuần số
+        uint16 score;           // Điểm tiến độ x10 (VD: 85 = 8.5)
+        uint256 timestamp;
+    }
+
     // === MAPPINGS (bytes32 thay cho string → tiết kiệm ~30-50% gas) ===
     mapping(bytes32 => Topic) public topics;                           // topicHash => Topic
     mapping(bytes32 => bytes32[]) public advisorTopics;                // advisorHash => topicHash[]
     mapping(bytes32 => mapping(bytes32 => Submission[])) private submissions; // topicHash => studentHash => Submissions
     mapping(bytes32 => TestResult[]) public testResults;               // topicHash => TestResult[]
+    mapping(bytes32 => mapping(bytes32 => ProgressRecord[])) private progressLogs; // topicHash => studentHash => ProgressRecord[]
 
     // === EVENTS ===
     event TopicRegistered(bytes32 indexed topicHash, string title, bytes32 indexed advisorDID);
     event ReportSubmitted(bytes32 indexed studentDID, bytes32 indexed topicHash, string ipfsCID);
     event GradeFinalized(bytes32 indexed studentDID, bytes32 indexed topicHash, uint8 grade);
     event TestResultSubmitted(bytes32 indexed topicHash, bytes32 indexed studentDID, uint16 score);
+    event ProgressSubmitted(bytes32 indexed topicHash, bytes32 indexed studentDID, uint16 week, uint16 score);
 
     // === 1. Giảng viên đăng ký đề tài (onlyOwner) ===
     function registerTopic(
@@ -141,6 +151,33 @@ contract ThesisManagementV2 {
         }));
 
         emit TestResultSubmitted(topicHash, studentDID, score);
+    }
+
+    // === 4b. Ghi đánh giá tiến độ tuần (#18) ===
+    function submitProgress(
+        bytes32 topicHash,
+        bytes32 studentDID,
+        uint16 week,
+        uint16 score
+    ) public {
+        require(topics[topicHash].exists, "Topic does not exist");
+
+        progressLogs[topicHash][studentDID].push(ProgressRecord({
+            studentDID: studentDID,
+            topicId: topicHash,
+            week: week,
+            score: score,
+            timestamp: block.timestamp
+        }));
+
+        emit ProgressSubmitted(topicHash, studentDID, week, score);
+    }
+
+    // === 4c. Lấy lịch sử tiến độ ===
+    function getProgressLogs(bytes32 topicHash, bytes32 studentDID)
+        public view returns (ProgressRecord[] memory)
+    {
+        return progressLogs[topicHash][studentDID];
     }
 
     // === 5. Lấy danh sách đề tài của giảng viên ===

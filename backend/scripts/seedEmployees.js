@@ -35,7 +35,7 @@ const defaultEmployees = [
   {
     employee_did: '01926d2c-a8d1-4c3e-8f2a-1b3c4d5e6f7c', // Employee (UUID v4)
     ho_ten: 'Regular Employee',
-    email: 'employee@company.com',
+    email: 'student@university.edu',
     so_dien_thoai: '0123456786',
     ngay_sinh: new Date('1995-03-10'),
     dia_chi: '321 Employee Lane',

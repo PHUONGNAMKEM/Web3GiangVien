@@ -18,6 +18,7 @@ import ReportUpload from './components/student/ReportUpload';
 import ProgressTracking from './components/student/ProgressTracking';
 import ProgressLog from './components/student/ProgressLog';
 import EntranceTest from './components/student/EntranceTest';
+import BlockchainDebugPage from './components/debug/BlockchainDebugPage';
 import GroupManagement from './components/student/GroupManagement';
 
 // Protected Route component
@@ -72,6 +73,7 @@ function App() {
       <Routes>
         <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/dashboard" element={<RoleRedirect />} />
+        <Route path="/blockchain" element={<BlockchainDebugPage />} />
 
         {/* Nested User Routes under MainLayout */}
         <Route path="/lecturer" element={

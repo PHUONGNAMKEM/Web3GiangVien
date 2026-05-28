@@ -21,7 +21,9 @@ const deTaiSchema = new mongoose.Schema({
   SuDungRubrics: { type: Boolean, default: false },        // Có dùng Rubrics không
   HienThiChiTietChoSV: { type: Boolean, default: false },  // GV quyết định SV có xem chi tiết không
   SoLuongSinhVien: { type: Number, default: 1, min: 1 },
-  Deadline: { type: Date, required: true },
+  Deadline: { type: Date, required: true },           // (giữ tương thích) hạn tổng quát
+  HanDangKy: { type: Date },                           // Hạn chót đăng ký đề tài (sau hạn này không cho đăng ký)
+  HanNopBaoCao: { type: Date },                        // Hạn chót nộp báo cáo (mặc định lấy theo Deadline nếu trống)
   GiangVienHuongDan: { type: mongoose.Schema.Types.ObjectId, ref: 'GiangVien', required: true },
   MonHoc: { type: mongoose.Schema.Types.ObjectId, ref: 'MonHoc' },
   CoBaiTest: { type: Boolean, default: false },       // Có yêu cầu bài test cạnh tranh không

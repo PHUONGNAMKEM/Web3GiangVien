@@ -6,7 +6,8 @@ const logger = require('../config/logger');
 // Tạo nhóm mới (SV tự động làm trưởng nhóm)
 exports.createNhom = async (req, res) => {
   try {
-    const { sinhVienId, tenNhom, soLuong } = req.body;
+    const { tenNhom, soLuong } = req.body;
+    const sinhVienId = req.user?.id || req.body.sinhVienId;
 
     if (!sinhVienId || !soLuong) {
       return res.status(400).json({ error: 'Thiếu thông tin sinhVienId hoặc soLuong.' });
@@ -87,6 +88,9 @@ exports.inviteMember = async (req, res) => {
 
     const nhom = await Nhom.findById(id);
     if (!nhom) return res.status(404).json({ error: 'Không tìm thấy nhóm.' });
+    if (req.user?.id && nhom.TruongNhom.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Chỉ trưởng nhóm mới có quyền mời thành viên.' });
+    }
     if (nhom.DaChot) return res.status(400).json({ error: 'Nhóm đã chốt, không thể mời thêm.' });
 
     // Kiểm tra số lượng
@@ -136,7 +140,8 @@ exports.inviteMember = async (req, res) => {
 exports.respondToInvite = async (req, res) => {
   try {
     const { id } = req.params;
-    const { sinhVienId, accept } = req.body;
+    const { accept } = req.body;
+    const sinhVienId = req.user?.id || req.body.sinhVienId;
 
     const nhom = await Nhom.findById(id);
     if (!nhom) return res.status(404).json({ error: 'Không tìm thấy nhóm.' });
@@ -181,6 +186,9 @@ exports.kickMember = async (req, res) => {
 
     const nhom = await Nhom.findById(id);
     if (!nhom) return res.status(404).json({ error: 'Không tìm thấy nhóm.' });
+    if (req.user?.id && nhom.TruongNhom.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Chỉ trưởng nhóm mới có quyền xóa thành viên.' });
+    }
     if (nhom.DaChot) return res.status(400).json({ error: 'Nhóm đã chốt, không thể xóa thành viên.' });
 
     // Không cho kick trưởng nhóm
@@ -207,7 +215,7 @@ exports.kickMember = async (req, res) => {
 exports.leaveNhom = async (req, res) => {
   try {
     const { id } = req.params;
-    const { sinhVienId } = req.body;
+    const sinhVienId = req.user?.id || req.body.sinhVienId;
 
     const nhom = await Nhom.findById(id);
     if (!nhom) return res.status(404).json({ error: 'Không tìm thấy nhóm.' });
@@ -239,10 +247,16 @@ exports.leaveNhom = async (req, res) => {
 exports.transferLeader = async (req, res) => {
   try {
     const { id } = req.params;
-    const { fromSinhVienId, toSinhVienId } = req.body;
+    const { toSinhVienId } = req.body;
+    const fromSinhVienId = req.user?.id || req.body.fromSinhVienId;
 
     const nhom = await Nhom.findById(id);
     if (!nhom) return res.status(404).json({ error: 'Không tìm thấy nhóm.' });
+
+    // #10: Nhóm đã chốt → không cho chuyển quyền (trưởng nhóm phải chịu trách nhiệm xuyên suốt)
+    if (nhom.DaChot) {
+      return res.status(400).json({ error: 'Nhóm đã chốt, không thể chuyển quyền trưởng nhóm.' });
+    }
 
     if (nhom.TruongNhom.toString() !== fromSinhVienId) {
       return res.status(403).json({ error: 'Chỉ trưởng nhóm mới có quyền chuyển.' });
@@ -278,6 +292,9 @@ exports.chotNhom = async (req, res) => {
 
     const nhom = await Nhom.findById(id);
     if (!nhom) return res.status(404).json({ error: 'Không tìm thấy nhóm.' });
+    if (req.user?.id && nhom.TruongNhom.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Chỉ trưởng nhóm mới có quyền chốt nhóm.' });
+    }
     if (nhom.DaChot) return res.status(400).json({ error: 'Nhóm đã được chốt rồi.' });
 
     // Kiểm tra số thành viên đã chấp nhận
@@ -304,6 +321,12 @@ exports.chotNhom = async (req, res) => {
 exports.deleteNhom = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const nhom = await Nhom.findById(id);
+    if (!nhom) return res.status(404).json({ error: 'Không tìm thấy nhóm.' });
+    if (req.user?.id && nhom.TruongNhom.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Chỉ trưởng nhóm mới có quyền xóa nhóm.' });
+    }
 
     // Check nhóm đã đăng ký đề tài nào chưa
     const hasReg = await DangKyDeTai.findOne({ Nhom: id });
