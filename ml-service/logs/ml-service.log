@@ -77,3 +77,4 @@
 2026-05-19 16:58:46 [INFO ] [AI] POST /analyze-report | textLength=238 | requirements=6
 2026-05-19 16:58:47 [INFO ] [AI] Report analysis completed | score=6.31 | requirements=6 | textLength=248 | time=512ms
 2026-05-19 16:58:47 [INFO ] [AI] /analyze-report response | score=6.31
+2026-05-20 23:18:31 [INFO ] [SERVER] ML Service started | FastAPI ready
