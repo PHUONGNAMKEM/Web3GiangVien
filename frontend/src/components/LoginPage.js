@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Container, Box, Typography, Button, Paper, Alert,
   CircularProgress, Fade, Grow, Avatar, Chip, Link,
-  useTheme, useMediaQuery, Tabs, Tab, Dialog, DialogTitle,
-  DialogContent, DialogActions
+  useTheme, useMediaQuery, Tabs, Tab
 } from '@mui/material';
 import {
   AccountBalanceWallet as WalletIcon,
@@ -11,17 +10,17 @@ import {
   ChevronRight as ChevronRightIcon,
   Language as LanguageIcon,
   HelpOutline as HelpIcon,
-  QrCodeScanner as QrCodeScannerIcon
+  QrCode as QrCodeIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
+import QRCode from 'qrcode';
 import MetaMaskGuideModal from './MetaMaskGuideModal';
-import QrScanner from './QrScanner';
 import authService from '../services/authService';
 import apiService from '../services/apiService';
 
-// Role ID constants (keep in sync with App.js)
-const EMPLOYEE_ROLE = '01926d2c-a8d1-7c3e-8f2a-1b3c4d5e6f7c';
-const MANAGER_ROLE = '01926d2c-a8d1-7c3e-8f2a-1b3c4d5e6f7b';
-const SUPER_ADMIN_ROLE = '01926d2c-a8d1-7c3e-8f2a-1b3c4d5e6f7a';
+// Role constants
+const STUDENT_ROLE = 'STUDENT_ROLE';
+const LECTURER_ROLE = 'LECTURER_ROLE';
 
 // --- Animated Gradient Text Component ---
 function AnimatedGradientText({ children, sx }) {
@@ -51,7 +50,6 @@ function LoginPage() {
   console.log('LoginPage component rendered');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const isVerySmall = useMediaQuery(theme.breakpoints.down(400));
 
   const [loading, setLoading] = useState(false);
@@ -62,8 +60,11 @@ function LoginPage() {
   const [user, setUser] = useState(null);
   const [connectedWallet, setConnectedWallet] = useState(null);
   const [tabValue, setTabValue] = useState(0);
-  const [qrScannerOpen, setQrScannerOpen] = useState(false);
-  const [scanningQr, setScanningQr] = useState(false);
+
+  // QR Login State
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrSessionId, setQrSessionId] = useState('');
 
   useEffect(() => {
     const checkAuth = () => {
@@ -71,6 +72,9 @@ function LoginPage() {
       const currentUser = authService.getCurrentUser();
       setIsAuthenticated(authenticated);
       setUser(currentUser);
+      if (currentUser) {
+        setConnectedWallet(currentUser.walletAddress);
+      }
     };
     checkAuth();
 
@@ -85,6 +89,72 @@ function LoginPage() {
     authService.onChainChange(() => window.location.reload());
   }, []);
 
+  // Handle Tab QR loading
+  useEffect(() => {
+    if (tabValue === 1) {
+      loadQrSession();
+    } else {
+      apiService.disconnectSocket();
+    }
+    return () => {
+      apiService.disconnectSocket();
+    };
+  }, [tabValue]);
+
+  const loadQrSession = async () => {
+    setQrLoading(true);
+    setError('');
+    setQrCodeUrl('');
+    try {
+      const session = await apiService.getQrSession();
+      setQrSessionId(session.sessionId);
+
+      // Generate the URL pointing to mobile-login route
+      const host = window.location.host;
+      const protocol = window.location.protocol;
+      const mobileLoginUrl = `${protocol}//${host}/mobile-login?sessionId=${session.sessionId}&challenge=${encodeURIComponent(session.challenge)}`;
+      
+      console.log('Mobile login URL generated:', mobileLoginUrl);
+
+      // Generate QR Code data URL
+      const qrDataUrl = await QRCode.toDataURL(mobileLoginUrl, { 
+        width: 256, 
+        margin: 2,
+        color: {
+          dark: '#1a1a2e',
+          light: '#ffffff'
+        }
+      });
+      setQrCodeUrl(qrDataUrl);
+
+      // Register Socket room
+      apiService.initSocket('guest-login');
+      if (apiService.socket) {
+        apiService.socket.emit('qr:register', { sessionId: session.sessionId });
+
+        apiService.socket.on('qr:success', (data) => {
+          setSuccess('Đăng nhập QR thành công! Đang chuyển hướng...');
+          setIsAuthenticated(true);
+          setUser(data.user);
+          setConnectedWallet(data.user.walletAddress);
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+
+          apiService.disconnectSocket();
+
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 2000);
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Không thể tạo phiên đăng nhập QR. Vui lòng thử lại.');
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
   const handleConnectWallet = async () => {
     setLoading(true);
     setError('');
@@ -98,110 +168,28 @@ function LoginPage() {
 
       await authService.initializeProvider();
       const walletAddress = await authService.getWalletAddress();
-      setConnectedWallet(walletAddress); // Store connected wallet address
+      setConnectedWallet(walletAddress);
 
-      const result = await authService.authenticate(walletAddress);
+      const result = await authService.authenticate();
       setSuccess('Đăng nhập thành công! Đang chuyển hướng đến dashboard...');
       setIsAuthenticated(true);
       setUser(result.user);
 
-      // Store JWT token in localStorage
-      localStorage.setItem('authToken', result.token);
-
       // Redirect to dashboard after success message
       setTimeout(() => {
         window.location.href = '/dashboard';
-      }, 2500);
+      }, 2000);
     } catch (err) {
       const message = err.message || 'Có lỗi xảy ra, vui lòng thử lại.';
-      if (message.includes('user rejected')) setError('Bạn đã từ chối yêu cầu kết nối.');
-      else if (message.includes('wallet not registered')) setError('Ví này chưa được đăng ký. Vui lòng liên hệ Ban quản lý khóa luận hoặc Giảng viên chủ nhiệm.');
-      else if (message.includes('employee inactive')) setError('Tài khoản của bạn đã bị vô hiệu hóa.');
-      else setError(message);
+      if (message.includes('user rejected')) {
+        setError('Bạn đã từ chối yêu cầu kết nối.');
+      } else if (message.includes('wallet not registered')) {
+        setError('Ví này chưa được đăng ký trong hệ thống. Vui lòng liên hệ Ban quản lý khoa hoặc Giảng viên để được phê duyệt.');
+      } else {
+        setError(message);
+      }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleQrScan = async (qrData) => {
-    setScanningQr(true);
-    setError('');
-    setSuccess('');
-    try {
-      // Parse QR data - expected format: JSON with qr_code_id, qr_hash, employee_did, etc.
-      const qrInfo = JSON.parse(qrData);
-
-      // Validate QR data structure
-      if (!qrInfo.qr_code_id || !qrInfo.qr_hash || !qrInfo.employee_did) {
-        throw new Error('QR code không hợp lệ. Thiếu thông tin cần thiết.');
-      }
-
-      // Validate QR code against backend database
-      console.log('Validating QR with backend:', {
-        qr_code_id: qrInfo.qr_code_id,
-        qr_hash: qrInfo.qr_hash
-      });
-      const validationResponse = await apiService.validateQrForLogin({
-        qr_code_id: qrInfo.qr_code_id,
-        qr_hash: qrInfo.qr_hash
-      });
-      console.log('QR validation response:', validationResponse);
-
-      if (!validationResponse.success) {
-        throw new Error('QR code không hợp lệ hoặc đã bị vô hiệu hóa.');
-      }
-
-      // Check if MetaMask is installed
-      if (!authService.isMetaMaskInstalled()) {
-        setError('Vui lòng cài đặt ví MetaMask để tiếp tục.');
-        setGuideModalOpen(true);
-        return;
-      }
-
-      // Simple MetaMask connection without network switching
-      try {
-        console.log('Requesting MetaMask accounts...');
-        const accounts = await window.ethereum.request({
-          method: 'eth_requestAccounts'
-        });
-
-        if (accounts.length === 0) {
-          throw new Error('Không có tài khoản MetaMask nào được kết nối.');
-        }
-
-        console.log('Initializing MetaMask provider...');
-        await authService.initializeProvider();
-        const walletAddress = await authService.getWalletAddress();
-        console.log('Wallet address obtained:', walletAddress);
-        setConnectedWallet(walletAddress);
-
-        console.log('Authenticating with wallet address...');
-        const result = await authService.authenticate(walletAddress);
-        console.log('Authentication result:', result);
-        setSuccess('Đăng nhập bằng QR thành công! Đang chuyển hướng...');
-        setIsAuthenticated(true);
-        setUser(result.user);
-
-        localStorage.setItem('authToken', result.token);
-
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 2500);
-      } catch (metaMaskError) {
-        console.error('MetaMask error:', metaMaskError);
-        if (metaMaskError.code === 4001) {
-          throw new Error('Bạn đã từ chối kết nối MetaMask.');
-        } else {
-          throw new Error('Lỗi kết nối MetaMask. Vui lòng thử lại.');
-        }
-      }
-
-    } catch (err) {
-      const message = err.message || 'Có lỗi xảy ra khi quét QR.';
-      setError(message);
-    } finally {
-      setScanningQr(false);
-      setQrScannerOpen(false);
     }
   };
 
@@ -211,95 +199,31 @@ function LoginPage() {
     setSuccess('');
   };
 
-  // Get display name for user's position based on role
-  const getPositionDisplayName = () => {
-    if (!user) return 'Intern';
-
-    if (user.role_id === SUPER_ADMIN_ROLE) {
-      return 'Quản trị hệ thống';
-    }
-
-    if (user.role_id === MANAGER_ROLE) {
-      return 'Quản lý';
-    }
-
-    // For normal employees, fall back to profile position or default
-    return user.chuc_vu || 'Intern';
-  };
-
-  // Get display text for user's department
-  const getDepartmentDisplayName = () => {
-    if (!user || !user.phong_ban_id) {
-      return 'Chưa vào Phòng ban';
-    }
-
-    const dept = user.phong_ban_id;
-
-    // If backend only returns department id as string
-    if (typeof dept === 'string') {
-      return `ID: ${dept}`;
-    }
-
-    // If backend returns populated object with name + id
-    const name = dept.ten_phong_ban || dept.name || 'Không rõ';
-    const id = dept._id || dept.id || dept.phong_ban_id || '';
-
-    return id ? `${name} (${id})` : name;
-  };
-
   // --- Responsive styles ---
   const getResponsiveStyles = () => {
-    if (isVerySmall) {
-      return {
-        containerPadding: 1,
-        paperPadding: 1.5,
-        avatarSize: 56,
-        iconSize: 40,
-        titleVariant: "h5",
-        subtitleVariant: "body1",
-        subtitleFontSize: '0.9rem',
-        buttonPadding: 1.2,
-        buttonFontSize: '0.9rem',
-        chipSize: "small",
-        spacing: 1
-      };
-    } else if (isMobile) {
+    if (isVerySmall || isMobile) {
       return {
         containerPadding: 2,
-        paperPadding: 2,
+        paperPadding: 2.5,
         avatarSize: 64,
         iconSize: 48,
         titleVariant: "h4",
-        subtitleVariant: "h6",
-        subtitleFontSize: '1rem',
+        subtitleVariant: "body1",
+        subtitleFontSize: '0.95rem',
         buttonPadding: 1.5,
         buttonFontSize: '0.95rem',
         chipSize: "small",
         spacing: 2
       };
-    } else if (isTablet) {
-      return {
-        containerPadding: 3,
-        paperPadding: 3,
-        avatarSize: 80,
-        iconSize: 60,
-        titleVariant: "h3",
-        subtitleVariant: "h6",
-        subtitleFontSize: '1.25rem',
-        buttonPadding: 2,
-        buttonFontSize: '1.1rem',
-        chipSize: "medium",
-        spacing: 3
-      };
     } else {
       return {
         containerPadding: 4,
-        paperPadding: 3,
+        paperPadding: 3.5,
         avatarSize: 80,
         iconSize: 60,
         titleVariant: "h3",
         subtitleVariant: "h6",
-        subtitleFontSize: '1.25rem',
+        subtitleFontSize: '1.2rem',
         buttonPadding: 2,
         buttonFontSize: '1.1rem',
         chipSize: "medium",
@@ -312,6 +236,7 @@ function LoginPage() {
 
   // --- Logged In View ---
   if (isAuthenticated && user) {
+    const isLecturer = user.role_id === LECTURER_ROLE;
     return (
       <Container maxWidth="sm">
         <Box
@@ -320,15 +245,16 @@ function LoginPage() {
           justifyContent="center"
           alignItems="center"
           py={styles.containerPadding}
-          px={isMobile ? styles.containerPadding : 0}
         >
           <Grow in={true}>
             <Paper
+              elevation={4}
               sx={{
                 p: styles.paperPadding,
                 textAlign: 'center',
                 width: '100%',
-                maxWidth: isMobile ? '100%' : '400px'
+                borderRadius: 4,
+                maxWidth: '420px'
               }}
             >
               <Avatar
@@ -340,42 +266,40 @@ function LoginPage() {
                   background: (theme) => `linear-gradient(45deg, ${theme.palette.success.main}, ${theme.palette.primary.main})`
                 }}
               >
-                <VerifiedUserIcon sx={{ fontSize: styles.iconSize * 0.625 }} />
+                <VerifiedUserIcon sx={{ fontSize: styles.iconSize * 0.6 }} />
               </Avatar>
               <AnimatedGradientText
                 variant={isMobile ? "h5" : "h4"}
                 gutterBottom
                 sx={{
                   fontWeight: 'bold',
-                  mb: isMobile ? 1 : 2
+                  mb: 1
                 }}
               >
-                Chào mừng {user.role_id === '01926d2c-a8d1-7c3e-8f2a-1b3c4d5e6f7a' || user.role_id === '01926d2c-a8d1-7c3e-8f2a-1b3c4d5e6f7b' ? 'Admin' : 'Nhân viên'},
+                Chào mừng {isLecturer ? 'Giảng viên' : 'Sinh viên'}
               </AnimatedGradientText>
               <Typography
-                variant={isMobile ? "h6" : "h5"}
+                variant="h5"
                 sx={{
-                  mb: styles.spacing,
-                  fontWeight: 'medium'
+                  mb: 1,
+                  fontWeight: 'bold'
                 }}
               >
-                {user.ho_ten || 'Nhân viên'}
+                {user.name || user.HoTen || 'Người dùng'}
               </Typography>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{
-                  mb: styles.spacing,
-                  fontWeight: 'medium'
-                }}
-              >
-                Chức vụ: {getPositionDisplayName()}
-              </Typography>
+              
+              {user.Email && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {user.Email}
+                </Typography>
+              )}
+
               <Box
                 display="flex"
                 flexDirection="column"
-                gap={styles.spacing * 0.5}
+                gap={1.5}
                 mb={styles.spacing}
+                sx={{ width: '100%', mt: 2 }}
               >
                 <Chip
                   label={`Ví: ${connectedWallet?.slice(0, 6)}...${connectedWallet?.slice(-4)}`}
@@ -384,44 +308,74 @@ function LoginPage() {
                   sx={{
                     background: 'linear-gradient(135deg, #f6851b 0%, #f7931e 100%)',
                     color: 'white',
+                    border: 'none',
                     '& .MuiChip-label': {
                       fontWeight: 'bold'
                     }
                   }}
                 />
+                
                 <Chip
-                  label={`Chức vụ: ${getPositionDisplayName()}`}
+                  label={`Vai trò: ${isLecturer ? 'Giảng viên' : 'Sinh viên'}`}
                   variant="outlined"
                   size={styles.chipSize}
+                  color="primary"
                 />
-                {user.role_id !== SUPER_ADMIN_ROLE && (
+
+                {!isLecturer && user.MaSV && (
                   <Chip
-                    label={`Phòng ban: ${getDepartmentDisplayName()}`}
+                    label={`Mã SV: ${user.MaSV}`}
                     variant="outlined"
                     size={styles.chipSize}
                   />
                 )}
+
+                {isLecturer && user.MaGV && (
+                  <Chip
+                    label={`Mã GV: ${user.MaGV}`}
+                    variant="outlined"
+                    size={styles.chipSize}
+                  />
+                )}
+
+                {user.ChuyenNganh && (
+                  <Chip
+                    label={`Chuyên ngành: ${user.ChuyenNganh}`}
+                    variant="outlined"
+                    size={styles.chipSize}
+                  />
+                )}
+
+                {!isLecturer && typeof user.GPA === 'number' && (
+                  <Chip
+                    label={`GPA tích lũy: ${user.GPA.toFixed(2)}`}
+                    variant="outlined"
+                    size={styles.chipSize}
+                    color="success"
+                  />
+                )}
               </Box>
+
               <Box
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
                 gap={1}
-                flexDirection={isMobile ? "column" : "row"}
+                mt={3}
+                mb={2}
               >
-                <CircularProgress size={isMobile ? 20 : 24} />
+                <CircularProgress size={20} />
                 <Typography
-                  variant="body1"
+                  variant="body2"
                   color="text.secondary"
-                  sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}
                 >
-                  Đang vào không gian làm việc...
+                  Đang chuyển hướng vào cổng đào tạo...
                 </Typography>
               </Box>
 
-              <Box mt={styles.spacing} display="flex" justifyContent="center">
+              <Box mt={3} display="flex" justifyContent="center">
                 <Button
-                  variant="outlined"
+                  variant="text"
                   size="small"
                   onClick={() => {
                     authService.logout();
@@ -431,15 +385,7 @@ function LoginPage() {
                     setError('');
                     setSuccess('');
                   }}
-                  sx={{
-                    fontSize: isMobile ? '0.8rem' : '0.875rem',
-                    borderColor: 'text.secondary',
-                    color: 'text.secondary',
-                    '&:hover': {
-                      borderColor: 'error.main',
-                      color: 'error.main'
-                    }
-                  }}
+                  color="error"
                 >
                   Đăng xuất
                 </Button>
@@ -461,13 +407,11 @@ function LoginPage() {
         justifyContent="center"
         alignItems="center"
         py={styles.containerPadding}
-        px={isMobile ? styles.containerPadding : 0}
       >
         <Fade in={true} timeout={1000}>
           <Box
             textAlign="center"
             mb={styles.spacing}
-            px={isMobile ? styles.containerPadding : 0}
           >
             <Avatar
               sx={{
@@ -491,88 +435,68 @@ function LoginPage() {
               component="h1"
               sx={{
                 fontWeight: 'bold',
-                mb: isMobile ? 0.5 : 1
+                mb: 1
               }}
             >
-              Cổng Thông Tin Hỗ Trợ Học Tập
+              Web3 & AI Competition Platform
             </AnimatedGradientText>
             <Typography
               variant={styles.subtitleVariant}
               color="text.secondary"
               sx={{
                 fontWeight: 400,
-                fontSize: styles.subtitleFontSize
+                fontSize: styles.subtitleFontSize,
+                maxWidth: '480px',
+                mx: 'auto',
+                lineHeight: 1.4
               }}
             >
-              Nền tảng hỗ trợ học tập & quản lý đồ án phi tập trung
+              Hệ thống quản lý khóa luận, chấm điểm tiến độ bằng AI & xác thực bất biến blockchain
             </Typography>
           </Box>
         </Fade>
 
         <Grow in={true} timeout={1500}>
           <Paper
+            elevation={3}
             sx={{
               p: styles.paperPadding,
               width: '100%',
               textAlign: 'center',
-              maxWidth: isMobile ? '100%' : '400px'
+              borderRadius: 4,
+              maxWidth: '420px'
             }}
           >
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: styles.spacing }}>
-              <Tabs value={tabValue} onChange={handleTabChange} aria-label="login tabs">
-                <Tab label="MetaMask" />
-                <Tab label="QR Code" />
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+              <Tabs value={tabValue} onChange={handleTabChange} variant="fullWidth">
+                <Tab label="Ví MetaMask" />
+                <Tab label="Quét QR Code" />
               </Tabs>
             </Box>
 
             {error && (
-              <Alert
-                severity="error"
-                sx={{
-                  mb: styles.spacing,
-                  fontSize: isMobile ? '0.85rem' : '0.95rem'
-                }}
-              >
+              <Alert severity="error" sx={{ mb: 2.5, textAlign: 'left' }}>
                 {error}
               </Alert>
             )}
             {success && (
-              <Alert
-                severity="success"
-                sx={{
-                  mb: styles.spacing,
-                  fontSize: isMobile ? '0.85rem' : '0.95rem'
-                }}
-              >
+              <Alert severity="success" sx={{ mb: 2.5, textAlign: 'left' }}>
                 {success}
               </Alert>
             )}
 
             {tabValue === 0 && (
               <>
-                <Typography
-                  variant={isMobile ? "h6" : "h5"}
-                  sx={{
-                    mb: isMobile ? 0.5 : 1,
-                    fontWeight: 'medium'
-                  }}
-                >
-                  Đăng nhập an toàn
+                <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
+                  Kết nối ví MetaMask
                 </Typography>
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{
-                    mb: styles.spacing,
-                    fontSize: isMobile ? '0.9rem' : '1rem'
-                  }}
-                >
-                  Sử dụng ví điện tử Web3 của bạn để xác thực.
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Đăng nhập thông qua tiện ích mở rộng ví MetaMask trên trình duyệt của bạn.
                 </Typography>
 
                 <Button
                   variant="contained"
-                  size={isMobile ? "large" : "large"}
+                  size="large"
                   fullWidth
                   onClick={handleConnectWallet}
                   disabled={loading}
@@ -580,50 +504,41 @@ function LoginPage() {
                     <Box
                       component="img"
                       src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg"
-                      alt="MetaMask Fox"
-                      sx={{
-                        width: isMobile ? 24 : 28,
-                        height: isMobile ? 24 : 28,
-                        filter: 'none' // Keep original MetaMask orange color
-                      }}
+                      alt="MetaMask"
+                      sx={{ width: 24, height: 24 }}
                     />
                   )}
                   endIcon={<ChevronRightIcon />}
                   sx={{
-                    py: styles.buttonPadding,
-                    fontSize: styles.buttonFontSize,
-                    mb: styles.spacing,
+                    py: 1.5,
+                    fontWeight: 'bold',
                     background: 'linear-gradient(135deg, #f6851b 0%, #f7931e 100%)',
+                    boxShadow: '0 4px 12px rgba(246, 133, 27, 0.3)',
                     '&:hover': {
                       background: 'linear-gradient(135deg, #e6750f 0%, #e8850f 100%)',
+                      boxShadow: '0 6px 16px rgba(246, 133, 27, 0.5)',
+                      transform: 'translateY(-1px)'
                     },
-                    boxShadow: '0 4px 14px 0 rgba(246, 133, 27, 0.39)',
-                    '&:hover': {
-                      boxShadow: '0 6px 20px rgba(246, 133, 27, 0.5)',
-                      transform: 'translateY(-1px)',
-                    },
-                    transition: 'all 0.3s ease-in-out'
+                    transition: 'all 0.2s'
                   }}
                 >
-                  {loading ? 'Đang xác thực...' : 'Kết Nối Ví MetaMask'}
+                  {loading ? 'Đang xác thực...' : 'Đăng Nhập Bằng MetaMask'}
                 </Button>
 
-                <Box mt={styles.spacing} display="flex" justifyContent="center">
+                <Box mt={3}>
                   <Link
                     component="button"
                     variant="body2"
                     onClick={() => setGuideModalOpen(true)}
                     sx={{
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
                       gap: 0.5,
-                      color: 'text.secondary',
-                      textDecorationColor: 'text.secondary',
-                      fontSize: isMobile ? '0.85rem' : '0.875rem'
+                      color: 'text.secondary'
                     }}
                   >
                     <HelpIcon fontSize="small" />
-                    Chưa có ví? Hướng dẫn cài đặt
+                    Chưa cài đặt ví? Xem hướng dẫn
                   </Link>
                 </Box>
               </>
@@ -631,89 +546,54 @@ function LoginPage() {
 
             {tabValue === 1 && (
               <>
-                <Typography
-                  variant={isMobile ? "h6" : "h5"}
-                  sx={{
-                    mb: isMobile ? 0.5 : 1,
-                    fontWeight: 'medium'
+                <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
+                  Đăng nhập qua MetaMask Mobile
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Quét mã QR dưới đây bằng điện thoại của bạn để đăng nhập nhanh chóng.
+                </Typography>
+
+                <Box 
+                  sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    my: 2,
+                    p: 2,
+                    bgcolor: '#f8f9fa',
+                    borderRadius: 3,
+                    minHeight: '230px',
+                    position: 'relative'
                   }}
                 >
-                  Đăng nhập bằng QR
-                </Typography>
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{
-                    mb: styles.spacing,
-                    fontSize: isMobile ? '0.9rem' : '1rem'
-                  }}
-                >
-                  Quét mã QR từ ứng dụng sinh viên để đăng nhập nhanh chóng và an toàn.
-                </Typography>
+                  {qrLoading ? (
+                    <CircularProgress size={40} />
+                  ) : qrCodeUrl ? (
+                    <Box component="img" src={qrCodeUrl} alt="Login QR Code" sx={{ width: 200, height: 200 }} />
+                  ) : (
+                    <Typography variant="body2" color="error">Không thể tạo mã QR</Typography>
+                  )}
+                </Box>
 
                 <Button
-                  variant="contained"
-                  size={isMobile ? "large" : "large"}
-                  fullWidth
-                  onClick={() => setQrScannerOpen(true)}
-                  disabled={scanningQr}
-                  startIcon={scanningQr ? <CircularProgress size={20} color="inherit" /> : <QrCodeScannerIcon />}
-                  sx={{
-                    py: styles.buttonPadding,
-                    fontSize: styles.buttonFontSize,
-                    mb: styles.spacing,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #5a6fd8 0%, #6b4190 100%)',
-                    },
-                    boxShadow: '0 4px 14px 0 rgba(102, 126, 234, 0.39)',
-                    '&:hover': {
-                      boxShadow: '0 6px 20px rgba(102, 126, 234, 0.5)',
-                      transform: 'translateY(-1px)',
-                    },
-                    transition: 'all 0.3s ease-in-out'
-                  }}
+                  variant="outlined"
+                  size="small"
+                  startIcon={<RefreshIcon />}
+                  onClick={loadQrSession}
+                  disabled={qrLoading}
+                  sx={{ mb: 2 }}
                 >
-                  {scanningQr ? 'Đang xử lý...' : 'Quét Mã QR'}
+                  Làm mới mã QR
                 </Button>
 
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
-                    fontSize: isMobile ? '0.8rem' : '0.875rem'
-                  }}
-                >
-                  QR code có hiệu lực vĩnh viễn cho đến khi tạo mã mới và chứa thông tin xác thực blockchain.
+                <Typography variant="caption" display="block" color="text.secondary" sx={{ px: 2 }}>
+                  Mẹo: Dùng máy ảnh điện thoại quét mã QR. Ổn định nhất khi mở liên kết trong trình duyệt in-app của ví MetaMask.
                 </Typography>
               </>
             )}
           </Paper>
         </Grow>
-
-        {/* QR Scanner Dialog */}
-        <Dialog
-          open={qrScannerOpen}
-          onClose={() => setQrScannerOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Quét Mã QR</DialogTitle>
-          <DialogContent>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-              <QrScanner
-                onScan={handleQrScan}
-                onError={(error) => console.log(error)}
-              />
-            </Box>
-            <Typography variant="body2" color="text.secondary" align="center">
-              Hướng camera về phía mã QR để quét
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setQrScannerOpen(false)}>Đóng</Button>
-          </DialogActions>
-        </Dialog>
 
         <Fade in={true} timeout={2000}>
           <Typography
@@ -722,11 +602,10 @@ function LoginPage() {
             sx={{
               mt: styles.spacing,
               textAlign: 'center',
-              fontSize: isMobile ? '0.8rem' : '0.875rem',
-              px: isMobile ? styles.containerPadding : 0
+              fontSize: '0.85rem'
             }}
           >
-            © {new Date().getFullYear()} - Nền tảng được xây dựng trên công nghệ Blockchain.
+            © {new Date().getFullYear()} - Nền tảng học tập bất biến Web3 & AI Competition Platform.
           </Typography>
         </Fade>
       </Box>

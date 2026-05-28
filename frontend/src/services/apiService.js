@@ -209,6 +209,16 @@ class ApiService {
     return response.data;
   }
 
+  async getQrSession() {
+    const response = await this.client.get('/auth/qr-session');
+    return response.data;
+  }
+
+  async submitQrSignature(data) {
+    const response = await this.client.post('/auth/qr-submit', data);
+    return response.data;
+  }
+
   // Get smart contract logs for attendance record
   async getSmartContractLogsForAttendance(recordId) {
     const response = await this.client.get(`/logs/contracts/attendance/${recordId}`);

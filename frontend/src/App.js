@@ -20,6 +20,7 @@ import ProgressLog from './components/student/ProgressLog';
 import EntranceTest from './components/student/EntranceTest';
 import BlockchainDebugPage from './components/debug/BlockchainDebugPage';
 import GroupManagement from './components/student/GroupManagement';
+import MobileLogin from './components/MobileLogin';
 
 // Protected Route component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -72,6 +73,7 @@ function App() {
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
+        <Route path="/mobile-login" element={<MobileLogin />} />
         <Route path="/dashboard" element={<RoleRedirect />} />
         <Route path="/blockchain" element={<BlockchainDebugPage />} />
 

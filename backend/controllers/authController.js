@@ -6,6 +6,7 @@ const GiangVien = require('../models/GiangVien');
 const { web3Utils } = require('../config/web3');
 
 const challenges = new Map();
+const qrSessions = new Map();
 
 const generateChallenge = async (req, res) => {
   try {
@@ -125,4 +126,106 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-module.exports = { generateChallenge, verifySignature, logout, getProfile, authenticateToken };
+const generateQrSession = async (req, res) => {
+  try {
+    const sessionId = uuidv4();
+    const nonce = uuidv4().substring(0, 8);
+    const timestamp = new Date().toISOString();
+    const challenge = `Hệ thống Web3 Giảng Viên\nXác thực đăng nhập di động\nThời gian: ${timestamp}\nNonce: ${nonce}\n\nVui lòng ký thông báo này để hoàn tất đăng nhập.`;
+
+    qrSessions.set(sessionId, {
+      challenge,
+      expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+      authenticated: false
+    });
+
+    res.json({ success: true, sessionId, challenge });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to generate QR session' });
+  }
+};
+
+const verifyQrSignature = async (req, res) => {
+  try {
+    const { sessionId, walletAddress, signature } = req.body;
+    if (!sessionId || !walletAddress || !signature) {
+      return res.status(400).json({ success: false, message: 'Missing parameters' });
+    }
+
+    const sessionData = qrSessions.get(sessionId);
+    if (!sessionData || sessionData.expiresAt < Date.now()) {
+      return res.status(400).json({ success: false, message: 'Session expired or invalid' });
+    }
+
+    let isValidSignature = false;
+    try {
+      isValidSignature = web3Utils.verifySignature(sessionData.challenge, signature, walletAddress);
+    } catch (e) {
+      isValidSignature = false;
+    }
+
+    if (!isValidSignature) {
+      return res.status(401).json({ success: false, message: 'Chữ ký không hợp lệ.' });
+    }
+
+    // Identify user role
+    let role_id = 'STUDENT_ROLE';
+    let userRecord = await GiangVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
+    
+    if (userRecord) {
+      role_id = 'LECTURER_ROLE';
+    } else {
+      userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
+      if (!userRecord) {
+        // Auto register as student
+        userRecord = new SinhVien({
+          MaSV: `SV${uuidv4().substring(0, 6).toUpperCase()}`,
+          HoTen: 'Sinh Viên Mới (QR)',
+          Email: `${uuidv4().substring(0, 6)}@huit.edu.vn`,
+          WalletAddress: walletAddress.toLowerCase()
+        });
+        await userRecord.save();
+      }
+    }
+
+    const token = jwt.sign(
+      { id: userRecord._id, walletAddress, role_id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
+    // Emit real-time login success via Socket.IO
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`qr:${sessionId}`).emit('qr:success', {
+        token,
+        user: {
+          id: userRecord._id,
+          walletAddress,
+          role_id,
+          name: userRecord.HoTen
+        }
+      });
+    }
+
+    qrSessions.delete(sessionId);
+
+    res.json({
+      success: true,
+      message: 'Đăng nhập QR thành công'
+    });
+  } catch (error) {
+    console.error('QR authentication error:', error);
+    res.status(500).json({ success: false, message: 'Authentication failed' });
+  }
+};
+
+module.exports = { 
+  generateChallenge, 
+  verifySignature, 
+  logout, 
+  getProfile, 
+  authenticateToken,
+  generateQrSession,
+  verifyQrSignature
+};
