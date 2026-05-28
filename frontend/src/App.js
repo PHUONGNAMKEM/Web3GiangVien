@@ -9,6 +9,9 @@ import SubmissionReview from './components/lecturer/SubmissionReview';
 import RubricsManagement from './components/lecturer/RubricsManagement';
 import ScoreComparison from './components/lecturer/ScoreComparison';
 import EntranceTestManager from './components/lecturer/EntranceTestManager';
+import CourseManagement from './components/lecturer/CourseManagement';
+import ClassManagement from './components/lecturer/ClassManagement';
+import StudentManagement from './components/lecturer/StudentManagement';
 import StudentDashboard from './components/student/StudentDashboard';
 import TopicRegistration from './components/student/TopicRegistration';
 import ReportUpload from './components/student/ReportUpload';
@@ -84,6 +87,9 @@ function App() {
           <Route path="rubrics" element={<RubricsManagement />} />
           <Route path="comparison" element={<ScoreComparison />} />
           <Route path="entrance-test/:deTaiId" element={<EntranceTestManager />} />
+          <Route path="courses" element={<CourseManagement />} />
+          <Route path="classes" element={<ClassManagement />} />
+          <Route path="students" element={<StudentManagement />} />
         </Route>
 
         <Route path="/student" element={

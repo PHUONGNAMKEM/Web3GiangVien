@@ -25,6 +25,7 @@ const deTaiSchema = new mongoose.Schema({
   HanDangKy: { type: Date },                           // Hạn chót đăng ký đề tài (sau hạn này không cho đăng ký)
   HanNopBaoCao: { type: Date },                        // Hạn chót nộp báo cáo (mặc định lấy theo Deadline nếu trống)
   GiangVienHuongDan: { type: mongoose.Schema.Types.ObjectId, ref: 'GiangVien', required: true },
+  MonHoc: { type: mongoose.Schema.Types.ObjectId, ref: 'MonHoc' },
   CoBaiTest: { type: Boolean, default: false },       // Có yêu cầu bài test cạnh tranh không
   TrangThai: { type: String, enum: ['MoDangKy', 'DaChot', 'HoanThanh'], default: 'MoDangKy' }
 }, { timestamps: true });

@@ -140,6 +140,8 @@ const rubricsController = require('./controllers/rubricsController');
 const baiTestController = require('./controllers/baiTestController');
 const blockchainController = require('./controllers/blockchainController');
 const nhomController = require('./controllers/nhomController');
+const monHocController = require('./controllers/monHocController');
+const lopHocController = require('./controllers/lopHocController');
 
 // Middleware xác thực & phân quyền
 const { authenticateToken } = authController;
@@ -296,6 +298,21 @@ app.use((err, req, res, next) => {
             : err.message
     });
 });
+
+// 13. Quản Lý Môn Học
+app.get('/api/monhoc/giangvien/:gvId', monHocController.getByGiangVien);
+app.post('/api/monhoc', monHocController.create);
+app.put('/api/monhoc/:id', monHocController.update);
+app.delete('/api/monhoc/:id', monHocController.delete);
+
+// 14. Quản Lý Lớp Học
+app.get('/api/lophoc/giangvien/:gvId', lopHocController.getByGiangVien);
+app.get('/api/lophoc/:id/detail', lopHocController.getDetail);
+app.post('/api/lophoc', lopHocController.create);
+app.put('/api/lophoc/:id', lopHocController.update);
+app.post('/api/lophoc/:id/sinhvien', lopHocController.addSinhVien);
+app.delete('/api/lophoc/:id/sinhvien/:svId', lopHocController.removeSinhVien);
+app.delete('/api/lophoc/:id', lopHocController.delete);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
