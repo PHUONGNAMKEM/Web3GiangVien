@@ -3,10 +3,12 @@ import { Card, Typography, Row, Col, Statistic, Alert, Spin, Tag, Tooltip, Form,
 import { Target, Award, BookOpen, ShieldCheck, BrainCircuit, ExternalLink, Edit2, User, Save } from 'lucide-react';
 import authService from '../../services/authService';
 import aiApiService from '../../services/aiService';
+import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Title, Paragraph, Text } = Typography;
 
 const StudentDashboard = () => {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [registration, setRegistration] = useState(null);
   const [grade, setGrade] = useState(null);
@@ -188,9 +190,9 @@ const StudentDashboard = () => {
         />
       ))}
 
-      <Row gutter={16}>
+      <Row gutter={[16, 16]}>
         {/* Card 1: Hồ sơ cá nhân */}
-        <Col span={8}>
+        <Col xs={24} sm={12} lg={8}>
           <Card
             title={<span><User size={18} style={{ marginRight: 8, color: '#1677ff' }} />Hồ Sơ Cá Nhân</span>}
             bordered={false}
@@ -230,7 +232,7 @@ const StudentDashboard = () => {
         </Col>
 
         {/* Card 2: Trạng thái đồ án */}
-        <Col span={8}>
+        <Col xs={24} sm={12} lg={8}>
           <Card
             title={<span><BookOpen size={18} style={{ marginRight: 8, color: '#52c41a' }} />Trạng Thái Đồ Án</span>}
             bordered={false}
@@ -249,7 +251,7 @@ const StudentDashboard = () => {
         </Col>
 
         {/* Card 3: Điểm số */}
-        <Col span={8}>
+        <Col xs={24} sm={12} lg={8}>
           <Card
             title={<span><Award size={18} style={{ marginRight: 8, color: '#eb2f96' }} />Tiến Độ & Điểm</span>}
             bordered={false}
@@ -325,7 +327,7 @@ const StudentDashboard = () => {
         closable={!needsProfileUpdate}
         maskClosable={!needsProfileUpdate}
         footer={null}
-        width={600}
+        width={isMobile ? '95vw' : 600}
       >
         {needsProfileUpdate && (
           <Alert
@@ -352,13 +354,13 @@ const StudentDashboard = () => {
             <Input placeholder="Nguyễn Văn A" size="large" />
           </Form.Item>
 
-          <Row gutter={16}>
-            <Col span={12}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12}>
               <Form.Item name="MaSV" label="Mã Sinh Viên" rules={[{ required: true, message: 'Vui lòng nhập mã SV!' }]}>
                 <Input placeholder="20110001" size="large" />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item name="GPA" label="GPA (Thang 10)" rules={[{ required: true, message: 'Vui lòng nhập điểm GPA!' }]}>
                 <InputNumber min={0} max={10} step={0.1} style={{ width: '100%' }} size="large" placeholder="8.5" />
               </Form.Item>

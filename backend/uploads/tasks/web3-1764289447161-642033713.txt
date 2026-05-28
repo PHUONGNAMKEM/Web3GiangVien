@@ -1,6 +1,6 @@
 const { ethers } = require('ethers');
 
-// Web3 Configuration for Web3 HR Management System
+// Web3 Configuration for Web3 GiangVien Learning Support System
 const web3Config = {
   // Network Configuration
   networks: {

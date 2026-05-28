@@ -118,7 +118,7 @@ Backend sử dụng `ethers.js` để tương tác với contract. Xem `backend/
 1. **Admin giao task** → Hệ thống tính toán reward
 2. **Nhân viên hoàn thành** → Cập nhật tiến độ 100%
 3. **Super Admin approve** → Tự động gọi `payTaskReward()`
-4. **Contract chuyển token** → Từ contract address vào ví nhân viên
+4. **Contract chuyển token** → Từ contract address vào ví sinh viên/giảng viên
 5. **Lưu transaction hash** → Vào database
 
 ### Security Best Practices

@@ -7,6 +7,7 @@ import io from 'socket.io-client';
 import aiApiService from '../../services/aiService';
 import nhomService from '../../services/nhomService';
 import authService from '../../services/authService';
+import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Title, Text, Paragraph } = Typography;
 const { Countdown } = Statistic;
@@ -14,6 +15,7 @@ const { Countdown } = Statistic;
 const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
 
 const EntranceTest = () => {
+  const isMobile = useIsMobile();
   const { deTaiId } = useParams();
   const navigate = useNavigate();
   const user = authService.getCurrentUser();
@@ -205,7 +207,7 @@ const EntranceTest = () => {
       : { status: 'warning', title: `Chưa đạt! ${percent}%`, sub: `Ngưỡng: ${result.nguongDat || 75}%` });
 
     return (
-      <div style={{ maxWidth: 700, margin: '0 auto' }}>
+      <div style={{ maxWidth: 700, margin: '0 auto', padding: isMobile ? '0 12px' : 0 }}>
         <Result status={info.status} title={info.title} subTitle={info.sub} />
         <Card>
           <Descriptions column={1} bordered size="small">
@@ -253,8 +255,8 @@ const EntranceTest = () => {
   // Chưa bắt đầu
   if (!started) {
     return (
-      <div style={{ maxWidth: 600, margin: '0 auto' }}>
-        <Card style={{ borderTop: '4px solid #722ed1', textAlign: 'center' }}>
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: isMobile ? '0 12px' : 0 }}>
+        <Card style={{ borderTop: '4px solid #722ed1', textAlign: 'center' }} styles={{ body: { padding: isMobile ? 16 : 24 } }}>
           <Title level={3}>{baiTest.TieuDe}</Title>
           {baiTest.MoTa && <Paragraph type="secondary">{baiTest.MoTa}</Paragraph>}
 
@@ -288,7 +290,7 @@ const EntranceTest = () => {
   const answeredCount = Object.keys(answers).length;
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ maxWidth: 800, margin: '0 auto', padding: isMobile ? '0 12px' : 0 }}>
       {/* Alert khi bị dừng do nhóm khác thắng */}
       {competitionStopped && (
         <Alert
@@ -317,7 +319,7 @@ const EntranceTest = () => {
 
       {/* Câu hỏi */}
       {baiTest.CauHoi.map((q, idx) => (
-        <Card key={idx} style={{ marginBottom: 12, borderLeft: answers[idx] ? '4px solid #52c41a' : '4px solid #d9d9d9', opacity: competitionStopped ? 0.5 : 1, pointerEvents: competitionStopped ? 'none' : 'auto' }}>
+        <Card key={idx} style={{ marginBottom: 12, borderLeft: answers[idx] ? '4px solid #52c41a' : '4px solid #d9d9d9', opacity: competitionStopped ? 0.5 : 1, pointerEvents: competitionStopped ? 'none' : 'auto' }} styles={{ body: { padding: isMobile ? 12 : 24 } }}>
           <Space style={{ marginBottom: 8 }}>
             <Tag color={q.LoaiCauHoi === 'TracNghiem' ? 'blue' : 'purple'}>
               {q.LoaiCauHoi === 'TracNghiem' ? 'Trắc Nghiệm' : 'Code'}
@@ -348,10 +350,10 @@ const EntranceTest = () => {
                 <Text type="secondary">Ngôn ngữ: {q.NgonNgu || 'python'}</Text>
               </Space>
               <Editor
-                height="250px" language={q.NgonNgu || 'python'}
+                height={isMobile ? '300px' : '500px'} language={q.NgonNgu || 'python'}
                 value={answers[idx] || ''} onChange={v => handleAnswer(idx, v || '')}
                 theme="vs-dark"
-                options={{ minimap: { enabled: false }, fontSize: 14, lineNumbers: 'on', scrollBeyondLastLine: false, automaticLayout: true, readOnly: competitionStopped }}
+                options={{ minimap: { enabled: !isMobile }, fontSize: isMobile ? 12 : 14, lineNumbers: 'on', scrollBeyondLastLine: false, automaticLayout: true, wordWrap: 'on', readOnly: competitionStopped }}
               />
             </div>
           )}

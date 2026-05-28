@@ -665,12 +665,6 @@ class ApiService {
     });
     return response.data;
   }
-
-  // Employee KPI Rewards - Lấy tổng KPI thưởng của nhân viên
-  async getEmployeeKpiRewards(employeeDid) {
-    const response = await this.client.get(`/employee/kpi-rewards/${employeeDid}`);
-    return response.data;
-  }
 }
 
 export default new ApiService();

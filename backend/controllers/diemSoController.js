@@ -4,9 +4,11 @@ const BaoCao = require('../models/BaoCao');
 const DangKyDeTai = require('../models/DangKyDeTai');
 const contractService = require('../services/thesisContractService');
 const logger = require('../config/logger');
+const AILog = require('../models/AILog');
+const crypto = require('crypto');
 
 // Tạo 1 bản ghi điểm cho 1 báo cáo + ghi blockchain (best-effort). Bỏ qua nếu đã chấm.
-const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, diem, nhanXet, aiScore, aiFeedback, rubricsResult }) => {
+const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs }) => {
     const sinhVienId = baoCao.SinhVien;
     const existing = await DiemSo.findOne({ BaoCao: baoCao._id });
     if (existing) {
@@ -32,6 +34,38 @@ const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, diem, nhanXe
         TrangThaiBlockchain: 'Pending'
     });
     await diemSo.save();
+
+    try {
+        const extractedText = baoCao.ExtractedText || '';
+        const securityFlags = Array.isArray(aiSecurityFlags) ? aiSecurityFlags : [];
+        const aiScoreNumber = Number(aiScore);
+        const textHash = extractedText
+            ? crypto.createHash('sha256').update(extractedText).digest('hex')
+            : null;
+
+        await AILog.create({
+            BaoCao: baoCao._id,
+            DeTai: deTaiId,
+            SinhVien: sinhVienId,
+            TextHash: textHash,
+            TextLength: extractedText.length,
+            ScoreResult: {
+                aiScore: Number.isFinite(aiScoreNumber) ? aiScoreNumber : null,
+                aiFeedback,
+                rubricsResult: rubricsResult || [],
+                finalScore: diem
+            },
+            SecurityFlags: securityFlags,
+            InjectionDetected: securityFlags.some(flag =>
+                typeof flag === 'string' && flag.toLowerCase().includes('injection')
+            ),
+            RepetitionRate: aiRepetitionRate ?? null,
+            ExtractionMethod: baoCao.ExtractionMethod || null,
+            TimeTakenMs: aiTimeTakenMs ?? 0
+        });
+    } catch (logErr) {
+        logger.warn(`[AILOG] Failed to save audit log: ${logErr.message}`);
+    }
 
     let blockchainStatus = 'Pending';
     let txHash = null;
@@ -158,7 +192,7 @@ const assertGiangVienOwnsDeTai = async (deTaiId, giangVienId) => {
 
 exports.chamDiem = async (req, res) => {
     try {
-        const { baoCaoId, deTaiId, sinhVienId, diem, nhanXet, aiScore, aiFeedback, rubricsResult } = req.body;
+        const { baoCaoId, deTaiId, sinhVienId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs } = req.body;
         // Danh tính GV chấm lấy từ token (an toàn), không tin body
         const giangVienId = req.user?.id || req.body.giangVienId;
 
@@ -204,7 +238,7 @@ exports.chamDiem = async (req, res) => {
             return res.status(409).json({ error: 'Báo cáo này đã được chấm điểm.', code: 'DA_CHAM_BAOCAO_NAY' });
         }
 
-        const gradePayload = { deTaiId, giangVienId, diem, nhanXet, aiScore, aiFeedback, rubricsResult };
+        const gradePayload = { deTaiId, giangVienId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs };
 
         // Chấm cho báo cáo chính (của thành viên được chọn)
         const primary = await createGradeForReport({ baoCao, ...gradePayload });

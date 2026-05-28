@@ -115,7 +115,7 @@ function LoginPage() {
     } catch (err) {
       const message = err.message || 'Có lỗi xảy ra, vui lòng thử lại.';
       if (message.includes('user rejected')) setError('Bạn đã từ chối yêu cầu kết nối.');
-      else if (message.includes('wallet not registered')) setError('Ví này chưa được đăng ký. Vui lòng liên hệ Phòng Nhân sự.');
+      else if (message.includes('wallet not registered')) setError('Ví này chưa được đăng ký. Vui lòng liên hệ Ban quản lý khóa luận hoặc Giảng viên chủ nhiệm.');
       else if (message.includes('employee inactive')) setError('Tài khoản của bạn đã bị vô hiệu hóa.');
       else setError(message);
     } finally {
@@ -494,7 +494,7 @@ function LoginPage() {
                 mb: isMobile ? 0.5 : 1
               }}
             >
-              Cổng Thông Tin Nhân Sự
+              Cổng Thông Tin Hỗ Trợ Học Tập
             </AnimatedGradientText>
             <Typography
               variant={styles.subtitleVariant}
@@ -504,7 +504,7 @@ function LoginPage() {
                 fontSize: styles.subtitleFontSize
               }}
             >
-              Nền tảng quản trị nhân sự phi tập trung
+              Nền tảng hỗ trợ học tập & quản lý đồ án phi tập trung
             </Typography>
           </Box>
         </Fade>
@@ -648,7 +648,7 @@ function LoginPage() {
                     fontSize: isMobile ? '0.9rem' : '1rem'
                   }}
                 >
-                  Quét mã QR từ ứng dụng nhân viên để đăng nhập nhanh chóng và an toàn.
+                  Quét mã QR từ ứng dụng sinh viên để đăng nhập nhanh chóng và an toàn.
                 </Typography>
 
                 <Button

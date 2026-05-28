@@ -4,6 +4,16 @@ const DangKyDeTai = require('../models/DangKyDeTai');
 const DiemSo = require('../models/DiemSo');
 const ipfsService = require('../services/ipfsService');
 const logger = require('../config/logger');
+const fs = require('fs');
+
+const cleanupTempFile = (filePath) => {
+    if (!filePath) return;
+    try {
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+    } catch (ignore) {}
+};
 
 const getAcceptedMembers = (dangKy) => {
     const acceptedMembers = (dangKy?.ThanhVien || []).filter(tv =>
@@ -84,11 +94,53 @@ exports.uploadBaoCao = async (req, res) => {
             return res.status(400).json({ error: 'Bạn chưa đính kèm file báo cáo.' });
         }
 
+        // Validate magic bytes — chặn file giả mạo MIME
+        try {
+            const fileBuffer = fs.readFileSync(req.file.path);
+            const magicBytes = fileBuffer.slice(0, 4).toString('ascii');
+            if (magicBytes !== '%PDF') {
+                cleanupTempFile(req.file.path);
+                return res.status(400).json({ error: 'File không hợp lệ. Chỉ chấp nhận file PDF thực sự.' });
+            }
+        } catch (fsErr) {
+            logger.error(`[REPORT] Magic bytes check failed: ${fsErr.message}`);
+            cleanupTempFile(req.file.path);
+            return res.status(400).json({ error: 'Không thể đọc file báo cáo.' });
+        }
+
+        // Chặn PDF quá lớn (phòng thủ chiều sâu)
+        if (req.file.size > 20 * 1024 * 1024) {
+            cleanupTempFile(req.file.path);
+            return res.status(400).json({ error: 'File quá lớn. Tối đa 20MB.' });
+        }
+
+        // 1. Trích xuất text từ file PDF tạm (gọi trước khi uploadFile vì uploadFile sẽ tự động xóa file tạm)
+        let extractionResult = { text: '', page_count: 0, method: 'failed', warnings: [] };
+        try {
+            const aiService = require('../services/aiService');
+            extractionResult = await aiService.extractPdf(req.file.path);
+            logger.info(`[REPORT] PDF extracted | method=${extractionResult.method} | pages=${extractionResult.page_count} | textLen=${extractionResult.text ? extractionResult.text.length : 0}`);
+            if (extractionResult.warnings && extractionResult.warnings.length > 0) {
+                logger.warn(`[REPORT] PDF warnings: ${extractionResult.warnings.join('; ')}`);
+            }
+        } catch (extractErr) {
+            logger.warn(`[REPORT] PDF extraction failed (non-blocking): ${extractErr.message}`);
+        }
+
+        // 2. Upload file lên IPFS
+        extractionResult.warnings = extractionResult.warnings || [];
+        if (extractionResult.method === 'failed' || (extractionResult.text || '').length < 500) {
+            extractionResult.warnings.push(
+                'Canh bao: Khong doc duoc noi dung PDF hoac noi dung qua ngan. AI co the khong cham diem chinh xac.'
+            );
+        }
+
         let ipfsCid;
         try {
             const ipfsResult = await ipfsService.uploadFile(req.file.path, req.file.originalname);
             ipfsCid = ipfsResult.IpfsHash;
         } catch (e) {
+            cleanupTempFile(req.file.path);
             logger.error(`[REPORT] IPFS upload failed: ${e.message}`);
             return res.status(500).json({ error: 'Không thể tải file lên IPFS (Pinata). Vui lòng kiểm tra API Key.' });
         }
@@ -97,7 +149,12 @@ exports.uploadBaoCao = async (req, res) => {
             DeTai: deTaiId,
             SinhVien: tv.SinhVien,
             TieuDe: tieuDe || 'Báo cáo đồ án',
-            IPFS_CID: ipfsCid
+            IPFS_CID: ipfsCid,
+            ExtractedText: extractionResult.text || null,
+            ExtractedAt: extractionResult.text ? new Date() : null,
+            PageCount: extractionResult.page_count || null,
+            ExtractionMethod: extractionResult.method || null,
+            ExtractionWarnings: extractionResult.warnings || []
         }));
 
         const createdReports = await BaoCao.insertMany(payload);
@@ -131,6 +188,7 @@ exports.uploadBaoCao = async (req, res) => {
             txHash: submitTxHash || null
         });
     } catch (err) {
+        cleanupTempFile(req.file?.path);
         logger.error(`[REPORT] Upload failed: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
@@ -243,6 +301,7 @@ exports.getBaoCaoByLecturer = async (req, res) => {
         }).populate('SinhVien').populate('ThanhVien.SinhVien').populate('DeTai');
 
         const submissions = await BaoCao.find({ DeTai: { $in: topicIds } })
+            .select('-ExtractedText -ExtractionWarnings')
             .populate('SinhVien')
             .populate('DeTai');
 
@@ -276,6 +335,34 @@ exports.getBaoCaoByLecturer = async (req, res) => {
         });
 
         res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// GV lay noi dung PDF da trich xuat khi mo chi tiet bao cao
+exports.getExtractedText = async (req, res) => {
+    try {
+        const bc = await BaoCao.findById(req.params.id)
+            .select('DeTai ExtractedText ExtractionMethod ExtractionWarnings PageCount ExtractedAt')
+            .populate('DeTai', 'GiangVienHuongDan');
+
+        if (!bc) {
+            return res.status(404).json({ error: 'Bao cao khong ton tai', code: 'BAOCAO_KHONG_TON_TAI' });
+        }
+
+        const giangVienId = req.user?.id;
+        if (giangVienId && String(bc.DeTai?.GiangVienHuongDan) !== String(giangVienId)) {
+            return res.status(403).json({ error: 'Khong co quyen xem bao cao nay', code: 'KHONG_CO_QUYEN' });
+        }
+
+        res.json({
+            ExtractedText: bc.ExtractedText,
+            ExtractionMethod: bc.ExtractionMethod,
+            ExtractionWarnings: bc.ExtractionWarnings,
+            PageCount: bc.PageCount,
+            ExtractedAt: bc.ExtractedAt
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
