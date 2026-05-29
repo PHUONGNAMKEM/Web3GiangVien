@@ -147,6 +147,7 @@ const blockchainController = require('./controllers/blockchainController');
 const nhomController = require('./controllers/nhomController');
 const monHocController = require('./controllers/monHocController');
 const lopHocController = require('./controllers/lopHocController');
+const qrController = require('./controllers/qrController');
 
 // Middleware xác thực & phân quyền
 const { authenticateToken } = authController;
@@ -167,6 +168,10 @@ app.post('/api/auth/verify', loginLimiter, authController.verifySignature);
 app.post('/api/auth/logout', authController.authenticateToken, authController.logout);
 app.get('/api/auth/qr-session', loginLimiter, authController.generateQrSession);
 app.post('/api/auth/qr-submit', loginLimiter, authController.verifyQrSignature);
+
+// 2b. QR Routes
+app.get('/api/qr/me', ...requireAuth, qrController.getQrCode);
+app.post('/api/qr/generate', ...requireAuth, qrController.generateQrCode);
 
 // 3. Sinh Viên
 app.get('/api/sinhvien', sinhVienController.getAll);
