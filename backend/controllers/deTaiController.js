@@ -4,8 +4,20 @@ const Nhom = require('../models/Nhom');
 const SinhVien = require('../models/SinhVien');
 const logger = require('../config/logger');
 
+// Cache cho getAll - TTL 30 giay
+let _deTaiCache = { data: null, ts: 0 };
+const DETAI_CACHE_TTL = 30 * 1000;
+
+function invalidateDeTaiCache() {
+    _deTaiCache = { data: null, ts: 0 };
+}
+
 exports.getAll = async (req, res) => {
     try {
+        if (_deTaiCache.data && Date.now() - _deTaiCache.ts < DETAI_CACHE_TTL) {
+            return res.json(_deTaiCache.data);
+        }
+
         const list = await DeTai.find({}).populate('GiangVienHuongDan').lean();
 
         // Đếm số nhóm đang đăng ký (active) cho mỗi đề tài
@@ -28,6 +40,7 @@ exports.getAll = async (req, res) => {
             DaChotNhom: !!chotMap[t._id.toString()]
         }));
 
+        _deTaiCache = { data: result, ts: Date.now() };
         res.json(result);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -84,6 +97,7 @@ exports.create = async (req, res) => {
         const newItem = new DeTai(body);
         await newItem.save();
         logger.info(`[TOPIC] Created "${body.TenDeTai}" by GV ${body.GiangVienHuongDan} | Rubrics: ${body.SuDungRubrics || false}`);
+        invalidateDeTaiCache();
         res.status(201).json(newItem);
     } catch (err) {
         logger.error(`[TOPIC] Create failed: ${err.message}`);
@@ -94,6 +108,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const updated = await DeTai.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        invalidateDeTaiCache();
         res.json(updated);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -106,6 +121,7 @@ exports.delete = async (req, res) => {
         // Xóa luôn đăng ký liên quan
         await DangKyDeTai.deleteMany({ DeTai: req.params.id });
         logger.info(`[TOPIC] Deleted topic ${req.params.id}`);
+        invalidateDeTaiCache();
         res.json({ message: 'Deleted successfully' });
     } catch (err) {
         logger.error(`[TOPIC] Delete failed: ${err.message}`);
@@ -182,6 +198,7 @@ exports.registerTopic = async (req, res) => {
         const msg = deTai.CoBaiTest 
             ? 'Đăng ký thành công! Trưởng nhóm cần hoàn thành bài test cạnh tranh.' 
             : 'Đăng ký đề tài thành công! Chờ Giảng viên duyệt.';
+        invalidateDeTaiCache();
         res.status(201).json({ message: msg, data: dangKy });
     } catch (err) {
         logger.error(`[TOPIC] Registration failed: ${err.message}`);
@@ -271,6 +288,7 @@ exports.cancelRegistration = async (req, res) => {
         }
 
         await DangKyDeTai.findByIdAndDelete(id);
+        invalidateDeTaiCache();
         res.json({ message: 'Hủy đăng ký đề tài thành công!' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -321,6 +339,7 @@ exports.approveRegistration = async (req, res) => {
         }
 
         logger.info(`[TOPIC] Registration ${id} ${trangThai === 'DaDuyet' ? 'approved' : 'rejected'} | topic=${updated.DeTai?._id}`);
+        invalidateDeTaiCache();
         res.json({ message: `Đã ${trangThai === 'DaDuyet' ? 'duyệt' : 'từ chối'} thành công`, data: updated });
     } catch (err) {
         logger.error(`[TOPIC] Approve/Reject failed: ${err.message}`);
@@ -434,11 +453,13 @@ exports.respondToInvitation = async (req, res) => {
 
             dangKy.ThanhVien[thanhVienIndex].TrangThaiTV = 'DaChapNhan';
             await dangKy.save();
+            invalidateDeTaiCache();
             res.json({ message: 'Đã chấp nhận gia nhập nhóm.' });
         } else {
             // Từ chối -> Xóa element ra khỏi array
             dangKy.ThanhVien.splice(thanhVienIndex, 1);
             await dangKy.save();
+            invalidateDeTaiCache();
             res.json({ message: 'Đã từ chối lời mời.' });
         }
     } catch (err) {

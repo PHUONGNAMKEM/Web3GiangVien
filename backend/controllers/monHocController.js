@@ -3,20 +3,59 @@ const DeTai = require('../models/DeTai');
 const LopHoc = require('../models/LopHoc');
 const logger = require('../config/logger');
 
+const _monHocCache = new Map();
+const MONHOC_CACHE_TTL = 30 * 1000;
+
+function invalidateMonHocCache(gvId) {
+  if (gvId) {
+    _monHocCache.delete(String(gvId));
+  } else {
+    _monHocCache.clear();
+  }
+}
+
 // Lấy danh sách môn học của giảng viên
 exports.getByGiangVien = async (req, res) => {
   try {
     const { gvId } = req.params;
+    const cached = _monHocCache.get(String(gvId));
+    if (cached && Date.now() - cached.ts < MONHOC_CACHE_TTL) {
+      return res.json({ success: true, data: cached.data });
+    }
+
     const monHocs = await MonHoc.find({ GiangVien: gvId })
       .populate('GiangVien', 'HoTen MaGV')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    // Đếm số đề tài & số lớp học cho mỗi môn
-    const result = await Promise.all(monHocs.map(async (mh) => {
-      const soDeTai = await DeTai.countDocuments({ MonHoc: mh._id });
-      const soLopHoc = await LopHoc.countDocuments({ MonHoc: mh._id });
-      return { ...mh.toObject(), soDeTai, soLopHoc };
+    if (monHocs.length === 0) {
+      _monHocCache.set(String(gvId), { data: [], ts: Date.now() });
+      return res.json({ success: true, data: [] });
+    }
+
+    const monHocIds = monHocs.map(mh => mh._id);
+
+    const [deTaiCounts, lopHocCounts] = await Promise.all([
+      DeTai.aggregate([
+        { $match: { MonHoc: { $in: monHocIds } } },
+        { $group: { _id: '$MonHoc', count: { $sum: 1 } } }
+      ]),
+      LopHoc.aggregate([
+        { $match: { MonHoc: { $in: monHocIds } } },
+        { $group: { _id: '$MonHoc', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const deTaiMap = Object.fromEntries(deTaiCounts.map(r => [r._id.toString(), r.count]));
+    const lopHocMap = Object.fromEntries(lopHocCounts.map(r => [r._id.toString(), r.count]));
+
+    const result = monHocs.map(mh => ({
+      ...mh,
+      soDeTai: deTaiMap[mh._id.toString()] || 0,
+      soLopHoc: lopHocMap[mh._id.toString()] || 0
     }));
+
+    _monHocCache.set(String(gvId), { data: result, ts: Date.now() });
 
     res.json({ success: true, data: result });
   } catch (error) {
@@ -43,6 +82,7 @@ exports.create = async (req, res) => {
     await monHoc.save();
 
     logger.info(`[MonHoc] Created: ${MaMonHoc} - ${TenMonHoc}`);
+    invalidateMonHocCache(GiangVien);
     res.status(201).json({ success: true, data: monHoc });
   } catch (error) {
     logger.error(`[MonHoc] create error: ${error.message}`);
@@ -56,12 +96,18 @@ exports.update = async (req, res) => {
     const { id } = req.params;
     const { TenMonHoc, MoTa } = req.body;
 
+    const currentMonHoc = await MonHoc.findById(id).select('GiangVien');
     const monHoc = await MonHoc.findByIdAndUpdate(id, { TenMonHoc, MoTa }, { new: true });
     if (!monHoc) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy môn học' });
     }
 
     logger.info(`[MonHoc] Updated: ${monHoc.MaMonHoc}`);
+    if (currentMonHoc?.GiangVien) {
+      invalidateMonHocCache(currentMonHoc.GiangVien);
+    } else {
+      invalidateMonHocCache();
+    }
     res.json({ success: true, data: monHoc });
   } catch (error) {
     logger.error(`[MonHoc] update error: ${error.message}`);
@@ -90,6 +136,7 @@ exports.delete = async (req, res) => {
     }
 
     logger.info(`[MonHoc] Deleted: ${monHoc.MaMonHoc}`);
+    invalidateMonHocCache();
     res.json({ success: true, message: 'Đã xóa môn học' });
   } catch (error) {
     logger.error(`[MonHoc] delete error: ${error.message}`);

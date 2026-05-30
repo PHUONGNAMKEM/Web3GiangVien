@@ -8,4 +8,7 @@ const lopHocSchema = new mongoose.Schema({
   SinhVien: [{ type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien' }]
 }, { timestamps: true });
 
+// Index cho query getByGiangVien: filter theo GiangVien + sort theo createdAt
+lopHocSchema.index({ GiangVien: 1, createdAt: -1 });
+
 module.exports = mongoose.model('LopHoc', lopHocSchema);
