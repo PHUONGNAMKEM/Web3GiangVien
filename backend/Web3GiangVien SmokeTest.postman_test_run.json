@@ -1,0 +1,828 @@
+{
+	"id": "014f826a-2a1c-4710-839e-e990138486e8",
+	"name": "Web3GiangVien SmokeTest",
+	"timestamp": "2026-05-30T09:27:43.941Z",
+	"collection_id": "39377403-c0ca93d9-b9b5-49d8-9dd5-59ff36c3a2a7",
+	"folder_id": 0,
+	"environment_id": "39377403-a42bfdc6-4953-4201-ad36-6a8329b3d444",
+	"totalPass": 25,
+	"delay": 0,
+	"persist": true,
+	"status": "finished",
+	"startedAt": "2026-05-30T09:27:33.367Z",
+	"totalFail": 1,
+	"results": [
+		{
+			"id": "50f8e5a6-9479-4409-9cb6-d89f65343661",
+			"name": "GET /api/giangvien",
+			"url": "http://localhost:5000/api/giangvien",
+			"time": 74,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				74
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "b4c2e0dc-ffae-470e-9329-e518c9b77e14",
+			"name": "GET /api/sinhvien",
+			"url": "http://localhost:5000/api/sinhvien",
+			"time": 72,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				72
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "fb7b6ce2-48a6-474b-a7d3-86b3d40fa8db",
+			"name": "GET /api/detai",
+			"url": "http://localhost:5000/api/detai",
+			"time": 185,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				185
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "0c52025b-d994-4379-a7f0-9ac170e241af",
+			"name": "GET /api/detai/:id",
+			"url": "http://localhost:5000/api/detai/6a1a9f7abbf6fb50daa4d92e",
+			"time": 114,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				114
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "c94bd643-3652-4859-919c-289809658bb3",
+			"name": "GET /api/giangvien/:id",
+			"url": "http://localhost:5000/api/giangvien/69cab756026550c0e19d57ac",
+			"time": 77,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				77
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "38cdb36c-16c4-427f-bd97-195faf0e3565",
+			"name": "GET /api/monhoc/giangvien/:gvId",
+			"url": "http://localhost:5000/api/monhoc/giangvien/69cab756026550c0e19d57ac",
+			"time": 57,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				57
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "27faa88a-79fb-45d9-a725-b408ad902b2c",
+			"name": "GET /api/lophoc/giangvien/:gvId",
+			"url": "http://localhost:5000/api/lophoc/giangvien/69cab756026550c0e19d57ac",
+			"time": 81,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				81
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "dd34becc-6f80-44af-a550-6e0c13c48a17",
+			"name": "GET /api/blockchain/contracts",
+			"url": "http://localhost:5000/api/blockchain/contracts",
+			"time": 2053,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				2053
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "bd440421-4f78-4214-9487-8b1741ec653a",
+			"name": "GET /api/blockchain/thesis/db-records",
+			"url": "http://localhost:5000/api/blockchain/thesis/db-records",
+			"time": 1246,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				1246
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "b254627d-5574-49aa-b39d-beb0c73c6fb0",
+			"name": "GET /api/blockchain/thesis/submissions",
+			"url": "http://localhost:5000/api/blockchain/thesis/submissions",
+			"time": 3,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {
+				"Status OK (200/201/204)": false
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 0,
+					"fail": 1
+				}
+			},
+			"times": [
+				3
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": false
+				}
+			]
+		},
+		{
+			"id": "57b0ee1b-1895-4de6-902e-a4ea4d1ba462",
+			"name": "GET /api/dangky/giangvien/:gvId",
+			"url": "http://localhost:5000/api/dangky/giangvien/69cab756026550c0e19d57ac",
+			"time": 117,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				117
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "3ff5ec3b-dc3b-4a71-b9d4-1289b7bcce74",
+			"name": "GET /api/baocao/giangvien/:gvId",
+			"url": "http://localhost:5000/api/baocao/giangvien/69cab756026550c0e19d57ac",
+			"time": 216,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				216
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "9e5c5cb5-97fd-45f5-8430-b6cef9f6e984",
+			"name": "GET /api/baocao/detai/:deTaiId",
+			"url": "http://localhost:5000/api/baocao/detai/6a1a9f7abbf6fb50daa4d92e",
+			"time": 56,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				56
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "15fd3254-9fa9-466d-b64e-3a3addd12a28",
+			"name": "GET /api/diemso/comparison/:gvId",
+			"url": "http://localhost:5000/api/diemso/comparison/69cab756026550c0e19d57ac",
+			"time": 111,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				111
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "3b1b5ca8-8ce6-4933-817b-991723aa99e1",
+			"name": "GET /api/rubrics/giangvien/:gvId",
+			"url": "http://localhost:5000/api/rubrics/giangvien/69cab756026550c0e19d57ac",
+			"time": 61,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				61
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "1363c16e-e53e-4bfe-9db3-9ad1d85f3f5b",
+			"name": "POST /api/detai",
+			"url": "http://localhost:5000/api/detai",
+			"time": 83,
+			"responseCode": {
+				"code": 201,
+				"name": "Created"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				83
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "080d3586-4260-4af3-b091-67c0f0853181",
+			"name": "PUT /api/detai/:id",
+			"url": "http://localhost:5000/api/detai/6a1aad8b3d6db5d8e5a7650e",
+			"time": 75,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				75
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "f91d3e4b-7444-41b9-bbf2-d1a051d61d31",
+			"name": "POST /api/rubrics",
+			"url": "http://localhost:5000/api/rubrics",
+			"time": 69,
+			"responseCode": {
+				"code": 201,
+				"name": "Created"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				69
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "3d3eaf60-1aa0-4f1b-98d7-47616056eebd",
+			"name": "PUT /api/rubrics/:id",
+			"url": "http://localhost:5000/api/rubrics/6a1aad8b3d6db5d8e5a76511",
+			"time": 125,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				125
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "43b46f4c-902e-4f2d-80d4-bd86400b98e1",
+			"name": "POST /api/ai/analyze-report",
+			"url": "http://localhost:5000/api/ai/analyze-report",
+			"time": 1727,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				1727
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "80bc064f-49de-4849-8790-8e2da3c47d7b",
+			"name": "POST /api/ai/analyze-rubrics",
+			"url": "http://localhost:5000/api/ai/analyze-rubrics",
+			"time": 446,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				446
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "7b589c6d-b72e-4c9e-9b88-4b93d03b0c16",
+			"name": "POST /api/baitest",
+			"url": "http://localhost:5000/api/baitest",
+			"time": 401,
+			"responseCode": {
+				"code": 201,
+				"name": "Created"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				401
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "c9a9857a-17b4-4e32-b615-0a7f7c078d09",
+			"name": "GET /api/baitest/detai/:deTaiId",
+			"url": "http://localhost:5000/api/baitest/detai/6a1aad8b3d6db5d8e5a7650e",
+			"time": 109,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				109
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "765cb9d4-71bb-482d-8a05-79136fa24f09",
+			"name": "GET /api/baitest/:id/results",
+			"url": "http://localhost:5000/api/baitest/6a1aad8e3d6db5d8e5a7651b/results",
+			"time": 62,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				62
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "825b27bc-cc99-48df-8597-49fdd1199483",
+			"name": "DELETE /api/baitest/:id",
+			"url": "http://localhost:5000/api/baitest/6a1aad8e3d6db5d8e5a7651b",
+			"time": 225,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				225
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "8eb19dad-afff-4688-992d-e2b7b664ef8d",
+			"name": "DELETE /api/detai/:id",
+			"url": "http://localhost:5000/api/detai/6a1aad8b3d6db5d8e5a7650e",
+			"time": 120,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				120
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		}
+	],
+	"count": 1,
+	"totalTime": 7965,
+	"collection": {
+		"requests": [
+			{
+				"id": "50f8e5a6-9479-4409-9cb6-d89f65343661",
+				"method": "GET"
+			},
+			{
+				"id": "b4c2e0dc-ffae-470e-9329-e518c9b77e14",
+				"method": "GET"
+			},
+			{
+				"id": "fb7b6ce2-48a6-474b-a7d3-86b3d40fa8db",
+				"method": "GET"
+			},
+			{
+				"id": "0c52025b-d994-4379-a7f0-9ac170e241af",
+				"method": "GET"
+			},
+			{
+				"id": "c94bd643-3652-4859-919c-289809658bb3",
+				"method": "GET"
+			},
+			{
+				"id": "38cdb36c-16c4-427f-bd97-195faf0e3565",
+				"method": "GET"
+			},
+			{
+				"id": "27faa88a-79fb-45d9-a725-b408ad902b2c",
+				"method": "GET"
+			},
+			{
+				"id": "dd34becc-6f80-44af-a550-6e0c13c48a17",
+				"method": "GET"
+			},
+			{
+				"id": "bd440421-4f78-4214-9487-8b1741ec653a",
+				"method": "GET"
+			},
+			{
+				"id": "b254627d-5574-49aa-b39d-beb0c73c6fb0",
+				"method": "GET"
+			},
+			{
+				"id": "57b0ee1b-1895-4de6-902e-a4ea4d1ba462",
+				"method": "GET"
+			},
+			{
+				"id": "3ff5ec3b-dc3b-4a71-b9d4-1289b7bcce74",
+				"method": "GET"
+			},
+			{
+				"id": "9e5c5cb5-97fd-45f5-8430-b6cef9f6e984",
+				"method": "GET"
+			},
+			{
+				"id": "15fd3254-9fa9-466d-b64e-3a3addd12a28",
+				"method": "GET"
+			},
+			{
+				"id": "3b1b5ca8-8ce6-4933-817b-991723aa99e1",
+				"method": "GET"
+			},
+			{
+				"id": "1363c16e-e53e-4bfe-9db3-9ad1d85f3f5b",
+				"method": "POST"
+			},
+			{
+				"id": "080d3586-4260-4af3-b091-67c0f0853181",
+				"method": "PUT"
+			},
+			{
+				"id": "f91d3e4b-7444-41b9-bbf2-d1a051d61d31",
+				"method": "POST"
+			},
+			{
+				"id": "3d3eaf60-1aa0-4f1b-98d7-47616056eebd",
+				"method": "PUT"
+			},
+			{
+				"id": "43b46f4c-902e-4f2d-80d4-bd86400b98e1",
+				"method": "POST"
+			},
+			{
+				"id": "80bc064f-49de-4849-8790-8e2da3c47d7b",
+				"method": "POST"
+			},
+			{
+				"id": "7b589c6d-b72e-4c9e-9b88-4b93d03b0c16",
+				"method": "POST"
+			},
+			{
+				"id": "c9a9857a-17b4-4e32-b615-0a7f7c078d09",
+				"method": "GET"
+			},
+			{
+				"id": "765cb9d4-71bb-482d-8a05-79136fa24f09",
+				"method": "GET"
+			},
+			{
+				"id": "825b27bc-cc99-48df-8597-49fdd1199483",
+				"method": "DELETE"
+			},
+			{
+				"id": "8eb19dad-afff-4688-992d-e2b7b664ef8d",
+				"method": "DELETE"
+			}
+		]
+	}
+}

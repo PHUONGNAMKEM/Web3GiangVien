@@ -1,0 +1,1136 @@
+{
+  "info": {
+    "name": "Web3GiangVien SmokeTest - Lecturer",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "24 request (token GIẢNG VIÊN). Chỉ cần dán token GV → gvId tự lấy từ JWT."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "var t = pm.environment.get(\"token\");",
+          "if (t && t.indexOf(\".\") > -1) {",
+          "  try {",
+          "    var p = t.split(\".\")[1].replace(/-/g,\"+\").replace(/_/g,\"/\");",
+          "    var payload = JSON.parse(atob(p));",
+          "    if (payload.id) { pm.environment.set(\"gvId\", payload.id); }",
+          "  } catch (e) { console.log(\"JWT decode fail:\", e.message); }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "default"
+    }
+  ],
+  "item": [
+    {
+      "name": "0_bootstrap",
+      "item": [
+        {
+          "name": "GET /api/giangvien",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});",
+                  "try {",
+                  "  var j = pm.response.json();",
+                  "  var arr = Array.isArray(j) ? j : (j.data || j.nhom || []);",
+                  "  if (arr && arr[0] && arr[0]._id) {",
+                  "    pm.environment.set(\"gvId\", arr[0]._id);",
+                  "    console.log(\"✅ gvId =\", arr[0]._id);",
+                  "  }",
+                  "} catch (e) { console.log(\"⚠️ gvId:\", e.message); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/giangvien",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "giangvien"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/detai",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});",
+                  "try {",
+                  "  var j = pm.response.json();",
+                  "  var arr = Array.isArray(j) ? j : (j.data || j.nhom || []);",
+                  "  if (arr && arr[0] && arr[0]._id) {",
+                  "    pm.environment.set(\"deTaiId\", arr[0]._id);",
+                  "    console.log(\"✅ deTaiId =\", arr[0]._id);",
+                  "  }",
+                  "} catch (e) { console.log(\"⚠️ deTaiId:\", e.message); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1_read",
+      "item": [
+        {
+          "name": "GET /api/detai/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai/{{deTaiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai",
+                "{{deTaiId}}"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{deTaiId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/giangvien/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/giangvien/{{gvId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "giangvien",
+                "{{gvId}}"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{gvId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/monhoc/giangvien/:gvId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/monhoc/giangvien/{{gvId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "monhoc",
+                "giangvien",
+                "{{gvId}}"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/lophoc/giangvien/:gvId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lophoc/giangvien/{{gvId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lophoc",
+                "giangvien",
+                "{{gvId}}"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/blockchain/contracts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blockchain/contracts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "blockchain",
+                "contracts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/blockchain/thesis/db-records",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blockchain/thesis/db-records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "blockchain",
+                "thesis",
+                "db-records"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/dangky/giangvien/:gvId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dangky/giangvien/{{gvId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dangky",
+                "giangvien",
+                "{{gvId}}"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/baocao/giangvien/:gvId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baocao/giangvien/{{gvId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baocao",
+                "giangvien",
+                "{{gvId}}"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/baocao/detai/:deTaiId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baocao/detai/{{deTaiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baocao",
+                "detai",
+                "{{deTaiId}}"
+              ],
+              "variable": [
+                {
+                  "key": "deTaiId",
+                  "value": "{{deTaiId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/diemso/comparison/:gvId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/diemso/comparison/{{gvId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diemso",
+                "comparison",
+                "{{gvId}}"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/rubrics/giangvien/:gvId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rubrics/giangvien/{{gvId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rubrics",
+                "giangvien",
+                "{{gvId}}"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2_create",
+      "item": [
+        {
+          "name": "POST /api/detai",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});",
+                  "try {",
+                  "  var j = pm.response.json();",
+                  "  var id = (j.data && j.data._id) || j._id;",
+                  "  if (id) {",
+                  "    pm.environment.set(\"deTaiId\", id);",
+                  "    console.log(\"✅ deTaiId =\", id);",
+                  "  }",
+                  "} catch (e) { console.log(\"⚠️ deTaiId:\", e.message); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"MaDeTai\": \"DT_SMOKE\",\n  \"TenDeTai\": \"Smoke Test - Hệ thống Web3 Giảng Viên\",\n  \"MoTa\": \"Đề tài tạo tự động khi kiểm thử\",\n  \"YeuCau\": [\n    \"Web3\",\n    \"Blockchain\",\n    \"AI\"\n  ],\n  \"SoLuongSinhVien\": 2,\n  \"Deadline\": \"2026-08-28\",\n  \"GiangVienHuongDan\": \"{{gvId}}\",\n  \"CoBaiTest\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /api/detai/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai/{{deTaiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai",
+                "{{deTaiId}}"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{deTaiId}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"MoTa\": \"Đã cập nhật mô tả khi smoke test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/rubrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});",
+                  "try {",
+                  "  var j = pm.response.json();",
+                  "  var id = (j.data && j.data._id) || j._id;",
+                  "  if (id) {",
+                  "    pm.environment.set(\"rubricsId\", id);",
+                  "    console.log(\"✅ rubricsId =\", id);",
+                  "  }",
+                  "} catch (e) { console.log(\"⚠️ rubricsId:\", e.message); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rubrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rubrics"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"TenMau\": \"Rubric Smoke Test\",\n  \"MoTaMau\": \"Mẫu rubric tạo tự động\",\n  \"GiangVien\": \"{{gvId}}\",\n  \"MacDinh\": false,\n  \"TieuChi\": [\n    {\n      \"TenTieuChi\": \"Nội dung kỹ thuật\",\n      \"TrongSo\": 50,\n      \"DiemToiDa\": 10,\n      \"GoiYChoAI\": [\n        \"web3\",\n        \"blockchain\"\n      ]\n    },\n    {\n      \"TenTieuChi\": \"Tài liệu & trình bày\",\n      \"TrongSo\": 50,\n      \"DiemToiDa\": 10,\n      \"GoiYChoAI\": [\n        \"report\",\n        \"documentation\"\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "PUT /api/rubrics/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rubrics/{{rubricsId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rubrics",
+                "{{rubricsId}}"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{rubricsId}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"MoTaMau\": \"Đã cập nhật mô tả rubric\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3_ai",
+      "item": [
+        {
+          "name": "POST /api/ai/analyze-report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/analyze-report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ai",
+                "analyze-report"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Báo cáo trình bày hệ thống quản lý đề tài Web3 dùng blockchain Ethereum, smart contract, IPFS lưu báo cáo, và mô hình SBERT/PhoBERT để gợi ý và chấm điểm.\",\n  \"topicRequirements\": [\n    \"blockchain\",\n    \"web3\",\n    \"ethereum\",\n    \"smart contract\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/ai/analyze-rubrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/analyze-rubrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ai",
+                "analyze-rubrics"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Báo cáo trình bày kiến trúc blockchain, smart contract Solidity, lưu trữ IPFS và tài liệu hướng dẫn chi tiết.\",\n  \"rubrics\": [\n    {\n      \"TenTieuChi\": \"Nội dung kỹ thuật\",\n      \"TrongSo\": 50,\n      \"GoiYChoAI\": [\n        \"blockchain\",\n        \"solidity\"\n      ]\n    },\n    {\n      \"TenTieuChi\": \"Tài liệu\",\n      \"TrongSo\": 50,\n      \"GoiYChoAI\": [\n        \"documentation\",\n        \"report\"\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4_baitest",
+      "item": [
+        {
+          "name": "POST /api/baitest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});",
+                  "try {",
+                  "  var j = pm.response.json();",
+                  "  var id = (j.data && j.data._id) || j._id;",
+                  "  if (id) {",
+                  "    pm.environment.set(\"baiTestId\", id);",
+                  "    console.log(\"✅ baiTestId =\", id);",
+                  "  }",
+                  "} catch (e) { console.log(\"⚠️ baiTestId:\", e.message); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deTaiId\": \"{{deTaiId}}\",\n  \"tieuDe\": \"Bài test smoke\",\n  \"moTa\": \"Bài test tạo tự động\",\n  \"thoiGianLam\": 30,\n  \"nguongDat\": 50,\n  \"cauHoi\": [\n    {\n      \"LoaiCauHoi\": \"TracNghiem\",\n      \"NoiDung\": \"Solidity là ngôn ngữ của?\",\n      \"LuaChon\": [\n        \"Ethereum\",\n        \"Bitcoin\"\n      ],\n      \"DapAnDung\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/baitest/detai/:deTaiId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/detai/{{deTaiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                "detai",
+                "{{deTaiId}}"
+              ],
+              "variable": [
+                {
+                  "key": "deTaiId",
+                  "value": "{{deTaiId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/baitest/:id/results",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/{{baiTestId}}/results",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                "{{baiTestId}}",
+                "results"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{baiTestId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5_cleanup",
+      "item": [
+        {
+          "name": "DELETE /api/baitest/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/{{baiTestId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                "{{baiTestId}}"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{baiTestId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/detai/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai/{{deTaiId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai",
+                "{{deTaiId}}"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{deTaiId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

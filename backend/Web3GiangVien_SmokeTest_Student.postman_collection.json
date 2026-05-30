@@ -1,0 +1,653 @@
+{
+  "info": {
+    "name": "Web3GiangVien SmokeTest - Student",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "13 request (token SINH VIÊN). Chỉ cần dán token SV → svId tự lấy từ JWT. Profile PUT giữ nguyên tên/MSSV/email gốc."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "var t = pm.environment.get(\"token\");",
+          "if (t && t.indexOf(\".\") > -1) {",
+          "  try {",
+          "    var p = t.split(\".\")[1].replace(/-/g,\"+\").replace(/_/g,\"/\");",
+          "    var payload = JSON.parse(atob(p));",
+          "    if (payload.id) { pm.environment.set(\"svId\", payload.id); }",
+          "  } catch (e) { console.log(\"JWT decode fail:\", e.message); }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "default"
+    }
+  ],
+  "item": [
+    {
+      "name": "0_bootstrap",
+      "item": [
+        {
+          "name": "GET /api/detai",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});",
+                  "try {",
+                  "  var j = pm.response.json();",
+                  "  var arr = Array.isArray(j) ? j : (j.data || j.nhom || []);",
+                  "  if (arr && arr[0] && arr[0]._id) {",
+                  "    pm.environment.set(\"deTaiId\", arr[0]._id);",
+                  "    console.log(\"✅ deTaiId =\", arr[0]._id);",
+                  "  }",
+                  "} catch (e) { console.log(\"⚠️ deTaiId:\", e.message); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/nhom",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});",
+                  "try {",
+                  "  var j = pm.response.json();",
+                  "  var d = j.data || j;",
+                  "  if (d._id) { pm.environment.set(\"nhomId\", d._id); console.log(\"✅ nhomId =\", d._id); }",
+                  "  var tn = d.TruongNhom;",
+                  "  var sv = tn && (tn._id || tn);",
+                  "  if (sv) { pm.environment.set(\"svId\", sv); console.log(\"✅ svId =\", sv); }",
+                  "} catch (e) { console.log(\"⚠️ nhomBootstrap:\", e.message); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenNhom\": \"Nhóm Smoke Test\",\n  \"soLuong\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/sinhvien/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});",
+                  "try {",
+                  "  var j = pm.response.json();",
+                  "  if (j.data) j = j.data;",
+                  "  if (j.HoTen != null) pm.environment.set(\"svHoTen\", j.HoTen);",
+                  "  if (j.MaSV != null) pm.environment.set(\"svMaSV\", j.MaSV);",
+                  "  if (j.Email != null) pm.environment.set(\"svEmail\", j.Email);",
+                  "} catch (e) { console.log(\"⚠️ fieldSaver:\", e.message); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sinhvien/{{svId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sinhvien",
+                "{{svId}}"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{svId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1_read",
+      "item": [
+        {
+          "name": "GET /api/nhom/sinhvien/:svId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/sinhvien/{{svId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                "sinhvien",
+                "{{svId}}"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/nhom/invites/:svId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/invites/{{svId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                "invites",
+                "{{svId}}"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/dangky/sinhvien/:svId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dangky/sinhvien/{{svId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dangky",
+                "sinhvien",
+                "{{svId}}"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/baocao/sinhvien/:svId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baocao/sinhvien/{{svId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baocao",
+                "sinhvien",
+                "{{svId}}"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/diemso/sinhvien/:svId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/diemso/sinhvien/{{svId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diemso",
+                "sinhvien",
+                "{{svId}}"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/tiendo/sinhvien/:svId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tiendo/sinhvien/{{svId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tiendo",
+                "sinhvien",
+                "{{svId}}"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2_ai",
+      "item": [
+        {
+          "name": "POST /api/ai/match-student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/match-student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ai",
+                "match-student"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentProfile\": {\n    \"GPA\": 3.5,\n    \"ChuyenNganh\": \"Công nghệ thông tin\",\n    \"BangDiemKyNang\": [\n      {\n        \"TenKyNang\": \"Web3\",\n        \"Diem\": 8\n      },\n      {\n        \"TenKyNang\": \"Machine Learning\",\n        \"Diem\": 8\n      }\n    ]\n  },\n  \"topics\": [\n    {\n      \"_id\": \"{{deTaiId}}\",\n      \"YeuCau\": [\n        \"Web3\",\n        \"Blockchain\"\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3_profile",
+      "item": [
+        {
+          "name": "PUT /api/sinhvien/:id/profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sinhvien/{{svId}}/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sinhvien",
+                "{{svId}}",
+                "profile"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{svId}}"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"HoTen\": \"{{svHoTen}}\",\n  \"MaSV\": \"{{svMaSV}}\",\n  \"Email\": \"{{svEmail}}\",\n  \"GPA\": 3.5,\n  \"ChuyenNganh\": \"Công nghệ thông tin\",\n  \"BangDiemKyNang\": [\n    {\n      \"TenKyNang\": \"Web3/Blockchain\",\n      \"Diem\": 8\n    },\n    {\n      \"TenKyNang\": \"Python\",\n      \"Diem\": 8\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4_nhom",
+      "item": [
+        {
+          "name": "POST /api/nhom/:id/chot",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/{{nhomId}}/chot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                "{{nhomId}}",
+                "chot"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{nhomId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/nhom/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status OK (200/201/204)\", function () {",
+                  "    pm.expect([200,201,204]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/{{nhomId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                "{{nhomId}}"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{nhomId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
