@@ -10,10 +10,20 @@ exports.matchStudentToTopics = async (studentProfile, topics) => {
         logger.info(`[AI] Calling FastAPI /match-student | topics=${topics.length}`);
         
         // FastAPI expects: { student: { gpa, major_scores }, topics: [{ topic_id, requirements: [] }] }
-        // Build major_scores from KyNang array (each skill gets score 8.0 to indicate proficiency)
-        const kyNang = studentProfile.ky_nang || studentProfile.KyNang || [];
+        // Build major_scores từ BangDiemKyNang (nếu có), fallback qua KyNang cũ (mặc định 8.0)
         const majorScores = {};
-        kyNang.forEach(skill => { majorScores[skill] = 8.0; });
+        const bangDiem = studentProfile.BangDiemKyNang || studentProfile.bang_diem_ky_nang || [];
+        
+        if (bangDiem && bangDiem.length > 0) {
+            bangDiem.forEach(item => {
+                if (item.TenKyNang && item.Diem) {
+                    majorScores[item.TenKyNang] = item.Diem;
+                }
+            });
+        } else {
+            const kyNang = studentProfile.ky_nang || studentProfile.KyNang || [];
+            kyNang.forEach(skill => { majorScores[skill] = 8.0; });
+        }
         
         // Nếu có chuyên ngành, thêm vào major_scores
         const chuyenNganh = studentProfile.chuyen_nganh || studentProfile.ChuyenNganh || '';

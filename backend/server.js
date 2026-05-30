@@ -95,6 +95,16 @@ io.on('connection', (socket) => {
     logger.info(`[SOCKET] Registered socket ${socket.id} to QR room: ${sessionId}`);
   });
 
+  socket.on('admin:join', () => {
+    socket.join('admin:room');
+    console.log(`Socket ${socket.id} joined admin:room`);
+  });
+
+  socket.on('pending:join', (walletAddress) => {
+    socket.join(`pending:${walletAddress.toLowerCase()}`);
+    console.log(`Socket ${socket.id} joined pending room for wallet ${walletAddress}`);
+  });
+
   socket.on('disconnect', () => {
     logger.info(`[SOCKET] User disconnected: ${socket.id}`);
   });
@@ -148,12 +158,14 @@ const nhomController = require('./controllers/nhomController');
 const monHocController = require('./controllers/monHocController');
 const lopHocController = require('./controllers/lopHocController');
 const qrController = require('./controllers/qrController');
+const adminController = require('./controllers/adminController');
 
 // Middleware xác thực & phân quyền
 const { authenticateToken } = authController;
 const { requireRole } = require('./middleware/authz');
 const requireLecturer = [authenticateToken, requireRole('LECTURER_ROLE')];
 const requireStudent = [authenticateToken, requireRole('STUDENT_ROLE')];
+const requireAdmin = [authenticateToken, requireRole('ADMIN_ROLE')];
 const requireAuth = [authenticateToken];
 
 
@@ -165,6 +177,7 @@ app.get('/', (req, res) => {
 // 2. Auth routes
 app.post('/api/auth/challenge', loginLimiter, authController.generateChallenge);
 app.post('/api/auth/verify', loginLimiter, authController.verifySignature);
+app.post('/api/auth/register-role', authController.registerWithRole);
 app.post('/api/auth/logout', authController.authenticateToken, authController.logout);
 app.get('/api/auth/qr-session', loginLimiter, authController.generateQrSession);
 app.post('/api/auth/qr-submit', loginLimiter, authController.verifyQrSignature);
@@ -172,6 +185,12 @@ app.post('/api/auth/qr-submit', loginLimiter, authController.verifyQrSignature);
 // 2b. QR Routes
 app.get('/api/qr/me', ...requireAuth, qrController.getQrCode);
 app.post('/api/qr/generate', ...requireAuth, qrController.generateQrCode);
+
+// 2c. Admin Routes
+app.get('/api/admin/requests', ...requireAdmin, adminController.getPendingRequests);
+app.post('/api/admin/approve/:id', ...requireAdmin, adminController.approveRequest);
+app.post('/api/admin/reject/:id', ...requireAdmin, adminController.rejectRequest);
+app.get('/api/admin/lecturers', ...requireAdmin, adminController.getAllLecturers);
 
 // 3. Sinh Viên
 app.get('/api/sinhvien', sinhVienController.getAll);

@@ -15,11 +15,13 @@ import {
 } from '@mui/icons-material';
 import MetaMaskGuideModal from './MetaMaskGuideModal';
 import QrScanner from './QrScanner';
+import RoleSelection from './RoleSelection';
 import authService from '../services/authService';
 
 // Role constants
 const STUDENT_ROLE = 'STUDENT_ROLE';
 const LECTURER_ROLE = 'LECTURER_ROLE';
+const ADMIN_ROLE = 'ADMIN_ROLE';
 
 // --- Animated Gradient Text Component ---
 function AnimatedGradientText({ children, sx }) {
@@ -63,6 +65,10 @@ function LoginPage() {
   // QR Login State
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const [scanningQr, setScanningQr] = useState(false);
+
+  // Role Selection State
+  const [needsRoleSelection, setNeedsRoleSelection] = useState(false);
+  const [tempWallet, setTempWallet] = useState(null);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -140,6 +146,14 @@ function LoginPage() {
       // Xác thực MetaMask (ký challenge)
       console.log('Authenticating...');
       const result = await authService.authenticate();
+      
+      if (result.needsRoleSelection) {
+        setNeedsRoleSelection(true);
+        setTempWallet(result.walletAddress);
+        setSuccess('Vui lòng chọn vai trò để tiếp tục.');
+        return;
+      }
+
       setSuccess('Đăng nhập bằng QR thành công! Đang chuyển hướng...');
       setIsAuthenticated(true);
       setUser(result.user);
@@ -176,6 +190,13 @@ function LoginPage() {
       setConnectedWallet(walletAddress);
 
       const result = await authService.authenticate();
+      if (result.needsRoleSelection) {
+        setNeedsRoleSelection(true);
+        setTempWallet(result.walletAddress);
+        setSuccess('Vui lòng chọn vai trò để tiếp tục.');
+        return;
+      }
+
       setSuccess('Đăng nhập thành công! Đang chuyển hướng đến dashboard...');
       setIsAuthenticated(true);
       setUser(result.user);
@@ -202,6 +223,32 @@ function LoginPage() {
     setTabValue(newValue);
     setError('');
     setSuccess('');
+  };
+
+  const handleSelectStudent = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await authService.registerWithRole(tempWallet, STUDENT_ROLE);
+      window.location.href = '/dashboard';
+    } catch (err) {
+      setError(err.message || 'Lỗi khi đăng ký Sinh viên');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectLecturer = async (formData) => {
+    setLoading(true);
+    setError('');
+    try {
+      await authService.registerWithRole(tempWallet, LECTURER_ROLE, formData);
+      window.location.href = '/pending-approval';
+    } catch (err) {
+      setError(err.message || 'Lỗi khi đăng ký Giảng viên');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // --- Responsive styles ---
@@ -242,6 +289,10 @@ function LoginPage() {
   // --- Logged In View ---
   if (isAuthenticated && user) {
     const isLecturer = user.role_id === LECTURER_ROLE;
+    const isAdmin = user.role_id === ADMIN_ROLE;
+    
+    const roleDisplayName = isAdmin ? 'Super Admin' : (isLecturer ? 'Giảng viên' : 'Sinh viên');
+    
     return (
       <Container maxWidth="sm">
         <Box
@@ -281,7 +332,7 @@ function LoginPage() {
                   mb: 1
                 }}
               >
-                Chào mừng {isLecturer ? 'Giảng viên' : 'Sinh viên'}
+                Chào mừng {roleDisplayName}
               </AnimatedGradientText>
               <Typography
                 variant="h5"
@@ -321,13 +372,13 @@ function LoginPage() {
                 />
                 
                 <Chip
-                  label={`Vai trò: ${isLecturer ? 'Giảng viên' : 'Sinh viên'}`}
+                  label={`Vai trò: ${roleDisplayName}`}
                   variant="outlined"
                   size={styles.chipSize}
                   color="primary"
                 />
 
-                {!isLecturer && user.MaSV && (
+                {!isLecturer && !isAdmin && user.MaSV && (
                   <Chip
                     label={`Mã SV: ${user.MaSV}`}
                     variant="outlined"
@@ -351,7 +402,7 @@ function LoginPage() {
                   />
                 )}
 
-                {!isLecturer && typeof user.GPA === 'number' && (
+                {!isLecturer && !isAdmin && typeof user.GPA === 'number' && (
                   <Chip
                     label={`GPA tích lũy: ${user.GPA.toFixed(2)}`}
                     variant="outlined"
@@ -461,7 +512,29 @@ function LoginPage() {
           </Box>
         </Fade>
 
-        <Grow in={true} timeout={1500}>
+        {needsRoleSelection ? (
+          <Grow in={true} timeout={1500}>
+            <Box width="100%">
+              {error && (
+                <Alert severity="error" sx={{ mb: 2.5, textAlign: 'left', maxWidth: 800, mx: 'auto' }}>
+                  {error}
+                </Alert>
+              )}
+              {success && (
+                <Alert severity="success" sx={{ mb: 2.5, textAlign: 'left', maxWidth: 800, mx: 'auto' }}>
+                  {success}
+                </Alert>
+              )}
+              <RoleSelection
+                walletAddress={tempWallet}
+                onSelectStudent={handleSelectStudent}
+                onSelectLecturer={handleSelectLecturer}
+                loading={loading}
+              />
+            </Box>
+          </Grow>
+        ) : (
+          <Grow in={true} timeout={1500}>
           <Paper
             elevation={3}
             sx={{
@@ -592,6 +665,7 @@ function LoginPage() {
             )}
           </Paper>
         </Grow>
+        )}
 
         {/* QR Scanner Dialog */}
         <Dialog

@@ -51,7 +51,7 @@ exports.delete = async (req, res) => {
 exports.updateProfile = async (req, res) => {
     try {
         const { id } = req.params;
-        const { HoTen, MaSV, Email, GPA, ChuyenNganh, KyNang } = req.body;
+        const { HoTen, MaSV, Email, GPA, ChuyenNganh, BangDiemKyNang } = req.body;
 
         // Validate fields cơ bản
         if (!HoTen || !MaSV || !Email) {
@@ -62,9 +62,12 @@ exports.updateProfile = async (req, res) => {
             return res.status(400).json({ error: 'Vui lòng nhập GPA để hệ thống AI có thể gợi ý đề tài chính xác.' });
         }
         
-        if (!KyNang || !Array.isArray(KyNang) || KyNang.length === 0) {
-            return res.status(400).json({ error: 'Vui lòng chọn hoặc nhập ít nhất 1 kỹ năng để SBERT có dữ liệu phân tích.' });
+        if (!BangDiemKyNang || !Array.isArray(BangDiemKyNang) || BangDiemKyNang.length === 0) {
+            return res.status(400).json({ error: 'Vui lòng chọn và nhập điểm ít nhất 1 kỹ năng để SBERT có dữ liệu phân tích.' });
         }
+        
+        // Auto-generate KyNang string array for backward compatibility
+        const KyNang = BangDiemKyNang.map(item => item.TenKyNang).filter(Boolean);
 
         // Kiểm tra trùng MaSV với SV khác
         const duplicateMaSV = await SinhVien.findOne({ MaSV, _id: { $ne: id } });
@@ -85,6 +88,7 @@ exports.updateProfile = async (req, res) => {
             GPA: GPA || 0,
             ChuyenNganh: ChuyenNganh || '',
             KyNang: KyNang || [],
+            BangDiemKyNang: BangDiemKyNang || [],
             DaCapNhatHoSo: true
         }, { new: true });
 
@@ -110,7 +114,8 @@ exports.findByMaSV = async (req, res) => {
             Email: sv.Email,
             GPA: sv.GPA,
             ChuyenNganh: sv.ChuyenNganh,
-            KyNang: sv.KyNang
+            KyNang: sv.KyNang,
+            BangDiemKyNang: sv.BangDiemKyNang
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

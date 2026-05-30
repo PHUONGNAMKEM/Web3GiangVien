@@ -20,6 +20,9 @@ import ProgressLog from './components/student/ProgressLog';
 import EntranceTest from './components/student/EntranceTest';
 import BlockchainDebugPage from './components/debug/BlockchainDebugPage';
 import GroupManagement from './components/student/GroupManagement';
+import AdminDashboard from './components/admin/AdminDashboard';
+import AdminRequests from './components/admin/AdminRequests';
+import PendingApproval from './components/PendingApproval';
 
 // Protected Route component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -53,6 +56,7 @@ function PublicRoute({ children }) {
   }, []);
 
   if (isAuthenticated && currentUser) {
+    if (currentUser.role_id === 'ADMIN_ROLE') return <Navigate to="/admin" replace />;
     if (currentUser.role_id === 'LECTURER_ROLE') return <Navigate to="/lecturer" replace />;
     return <Navigate to="/student" replace />;
   }
@@ -63,6 +67,7 @@ function PublicRoute({ children }) {
 function RoleRedirect() {
   const user = authService.getCurrentUser();
   if (!user) return <Navigate to="/" replace />;
+  if (user.role_id === 'ADMIN_ROLE') return <Navigate to="/admin" replace />;
   if (user.role_id === 'LECTURER_ROLE') return <Navigate to="/lecturer" replace />;
   return <Navigate to="/student" replace />;
 }
@@ -74,8 +79,18 @@ function App() {
         <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/dashboard" element={<RoleRedirect />} />
         <Route path="/blockchain" element={<BlockchainDebugPage />} />
+        <Route path="/pending-approval" element={<PendingApproval />} />
 
         {/* Nested User Routes under MainLayout */}
+        <Route path="/admin" element={
+          <ProtectedRoute allowedRoles={['ADMIN_ROLE']}>
+            <MainLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<AdminDashboard />} />
+          <Route path="requests" element={<AdminRequests />} />
+        </Route>
+
         <Route path="/lecturer" element={
           <ProtectedRoute allowedRoles={['LECTURER_ROLE']}>
             <MainLayout />

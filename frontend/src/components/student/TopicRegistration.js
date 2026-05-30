@@ -69,12 +69,13 @@ const TopicRegistration = () => {
         }
 
         // 3. Lấy profile SV thật từ DB
-        let studentProfile = { chuyen_nganh: '', ky_nang: [] };
+        let studentProfile = { chuyen_nganh: '', ky_nang: [], bang_diem_ky_nang: [] };
         try {
           const svProfile = await aiApiService.getStudentProfile(user.id);
           studentProfile = {
             chuyen_nganh: svProfile.ChuyenNganh || '',
             ky_nang: svProfile.KyNang || [],
+            bang_diem_ky_nang: svProfile.BangDiemKyNang || [],
             gpa: svProfile.GPA || 0
           };
         } catch (e) {

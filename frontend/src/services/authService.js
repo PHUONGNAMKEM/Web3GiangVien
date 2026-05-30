@@ -117,6 +117,10 @@ class AuthService {
         throw new Error(verifyResponse.data.message || 'Authentication failed');
       }
 
+      if (verifyResponse.data.needsRoleSelection) {
+        return verifyResponse.data;
+      }
+
       // Store authentication data
       this.user = verifyResponse.data.user;
       localStorage.setItem('user', JSON.stringify(verifyResponse.data.user));
@@ -144,6 +148,32 @@ class AuthService {
       };
     } catch (error) {
       console.error('Authentication error:', error);
+      throw error;
+    }
+  }
+
+  // Register with selected role
+  async registerWithRole(walletAddress, role, profileData = {}) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/register-role`, {
+        walletAddress,
+        role,
+        ...profileData
+      });
+
+      if (!response.data.success && !response.data.isPending) {
+        throw new Error(response.data.message || 'Registration failed');
+      }
+
+      if (response.data.token && response.data.user) {
+        this.user = response.data.user;
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('token', response.data.token);
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Register Role Error:', error);
       throw error;
     }
   }

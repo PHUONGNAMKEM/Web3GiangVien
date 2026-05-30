@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Button, Avatar, theme, Dropdown } from 'antd';
-import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award, ClipboardList, BarChart2, School, Users, GraduationCap } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Layout, Menu, Button, Avatar, theme, Dropdown, Badge } from 'antd';
+import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award, ClipboardList, BarChart2, School, Users, GraduationCap, Bell } from 'lucide-react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import authService from '../../services/authService';
+import axios from 'axios';
+import io from 'socket.io-client';
 import { useIsMobile } from '../../hooks/useResponsive';
 
 const { Header, Content, Sider } = Layout;
@@ -14,6 +16,22 @@ const MainLayout = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(isMobile);
   const [currentUser, setCurrentUser] = useState(null);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  const fetchPendingRequestsCount = useCallback(async () => {
+    try {
+      const token = authService.getToken();
+      if (!token) return;
+      const res = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000/api'}/admin/requests`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        setPendingRequestsCount(res.data.requests.length);
+      }
+    } catch (e) {
+      console.error('Failed to fetch pending requests count', e);
+    }
+  }, []);
 
   useEffect(() => {
     if (isMobile) {
@@ -36,6 +54,27 @@ const MainLayout = () => {
   };
 
   const isLecturer = currentUser?.role_id === 'LECTURER_ROLE';
+  const isAdmin = currentUser?.role_id === 'ADMIN_ROLE';
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchPendingRequestsCount();
+
+      const socket = io(process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://localhost:5000');
+      socket.on('connect', () => socket.emit('admin:join'));
+      socket.on('admin:newRequest', () => {
+        setPendingRequestsCount(prev => prev + 1);
+      });
+
+      const handleRefresh = () => fetchPendingRequestsCount();
+      window.addEventListener('admin:refreshBadge', handleRefresh);
+
+      return () => {
+        socket.disconnect();
+        window.removeEventListener('admin:refreshBadge', handleRefresh);
+      };
+    }
+  }, [isAdmin, fetchPendingRequestsCount]);
 
   const studentMenuItems = [
     { key: '/student', icon: <Monitor size={18} />, label: 'Dashboard Sinh Viên' },
@@ -57,7 +96,20 @@ const MainLayout = () => {
     { key: '/lecturer/comparison', icon: <BarChart2 size={18} />, label: 'So Sánh AI vs GV' }
   ];
 
-  const menuItems = isLecturer ? lecturerMenuItems : studentMenuItems;
+  const adminMenuItems = [
+    { key: '/admin', icon: <Monitor size={18} />, label: 'Dashboard Admin' },
+    { 
+      key: '/admin/requests', 
+      icon: (
+        <Badge count={pendingRequestsCount} size="small" offset={[5, 0]}>
+          <Bell size={18} />
+        </Badge>
+      ), 
+      label: 'Yêu cầu' 
+    }
+  ];
+
+  const menuItems = isAdmin ? adminMenuItems : (isLecturer ? lecturerMenuItems : studentMenuItems);
 
   const headerMenu = (
     <Menu items={[

@@ -7,6 +7,10 @@ const sinhVienSchema = new mongoose.Schema({
   GPA: { type: Number, default: 0 },
   ChuyenNganh: { type: String, default: '' },
   KyNang: [{ type: String }],
+  BangDiemKyNang: [{
+    TenKyNang: { type: String, required: true },
+    Diem: { type: Number, required: true, default: 8.0 }
+  }],
   WalletAddress: { type: String, required: true, unique: true },
   DaCapNhatHoSo: { type: Boolean, default: false }
 }, { timestamps: true });

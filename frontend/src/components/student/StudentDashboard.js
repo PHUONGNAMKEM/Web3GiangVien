@@ -89,13 +89,18 @@ const StudentDashboard = () => {
   const handleSaveProfile = async (values) => {
     setSavingProfile(true);
     try {
+      const bangDiem = (values.KyNang || []).map(skill => ({
+        TenKyNang: skill,
+        Diem: values.Scores?.[skill] || 8.0
+      }));
+
       const result = await aiApiService.updateStudentProfile(user.id, {
         HoTen: values.HoTen,
         MaSV: values.MaSV,
         Email: values.Email,
         GPA: values.GPA || 0,
         ChuyenNganh: values.ChuyenNganh || '',
-        KyNang: values.KyNang || []
+        BangDiemKyNang: bangDiem
       });
       setStudentProfile(result.data);
       setEditingProfile(false);
@@ -110,13 +115,22 @@ const StudentDashboard = () => {
 
   const openEditProfile = () => {
     if (studentProfile) {
+      const currentKyNang = studentProfile.KyNang || [];
+      const currentScores = {};
+      if (studentProfile.BangDiemKyNang) {
+          studentProfile.BangDiemKyNang.forEach(item => {
+              currentScores[item.TenKyNang] = item.Diem;
+          });
+      }
+
       form.setFieldsValue({
         HoTen: studentProfile.HoTen,
         MaSV: studentProfile.MaSV,
         Email: studentProfile.Email,
         GPA: studentProfile.GPA,
         ChuyenNganh: studentProfile.ChuyenNganh,
-        KyNang: studentProfile.KyNang || []
+        KyNang: currentKyNang,
+        Scores: currentScores
       });
     }
     setEditingProfile(true);
@@ -354,7 +368,11 @@ const StudentDashboard = () => {
             Email: studentProfile?.Email || '',
             GPA: studentProfile?.GPA || 0,
             ChuyenNganh: studentProfile?.ChuyenNganh || '',
-            KyNang: studentProfile?.KyNang || []
+            KyNang: studentProfile?.KyNang || [],
+            Scores: studentProfile?.BangDiemKyNang?.reduce((acc, curr) => {
+              acc[curr.TenKyNang] = curr.Diem;
+              return acc;
+            }, {}) || {}
           }}
         >
           <Form.Item name="HoTen" label="Họ và Tên" rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}>
@@ -382,8 +400,23 @@ const StudentDashboard = () => {
             <Input placeholder="Công nghệ phần mềm" size="large" />
           </Form.Item>
 
+          <style>
+            {`
+              .skill-select-dropdown .ant-select-item {
+                margin-bottom: 4px;
+                border-radius: 4px;
+              }
+            `}
+          </style>
+
           <Form.Item name="KyNang" label="Kỹ Năng (Dùng cho AI SBERT Matching)" rules={[{ required: true, message: 'Vui lòng chọn ít nhất 1 kỹ năng!' }]} tooltip="Nhập kỹ năng và nhấn Enter">
-            <Select mode="tags" style={{ width: '100%' }} placeholder="React, Node.js, Python..." size="large">
+            <Select 
+              mode="tags" 
+              style={{ width: '100%' }} 
+              placeholder="React, Node.js, Python..." 
+              size="large"
+              popupClassName="skill-select-dropdown"
+            >
               <Select.Option value="React">React</Select.Option>
               <Select.Option value="NodeJS">NodeJS</Select.Option>
               <Select.Option value="Python">Python</Select.Option>
@@ -392,6 +425,31 @@ const StudentDashboard = () => {
               <Select.Option value="Java">Java</Select.Option>
               <Select.Option value="C#">C#</Select.Option>
             </Select>
+          </Form.Item>
+
+          <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.KyNang !== currentValues.KyNang}>
+            {({ getFieldValue }) => {
+              const kyNangList = getFieldValue('KyNang') || [];
+              if (kyNangList.length === 0) return null;
+              return (
+                <div style={{ marginTop: 16, marginBottom: 24, padding: 16, background: '#f5f5f5', borderRadius: 8 }}>
+                  <div style={{ marginBottom: 12, fontWeight: 500 }}>Nhập điểm cho từng kỹ năng:</div>
+                  {kyNangList.map(skill => (
+                    <Space key={skill} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                      <Input value={skill} disabled style={{ width: 250 }} />
+                      <Form.Item
+                        name={['Scores', skill]}
+                        rules={[{ required: true, message: 'Nhập điểm' }]}
+                        initialValue={8.0}
+                        style={{ marginBottom: 0 }}
+                      >
+                        <InputNumber min={0} max={10} step={0.1} placeholder="Điểm (Thang 10)" style={{ width: 150 }} />
+                      </Form.Item>
+                    </Space>
+                  ))}
+                </div>
+              );
+            }}
           </Form.Item>
 
           <Button type="primary" htmlType="submit" loading={savingProfile} size="large" style={{ width: '100%' }}

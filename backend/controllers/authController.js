@@ -3,6 +3,8 @@ const { ethers } = require('ethers');
 const { v4: uuidv4 } = require('uuid');
 const SinhVien = require('../models/SinhVien');
 const GiangVien = require('../models/GiangVien');
+const Admin = require('../models/Admin');
+const RoleRequest = require('../models/RoleRequest');
 const { web3Utils } = require('../config/web3');
 
 const challenges = new Map();
@@ -56,21 +58,27 @@ const verifySignature = async (req, res) => {
 
     // Identify user role
     let role_id = 'STUDENT_ROLE';
-    let userRecord = await GiangVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
-    
+    let userRecord = await Admin.findOne({ WalletAddress: walletAddress.toLowerCase() });
+
     if (userRecord) {
-      role_id = 'LECTURER_ROLE';
+      role_id = 'ADMIN_ROLE';
     } else {
-      userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
-      if (!userRecord) {
-        // Auto register as student
-        userRecord = new SinhVien({
-          MaSV: `SV${uuidv4().substring(0, 6).toUpperCase()}`,
-          HoTen: 'Sinh Viên Mới',
-          Email: `${uuidv4().substring(0, 6)}@huit.edu.vn`,
-          WalletAddress: walletAddress.toLowerCase()
-        });
-        await userRecord.save();
+      userRecord = await GiangVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
+      
+      if (userRecord) {
+        role_id = 'LECTURER_ROLE';
+      } else {
+        userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
+        if (!userRecord) {
+          // Not found anywhere - needs role selection
+          challenges.delete(challengeId);
+          return res.json({
+            success: true,
+            needsRoleSelection: true,
+            walletAddress: walletAddress.toLowerCase(),
+            message: 'Vui lòng chọn vai trò để tiếp tục'
+          });
+        }
       }
     }
 
@@ -170,21 +178,26 @@ const verifyQrSignature = async (req, res) => {
 
     // Identify user role
     let role_id = 'STUDENT_ROLE';
-    let userRecord = await GiangVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
-    
+    let userRecord = await Admin.findOne({ WalletAddress: walletAddress.toLowerCase() });
+
     if (userRecord) {
-      role_id = 'LECTURER_ROLE';
+      role_id = 'ADMIN_ROLE';
     } else {
-      userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
-      if (!userRecord) {
-        // Auto register as student
-        userRecord = new SinhVien({
-          MaSV: `SV${uuidv4().substring(0, 6).toUpperCase()}`,
-          HoTen: 'Sinh Viên Mới (QR)',
-          Email: `${uuidv4().substring(0, 6)}@huit.edu.vn`,
-          WalletAddress: walletAddress.toLowerCase()
-        });
-        await userRecord.save();
+      userRecord = await GiangVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
+      
+      if (userRecord) {
+        role_id = 'LECTURER_ROLE';
+      } else {
+        userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
+        if (!userRecord) {
+          qrSessions.delete(sessionId);
+          return res.json({
+            success: true,
+            needsRoleSelection: true,
+            walletAddress: walletAddress.toLowerCase(),
+            message: 'Vui lòng chọn vai trò để tiếp tục'
+          });
+        }
       }
     }
 
@@ -220,6 +233,105 @@ const verifyQrSignature = async (req, res) => {
   }
 };
 
+const registerWithRole = async (req, res) => {
+  try {
+    const { walletAddress, role, hoTen, email, chuyenNganh } = req.body;
+
+    if (!walletAddress || !role) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const lowerWallet = walletAddress.toLowerCase();
+
+    // Check if already registered
+    const exists = await SinhVien.findOne({ WalletAddress: lowerWallet }) || 
+                   await GiangVien.findOne({ WalletAddress: lowerWallet }) ||
+                   await Admin.findOne({ WalletAddress: lowerWallet });
+                   
+    if (exists) {
+      return res.status(400).json({ success: false, message: 'Ví này đã được đăng ký.' });
+    }
+
+    if (role === 'STUDENT_ROLE') {
+      const newUser = new SinhVien({
+        MaSV: `SV${uuidv4().substring(0, 6).toUpperCase()}`,
+        HoTen: hoTen || 'Sinh Viên Mới',
+        Email: email || `${uuidv4().substring(0, 6)}@huit.edu.vn`,
+        ChuyenNganh: chuyenNganh || '',
+        WalletAddress: lowerWallet
+      });
+      await newUser.save();
+
+      const token = jwt.sign(
+        { id: newUser._id, walletAddress: lowerWallet, role_id: 'STUDENT_ROLE' },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
+      return res.json({
+        success: true,
+        token,
+        user: { id: newUser._id, walletAddress: lowerWallet, role_id: 'STUDENT_ROLE', name: newUser.HoTen },
+        message: 'Đăng ký Sinh viên thành công'
+      });
+    } 
+    else if (role === 'LECTURER_ROLE') {
+      // Check for rate limit: Max 3 rejected requests today
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const rejectedCount = await RoleRequest.countDocuments({
+        walletAddress: lowerWallet,
+        status: 'rejected',
+        createdAt: { $gte: startOfDay, $lte: endOfDay }
+      });
+
+      if (rejectedCount >= 3) {
+        return res.status(429).json({ 
+          success: false, 
+          message: 'Bạn đã bị từ chối 3 lần hôm nay. Vui lòng thử lại vào ngày mai hoặc tham gia với tư cách Sinh viên.' 
+        });
+      }
+
+      // Check if already has a pending request
+      const pendingReq = await RoleRequest.findOne({ walletAddress: lowerWallet, status: 'pending' });
+      if (pendingReq) {
+        return res.status(400).json({ success: false, message: 'Bạn đang có yêu cầu chờ duyệt.' });
+      }
+
+      // Create new request
+      const newRequest = new RoleRequest({
+        walletAddress: lowerWallet,
+        hoTen,
+        email,
+        chuyenNganh,
+        requestedRole: 'LECTURER_ROLE'
+      });
+      await newRequest.save();
+
+      // Emit to Admin via Socket
+      const io = req.app.get('io');
+      if (io) {
+        io.to('admin:room').emit('admin:newRequest', newRequest);
+      }
+
+      return res.json({
+        success: true,
+        isPending: true,
+        message: 'Yêu cầu của bạn đã được gửi và đang chờ duyệt.'
+      });
+    }
+
+    return res.status(400).json({ success: false, message: 'Role không hợp lệ.' });
+
+  } catch (error) {
+    console.error('Register Role error:', error);
+    res.status(500).json({ success: false, message: 'Đăng ký thất bại' });
+  }
+};
+
 module.exports = { 
   generateChallenge, 
   verifySignature, 
@@ -227,5 +339,6 @@ module.exports = {
   getProfile, 
   authenticateToken,
   generateQrSession,
-  verifyQrSignature
+  verifyQrSignature,
+  registerWithRole
 };
