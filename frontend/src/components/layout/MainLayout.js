@@ -137,7 +137,7 @@ const MainLayout = () => {
       <Layout>
         <Header style={{ padding: isMobile ? '0 12px' : '0 24px', background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <ClassSelector />
+            {!isAdmin && <ClassSelector />}
           </div>
           <Dropdown menu={{
             items: [

@@ -10,8 +10,9 @@ const { Option } = Select;
 const ClassSelector = () => {
   const user = authService.getCurrentUser();
   const isLecturer = user?.role_id === 'LECTURER_ROLE';
+  const isAdmin = user?.role_id === 'ADMIN_ROLE';
   
-  if (!user) return null;
+  if (!user || isAdmin) return null;
 
   return isLecturer ? <LecturerClassSelector /> : <StudentClassSelector />;
 };
