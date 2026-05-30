@@ -1,0 +1,425 @@
+{
+	"id": "6f17723a-7b2b-4377-87a5-4a865d85d689",
+	"name": "Web3GiangVien SmokeTest - Student",
+	"timestamp": "2026-05-30T10:26:05.663Z",
+	"collection_id": "39377403-a01a6fed-3678-4410-81d8-71def7a3b86e",
+	"folder_id": 0,
+	"environment_id": "39377403-a42bfdc6-4953-4201-ad36-6a8329b3d444",
+	"totalPass": 13,
+	"delay": 0,
+	"persist": true,
+	"status": "finished",
+	"startedAt": "2026-05-30T10:26:01.886Z",
+	"totalFail": 0,
+	"results": [
+		{
+			"id": "6e47df80-efa8-4811-b3a0-62e3da2f1042",
+			"name": "GET /api/detai",
+			"url": "http://localhost:5000/api/detai",
+			"time": 183,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				183
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "b00e6e9f-ebc1-44b6-bc48-82b6c056e8b7",
+			"name": "POST /api/nhom",
+			"url": "http://localhost:5000/api/nhom",
+			"time": 259,
+			"responseCode": {
+				"code": 201,
+				"name": "Created"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				259
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "b5f67006-4f13-4dff-934b-4918164db4a7",
+			"name": "GET /api/sinhvien/:id",
+			"url": "http://localhost:5000/api/sinhvien/6a1ab47c352989a3bdade6c0",
+			"time": 59,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				59
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "85f5368a-3254-4e4f-8bd1-88bb01926c96",
+			"name": "GET /api/nhom/sinhvien/:svId",
+			"url": "http://localhost:5000/api/nhom/sinhvien/6a1ab47c352989a3bdade6c0",
+			"time": 104,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				104
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "2c3f25c4-f903-4238-b024-dbdc265e36fd",
+			"name": "GET /api/nhom/invites/:svId",
+			"url": "http://localhost:5000/api/nhom/invites/6a1ab47c352989a3bdade6c0",
+			"time": 55,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				55
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "27442f93-7c63-4b41-9bf3-c694cd595875",
+			"name": "GET /api/dangky/sinhvien/:svId",
+			"url": "http://localhost:5000/api/dangky/sinhvien/6a1ab47c352989a3bdade6c0",
+			"time": 54,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				54
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "44bf79c8-4da9-40df-88cf-8384f8b1540e",
+			"name": "GET /api/baocao/sinhvien/:svId",
+			"url": "http://localhost:5000/api/baocao/sinhvien/6a1ab47c352989a3bdade6c0",
+			"time": 64,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				64
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "fa9f2b2c-03c2-413a-bf53-85948a17a344",
+			"name": "GET /api/diemso/sinhvien/:svId",
+			"url": "http://localhost:5000/api/diemso/sinhvien/6a1ab47c352989a3bdade6c0",
+			"time": 50,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				50
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "7deb517c-65ee-4d27-b185-ba170ec62280",
+			"name": "GET /api/tiendo/sinhvien/:svId",
+			"url": "http://localhost:5000/api/tiendo/sinhvien/6a1ab47c352989a3bdade6c0",
+			"time": 51,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				51
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "46f2f122-d43f-435b-9cc7-09c7c001c5c9",
+			"name": "POST /api/ai/match-student",
+			"url": "http://localhost:5000/api/ai/match-student",
+			"time": 1130,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				1130
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "dde3d287-90fd-4fb5-8123-2ce67c7aeabc",
+			"name": "PUT /api/sinhvien/:id/profile",
+			"url": "http://localhost:5000/api/sinhvien/6a1ab47c352989a3bdade6c0/profile",
+			"time": 155,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				155
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "2e60145c-d0f4-428f-8802-5e22670bc929",
+			"name": "POST /api/nhom/:id/chot",
+			"url": "http://localhost:5000/api/nhom/6a1abb3a7c40adddb02778d2/chot",
+			"time": 119,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				119
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		},
+		{
+			"id": "dcc1ca0f-707d-4677-a2aa-bdb5f3d7245d",
+			"name": "DELETE /api/nhom/:id",
+			"url": "http://localhost:5000/api/nhom/6a1abb3a7c40adddb02778d2",
+			"time": 172,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {
+				"Status OK (200/201/204)": true
+			},
+			"testPassFailCounts": {
+				"Status OK (200/201/204)": {
+					"pass": 1,
+					"fail": 0
+				}
+			},
+			"times": [
+				172
+			],
+			"allTests": [
+				{
+					"Status OK (200/201/204)": true
+				}
+			]
+		}
+	],
+	"count": 1,
+	"totalTime": 2455,
+	"collection": {
+		"requests": [
+			{
+				"id": "6e47df80-efa8-4811-b3a0-62e3da2f1042",
+				"method": "GET"
+			},
+			{
+				"id": "b00e6e9f-ebc1-44b6-bc48-82b6c056e8b7",
+				"method": "POST"
+			},
+			{
+				"id": "b5f67006-4f13-4dff-934b-4918164db4a7",
+				"method": "GET"
+			},
+			{
+				"id": "85f5368a-3254-4e4f-8bd1-88bb01926c96",
+				"method": "GET"
+			},
+			{
+				"id": "2c3f25c4-f903-4238-b024-dbdc265e36fd",
+				"method": "GET"
+			},
+			{
+				"id": "27442f93-7c63-4b41-9bf3-c694cd595875",
+				"method": "GET"
+			},
+			{
+				"id": "44bf79c8-4da9-40df-88cf-8384f8b1540e",
+				"method": "GET"
+			},
+			{
+				"id": "fa9f2b2c-03c2-413a-bf53-85948a17a344",
+				"method": "GET"
+			},
+			{
+				"id": "7deb517c-65ee-4d27-b185-ba170ec62280",
+				"method": "GET"
+			},
+			{
+				"id": "46f2f122-d43f-435b-9cc7-09c7c001c5c9",
+				"method": "POST"
+			},
+			{
+				"id": "dde3d287-90fd-4fb5-8123-2ce67c7aeabc",
+				"method": "PUT"
+			},
+			{
+				"id": "2e60145c-d0f4-428f-8802-5e22670bc929",
+				"method": "POST"
+			},
+			{
+				"id": "dcc1ca0f-707d-4677-a2aa-bdb5f3d7245d",
+				"method": "DELETE"
+			}
+		]
+	}
+}

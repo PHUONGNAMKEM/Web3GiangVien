@@ -1,0 +1,2156 @@
+{
+	"id": "6be01afb-c9f0-4de2-b845-856232a7a572",
+	"name": "Web3GiangVien HappyPath v2",
+	"timestamp": "2026-05-30T09:02:32.690Z",
+	"collection_id": "39377403-9dad913b-d162-47eb-9715-8f4c74e58098",
+	"folder_id": 0,
+	"environment_id": "39377403-a42bfdc6-4953-4201-ad36-6a8329b3d444",
+	"totalPass": 0,
+	"delay": 0,
+	"persist": true,
+	"status": "finished",
+	"startedAt": "2026-05-30T09:02:15.108Z",
+	"totalFail": 0,
+	"results": [
+		{
+			"id": "123d32cf-447f-4a50-946b-851537646ce6",
+			"name": "POST /api/ai/analyze-report",
+			"url": "http://localhost:5000/api/ai/analyze-report",
+			"time": 56,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				56
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "30dfddc5-5c48-4235-a1f7-644deda7b128",
+			"name": "POST /api/ai/analyze-rubrics",
+			"url": "http://localhost:5000/api/ai/analyze-rubrics",
+			"time": 6,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				6
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "686ec610-4019-4d3e-8309-b9db2a4f9dfd",
+			"name": "POST /api/ai/match-student",
+			"url": "http://localhost:5000/api/ai/match-student",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "7f89693d-56c6-4aa4-8d98-efbe4b0a3bfd",
+			"name": "GET /api/auth/qr-session",
+			"url": "http://localhost:5000/api/auth/qr-session",
+			"time": 4,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "501e43ad-ad02-4dd5-834d-a0e0d0f78242",
+			"name": "POST /api/auth/challenge",
+			"url": "http://localhost:5000/api/auth/challenge",
+			"time": 4,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "31dc186b-82a3-4fc0-acdd-d735bb39510c",
+			"name": "POST /api/auth/logout",
+			"url": "http://localhost:5000/api/auth/logout",
+			"time": 3,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "23b70572-0ca8-4ca8-9f62-4aabd2c9da61",
+			"name": "POST /api/auth/qr-submit",
+			"url": "http://localhost:5000/api/auth/qr-submit",
+			"time": 3,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "8903b12e-3487-4aa0-9709-cee768be38a9",
+			"name": "POST /api/auth/register-role",
+			"url": "http://localhost:5000/api/auth/register-role",
+			"time": 4,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "ddd01d12-7adf-4555-a375-eaaecc349a51",
+			"name": "POST /api/auth/verify",
+			"url": "http://localhost:5000/api/auth/verify",
+			"time": 3,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "893a83f5-1e25-4031-95cb-eef063419150",
+			"name": "GET /api/baitest/:id/results",
+			"url": "http://localhost:5000/api/baitest/{{id}}/results",
+			"time": 6,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				6
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "2b4172f7-ff68-4d1c-b319-599a8f2f8f7e",
+			"name": "GET /api/baitest/check/:deTaiId/:sinhVienId",
+			"url": "http://localhost:5000/api/baitest/check/:deTaiId/{{sinhVienId}}",
+			"time": 6,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				6
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "caf2f695-1b99-4494-959e-614178871465",
+			"name": "GET /api/baitest/detai/:deTaiId",
+			"url": "http://localhost:5000/api/baitest/detai/:deTaiId",
+			"time": 3,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "d6a1daf7-a42c-404c-908d-d285a5df7362",
+			"name": "GET /api/baitest/detai/:deTaiId/student",
+			"url": "http://localhost:5000/api/baitest/detai/:deTaiId/student",
+			"time": 3,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "c2fb202e-b017-4d78-ab6d-1887856c3645",
+			"name": "POST /api/baitest",
+			"url": "http://localhost:5000/api/baitest",
+			"time": 55,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				55
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "2f461ea2-75e1-4273-b91b-ca7baf22bbf7",
+			"name": "POST /api/baitest/:id/select-winner",
+			"url": "http://localhost:5000/api/baitest/{{id}}/select-winner",
+			"time": 5,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				5
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "0b756305-ec1d-4bf8-a893-f847d5c8b98d",
+			"name": "POST /api/baitest/:id/start",
+			"url": "http://localhost:5000/api/baitest/{{id}}/start",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "5232a060-dab8-4e93-bfab-4f48321949a4",
+			"name": "POST /api/baitest/:id/submit",
+			"url": "http://localhost:5000/api/baitest/{{id}}/submit",
+			"time": 4,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "4b92fdc6-dfd3-4643-99f3-28b4c9f1420d",
+			"name": "DELETE /api/baitest/:id",
+			"url": "http://localhost:5000/api/baitest/{{id}}",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "35dd8ee5-2bf2-4cfb-aab9-f709f400ea90",
+			"name": "GET /api/baocao/:id/extracted",
+			"url": "http://localhost:5000/api/baocao/{{id}}/extracted",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "8fe8b353-040d-4f2f-a05a-85d7824ff6c4",
+			"name": "GET /api/baocao/detai/:deTaiId",
+			"url": "http://localhost:5000/api/baocao/detai/:deTaiId",
+			"time": 4,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "75ce1997-0479-48b9-b126-8a20e9b9141f",
+			"name": "GET /api/baocao/giangvien/:gvId",
+			"url": "http://localhost:5000/api/baocao/giangvien/69cd5ef0563e07d10eb4d838",
+			"time": 256,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				256
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "e5b78be9-93fa-4315-8f9b-076b9c42a6de",
+			"name": "GET /api/baocao/sinhvien/:svId",
+			"url": "http://localhost:5000/api/baocao/sinhvien/69cd5ef0563e07d10eb4d838",
+			"time": 73,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				73
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "2941aaa7-a2b3-42ff-9d8c-404dea75b1e0",
+			"name": "POST /api/baocao/upload",
+			"url": "http://localhost:5000/api/baocao/upload",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "1d91d70a-c6a3-4fc9-a89f-61f30acd8029",
+			"name": "DELETE /api/baocao/:id",
+			"url": "http://localhost:5000/api/baocao/{{id}}",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "d85ae503-5d38-4bbb-8f9d-a9a18dfe5237",
+			"name": "GET /api/blockchain/contracts",
+			"url": "http://localhost:5000/api/blockchain/contracts",
+			"time": 2446,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				2446
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "302b1907-a841-4ae8-8604-eab6d18de7fd",
+			"name": "GET /api/blockchain/db-records",
+			"url": "http://localhost:5000/api/blockchain/db-records",
+			"time": 1868,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				1868
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "3d3fd939-e128-4f87-a531-ff6cfec94fe2",
+			"name": "GET /api/blockchain/thesis/db-records",
+			"url": "http://localhost:5000/api/blockchain/thesis/db-records",
+			"time": 1938,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				1938
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "9bf21db9-4f00-4b19-a852-1c8c0f069c21",
+			"name": "GET /api/blockchain/thesis/submissions",
+			"url": "http://localhost:5000/api/blockchain/thesis/submissions",
+			"time": 3,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "f7270a0f-7e33-4586-bf00-8644b2127c5d",
+			"name": "GET /api/blockchain/thesis/topic/:topicId",
+			"url": "http://localhost:5000/api/blockchain/thesis/topic/{{topicId}}",
+			"time": 603,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				603
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "235b9975-85a2-426a-8ff0-2a099e91fbe5",
+			"name": "GET /api/dangky/giangvien/:gvId",
+			"url": "http://localhost:5000/api/dangky/giangvien/69cd5ef0563e07d10eb4d838",
+			"time": 117,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				117
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "146b612f-0cf8-4f7c-8eaa-b5bcfb895058",
+			"name": "GET /api/dangky/sinhvien/:svId",
+			"url": "http://localhost:5000/api/dangky/sinhvien/69cd5ef0563e07d10eb4d838",
+			"time": 59,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				59
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "555b3021-43b5-4276-9bc1-ce5356d72eee",
+			"name": "PUT /api/dangky/:id/approve",
+			"url": "http://localhost:5000/api/dangky/{{id}}/approve",
+			"time": 4,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "43c642a0-5c60-410c-b28e-732296f3fbdd",
+			"name": "DELETE /api/dangky/:id",
+			"url": "http://localhost:5000/api/dangky/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "ebc45ecb-e571-4e27-ae3b-b66fa51f3b75",
+			"name": "GET /api/detai",
+			"url": "http://localhost:5000/api/detai",
+			"time": 320,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				320
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "e8429bf9-4b16-4db6-a69a-7af5c0d8ca6d",
+			"name": "POST /api/detai",
+			"url": "http://localhost:5000/api/detai",
+			"time": 74,
+			"responseCode": {
+				"code": 201,
+				"name": "Created"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				74
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "0a9a27d6-21a2-4dc2-86a0-fec9b7fec67b",
+			"name": "GET /api/detai/:id",
+			"url": "http://localhost:5000/api/detai/{{id}}",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "c51187d6-a48f-4b4d-b797-ce2c7e5f6d77",
+			"name": "GET /api/detai/invitations/:svId",
+			"url": "http://localhost:5000/api/detai/invitations/69cd5ef0563e07d10eb4d838",
+			"time": 65,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				65
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "cf36ac6f-e9dc-4446-ba60-88b82c0af985",
+			"name": "PUT /api/detai/:id",
+			"url": "http://localhost:5000/api/detai/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "59b218f6-bc5a-40aa-bf2e-7af8c2321ae8",
+			"name": "POST /api/detai/:id/register",
+			"url": "http://localhost:5000/api/detai/{{id}}/register",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "b54d5127-740e-4272-a4f5-233d15a7bc94",
+			"name": "POST /api/detai/:id/invite",
+			"url": "http://localhost:5000/api/detai/{{id}}/invite",
+			"time": 4,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "3b0ba014-37be-4e92-9c75-c9b0cb3f0a6f",
+			"name": "POST /api/detai/invitation/:id/respond",
+			"url": "http://localhost:5000/api/detai/invitation/{{id}}/respond",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "502afee0-c618-49fe-b592-619dfd983edf",
+			"name": "DELETE /api/detai/:id",
+			"url": "http://localhost:5000/api/detai/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "e1575f08-c7a2-451b-919b-a1f9cd941cb5",
+			"name": "GET /api/diemso/comparison/:gvId",
+			"url": "http://localhost:5000/api/diemso/comparison/69cd5ef0563e07d10eb4d838",
+			"time": 149,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				149
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "c12aec90-8f73-4746-a930-05fed0cdc871",
+			"name": "GET /api/diemso/sinhvien/:svId",
+			"url": "http://localhost:5000/api/diemso/sinhvien/69cd5ef0563e07d10eb4d838",
+			"time": 62,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				62
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "6ed9832c-39dd-45d9-a128-dcde5575bc38",
+			"name": "PUT /api/diemso/:id/retry-blockchain",
+			"url": "http://localhost:5000/api/diemso/{{id}}/retry-blockchain",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "d39255e6-0451-42c4-aeb6-46239001deab",
+			"name": "POST /api/diemso",
+			"url": "http://localhost:5000/api/diemso",
+			"time": 57,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				57
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "3c2962b1-7958-471a-9598-f5a7c8376411",
+			"name": "GET /api/giangvien",
+			"url": "http://localhost:5000/api/giangvien",
+			"time": 85,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				85
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "336f1996-2c9a-4cfe-b021-830f8752ddd7",
+			"name": "GET /api/giangvien/:id",
+			"url": "http://localhost:5000/api/giangvien/{{id}}",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "c69965db-6e90-42f3-96f7-6a56213fc5e1",
+			"name": "PUT /api/giangvien/:id",
+			"url": "http://localhost:5000/api/giangvien/{{id}}",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "68d9cf11-8090-4ccd-8988-b706a91ea91c",
+			"name": "POST /api/giangvien",
+			"url": "http://localhost:5000/api/giangvien",
+			"time": 5,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				5
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "8e012c18-0ac5-4955-993a-3babfaca92b3",
+			"name": "DELETE /api/giangvien/:id",
+			"url": "http://localhost:5000/api/giangvien/{{id}}",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "5f95d54d-69ef-4e8f-a64a-5f910b1f55c1",
+			"name": "GET /api/lophoc/:id/detail",
+			"url": "http://localhost:5000/api/lophoc/{{id}}/detail",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "bdd7acea-1f3d-4fa3-b501-8a3f588705ec",
+			"name": "GET /api/lophoc/giangvien/:gvId",
+			"url": "http://localhost:5000/api/lophoc/giangvien/69cd5ef0563e07d10eb4d838",
+			"time": 54,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				54
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "d746d745-81e8-477b-a845-e0424181ead7",
+			"name": "PUT /api/lophoc/:id",
+			"url": "http://localhost:5000/api/lophoc/{{id}}",
+			"time": 5,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				5
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "dbc14893-24e1-4b53-ac62-8b060274dac0",
+			"name": "POST /api/lophoc",
+			"url": "http://localhost:5000/api/lophoc",
+			"time": 3,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "a8d05d21-1434-4e7b-b9c6-55735c9bca0d",
+			"name": "POST /api/lophoc/:id/sinhvien",
+			"url": "http://localhost:5000/api/lophoc/{{id}}/sinhvien",
+			"time": 3,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "f42cc733-ebae-4097-b91d-0b81056f0319",
+			"name": "DELETE /api/lophoc/:id",
+			"url": "http://localhost:5000/api/lophoc/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "6445f91f-e9a9-4fe8-9a37-3018da823500",
+			"name": "DELETE /api/lophoc/:id/sinhvien/:svId",
+			"url": "http://localhost:5000/api/lophoc/{{id}}/sinhvien/69cd5ef0563e07d10eb4d838",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "2f066290-479b-4f3c-9008-a5f3182c4b22",
+			"name": "GET /api/monhoc/giangvien/:gvId",
+			"url": "http://localhost:5000/api/monhoc/giangvien/69cd5ef0563e07d10eb4d838",
+			"time": 60,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				60
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "b4a3c55c-b0de-4f2c-846e-a54a01f6e770",
+			"name": "PUT /api/monhoc/:id",
+			"url": "http://localhost:5000/api/monhoc/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "314f247d-1276-4756-8846-8be2db829075",
+			"name": "POST /api/monhoc",
+			"url": "http://localhost:5000/api/monhoc",
+			"time": 3,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "d0c74eae-cd02-471a-9c34-56f1eb001987",
+			"name": "DELETE /api/monhoc/:id",
+			"url": "http://localhost:5000/api/monhoc/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "02729e13-fc0a-44e3-a000-59ac8c86ac35",
+			"name": "POST /api/nhom",
+			"url": "http://localhost:5000/api/nhom",
+			"time": 5,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				5
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "b614fd31-700f-4966-abf0-00326a3f57e6",
+			"name": "GET /api/nhom/:id",
+			"url": "http://localhost:5000/api/nhom/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "02f36133-37d6-4836-873c-5162dc63ac20",
+			"name": "GET /api/nhom/invites/:svId",
+			"url": "http://localhost:5000/api/nhom/invites/69cd5ef0563e07d10eb4d838",
+			"time": 84,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				84
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "1db8a295-9a7b-45fd-8248-919bdc7d1357",
+			"name": "GET /api/nhom/sinhvien/:svId",
+			"url": "http://localhost:5000/api/nhom/sinhvien/69cd5ef0563e07d10eb4d838",
+			"time": 97,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				97
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "7d8dc9f2-e866-47a0-af62-40ca5968fb48",
+			"name": "POST /api/nhom/:id/chot",
+			"url": "http://localhost:5000/api/nhom/{{id}}/chot",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "038f8cf0-222d-4e74-bec4-3b64bb1cc941",
+			"name": "POST /api/nhom/:id/invite",
+			"url": "http://localhost:5000/api/nhom/{{id}}/invite",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "8192204f-18bd-4b69-a30a-9ae974797006",
+			"name": "POST /api/nhom/:id/leave",
+			"url": "http://localhost:5000/api/nhom/{{id}}/leave",
+			"time": 4,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "3ebbd932-cdd6-4a66-b090-c6c9ca7b4bbd",
+			"name": "POST /api/nhom/:id/respond",
+			"url": "http://localhost:5000/api/nhom/{{id}}/respond",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "370d93a7-6d25-42e9-94bd-af3c5e3875b8",
+			"name": "POST /api/nhom/:id/transfer-leader",
+			"url": "http://localhost:5000/api/nhom/{{id}}/transfer-leader",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "dfd1818b-410b-467b-b008-7f18f9e41bd3",
+			"name": "DELETE /api/nhom/:id",
+			"url": "http://localhost:5000/api/nhom/{{id}}",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "427363a1-6382-47c5-92f2-f9de7169b97e",
+			"name": "DELETE /api/nhom/:id/kick/:svId",
+			"url": "http://localhost:5000/api/nhom/{{id}}/kick/69cd5ef0563e07d10eb4d838",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "2f83ccdb-6a00-41ab-8537-d2bb995d0cd0",
+			"name": "GET /api/qr/me",
+			"url": "http://localhost:5000/api/qr/me",
+			"time": 65,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				65
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "74ae40a7-b2cc-4039-9399-6b67a466c66d",
+			"name": "POST /api/qr/generate",
+			"url": "http://localhost:5000/api/qr/generate",
+			"time": 157,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				157
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "d2a40984-528f-40ca-badc-dcdc2bfcc200",
+			"name": "GET /api/rubrics/giangvien/:gvId",
+			"url": "http://localhost:5000/api/rubrics/giangvien/69cd5ef0563e07d10eb4d838",
+			"time": 65,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				65
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "ccbbd77c-4349-42ff-80ed-8dbec3302cb9",
+			"name": "PUT /api/rubrics/:id",
+			"url": "http://localhost:5000/api/rubrics/{{id}}",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "96308725-576b-49f2-a19c-2e922591b074",
+			"name": "PUT /api/rubrics/:id/default",
+			"url": "http://localhost:5000/api/rubrics/{{id}}/default",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "8b62b69c-072b-4df1-a73b-01e7aa87d735",
+			"name": "POST /api/rubrics",
+			"url": "http://localhost:5000/api/rubrics",
+			"time": 3,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "79fddc61-0bb2-4c06-866c-dca2be1add54",
+			"name": "POST /api/rubrics/:id/apply/:deTaiId",
+			"url": "http://localhost:5000/api/rubrics/{{id}}/apply/:deTaiId",
+			"time": 2,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				2
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "d29ad672-9263-4037-ae30-3ed4ee3b4398",
+			"name": "DELETE /api/rubrics/:id",
+			"url": "http://localhost:5000/api/rubrics/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "37d44eba-e2bb-4c05-affa-3d4859f82ecc",
+			"name": "GET /api/sinhvien",
+			"url": "http://localhost:5000/api/sinhvien",
+			"time": 134,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				134
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "a1b924d9-eec5-4050-be88-f66be649d1a4",
+			"name": "GET /api/sinhvien/:id",
+			"url": "http://localhost:5000/api/sinhvien/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "2bbd5317-e183-4281-8323-40984876bbe5",
+			"name": "GET /api/sinhvien/masv/:maSV",
+			"url": "http://localhost:5000/api/sinhvien/masv/{{maSV}}",
+			"time": 68,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				68
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "eaf04324-e732-4429-9eae-58bd5283d954",
+			"name": "PUT /api/sinhvien/:id",
+			"url": "http://localhost:5000/api/sinhvien/{{id}}",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "3981683e-bb21-42fc-9aec-d602c43baac7",
+			"name": "PUT /api/sinhvien/:id/profile",
+			"url": "http://localhost:5000/api/sinhvien/{{id}}/profile",
+			"time": 2,
+			"responseCode": {
+				"code": 400,
+				"name": "Bad Request"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				2
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "22dc6fcd-c77c-4304-a52e-c9cb92d1a9e9",
+			"name": "POST /api/sinhvien",
+			"url": "http://localhost:5000/api/sinhvien",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "15b1114d-2e36-4931-935f-675087804ac4",
+			"name": "DELETE /api/sinhvien/:id",
+			"url": "http://localhost:5000/api/sinhvien/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "9e3d8781-4ecb-4c88-94cb-a8829d20830e",
+			"name": "GET /api/tiendo/:id/ai-suggest",
+			"url": "http://localhost:5000/api/tiendo/{{id}}/ai-suggest",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "d5647d51-b7a5-4838-bd23-3bd50d385a32",
+			"name": "GET /api/tiendo/:svId",
+			"url": "http://localhost:5000/api/tiendo/69cd5ef0563e07d10eb4d838",
+			"time": 64,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				64
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "4f82c998-9c79-4929-b45f-03a61a556844",
+			"name": "GET /api/tiendo/detai/:deTaiId",
+			"url": "http://localhost:5000/api/tiendo/detai/:deTaiId",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "e4d60fd3-4b22-45e6-a2de-23f0093ea0a0",
+			"name": "GET /api/tiendo/detail/:id",
+			"url": "http://localhost:5000/api/tiendo/detail/{{id}}",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "d174454b-d2eb-40a9-8554-0fb7e3f7b130",
+			"name": "GET /api/tiendo/sinhvien/:svId",
+			"url": "http://localhost:5000/api/tiendo/sinhvien/69cd5ef0563e07d10eb4d838",
+			"time": 87,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				87
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "131b4042-ab5c-456f-bdb1-c58c55cdc462",
+			"name": "PUT /api/tiendo/:id",
+			"url": "http://localhost:5000/api/tiendo/{{id}}",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "e0ed4388-3ece-4c34-8550-225efd1716c2",
+			"name": "PUT /api/tiendo/:id/danhgia",
+			"url": "http://localhost:5000/api/tiendo/{{id}}/danhgia",
+			"time": 3,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "1abb2f6d-5348-49bb-acb3-f1ae309be297",
+			"name": "PUT /api/tiendo/:id/nhanxet",
+			"url": "http://localhost:5000/api/tiendo/{{id}}/nhanxet",
+			"time": 4,
+			"responseCode": {
+				"code": 500,
+				"name": "Internal Server Error"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				4
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "1c329b04-07ec-4cfa-9eac-cdb48763c514",
+			"name": "POST /api/tiendo",
+			"url": "http://localhost:5000/api/tiendo",
+			"time": 3,
+			"responseCode": {
+				"code": 403,
+				"name": "Forbidden"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				3
+			],
+			"allTests": [
+				{}
+			]
+		}
+	],
+	"count": 1,
+	"totalTime": 9464,
+	"collection": {
+		"requests": [
+			{
+				"id": "123d32cf-447f-4a50-946b-851537646ce6",
+				"method": "POST"
+			},
+			{
+				"id": "30dfddc5-5c48-4235-a1f7-644deda7b128",
+				"method": "POST"
+			},
+			{
+				"id": "686ec610-4019-4d3e-8309-b9db2a4f9dfd",
+				"method": "POST"
+			},
+			{
+				"id": "7f89693d-56c6-4aa4-8d98-efbe4b0a3bfd",
+				"method": "GET"
+			},
+			{
+				"id": "501e43ad-ad02-4dd5-834d-a0e0d0f78242",
+				"method": "POST"
+			},
+			{
+				"id": "31dc186b-82a3-4fc0-acdd-d735bb39510c",
+				"method": "POST"
+			},
+			{
+				"id": "23b70572-0ca8-4ca8-9f62-4aabd2c9da61",
+				"method": "POST"
+			},
+			{
+				"id": "8903b12e-3487-4aa0-9709-cee768be38a9",
+				"method": "POST"
+			},
+			{
+				"id": "ddd01d12-7adf-4555-a375-eaaecc349a51",
+				"method": "POST"
+			},
+			{
+				"id": "893a83f5-1e25-4031-95cb-eef063419150",
+				"method": "GET"
+			},
+			{
+				"id": "2b4172f7-ff68-4d1c-b319-599a8f2f8f7e",
+				"method": "GET"
+			},
+			{
+				"id": "caf2f695-1b99-4494-959e-614178871465",
+				"method": "GET"
+			},
+			{
+				"id": "d6a1daf7-a42c-404c-908d-d285a5df7362",
+				"method": "GET"
+			},
+			{
+				"id": "c2fb202e-b017-4d78-ab6d-1887856c3645",
+				"method": "POST"
+			},
+			{
+				"id": "2f461ea2-75e1-4273-b91b-ca7baf22bbf7",
+				"method": "POST"
+			},
+			{
+				"id": "0b756305-ec1d-4bf8-a893-f847d5c8b98d",
+				"method": "POST"
+			},
+			{
+				"id": "5232a060-dab8-4e93-bfab-4f48321949a4",
+				"method": "POST"
+			},
+			{
+				"id": "4b92fdc6-dfd3-4643-99f3-28b4c9f1420d",
+				"method": "DELETE"
+			},
+			{
+				"id": "35dd8ee5-2bf2-4cfb-aab9-f709f400ea90",
+				"method": "GET"
+			},
+			{
+				"id": "8fe8b353-040d-4f2f-a05a-85d7824ff6c4",
+				"method": "GET"
+			},
+			{
+				"id": "75ce1997-0479-48b9-b126-8a20e9b9141f",
+				"method": "GET"
+			},
+			{
+				"id": "e5b78be9-93fa-4315-8f9b-076b9c42a6de",
+				"method": "GET"
+			},
+			{
+				"id": "2941aaa7-a2b3-42ff-9d8c-404dea75b1e0",
+				"method": "POST"
+			},
+			{
+				"id": "1d91d70a-c6a3-4fc9-a89f-61f30acd8029",
+				"method": "DELETE"
+			},
+			{
+				"id": "d85ae503-5d38-4bbb-8f9d-a9a18dfe5237",
+				"method": "GET"
+			},
+			{
+				"id": "302b1907-a841-4ae8-8604-eab6d18de7fd",
+				"method": "GET"
+			},
+			{
+				"id": "3d3fd939-e128-4f87-a531-ff6cfec94fe2",
+				"method": "GET"
+			},
+			{
+				"id": "9bf21db9-4f00-4b19-a852-1c8c0f069c21",
+				"method": "GET"
+			},
+			{
+				"id": "f7270a0f-7e33-4586-bf00-8644b2127c5d",
+				"method": "GET"
+			},
+			{
+				"id": "235b9975-85a2-426a-8ff0-2a099e91fbe5",
+				"method": "GET"
+			},
+			{
+				"id": "146b612f-0cf8-4f7c-8eaa-b5bcfb895058",
+				"method": "GET"
+			},
+			{
+				"id": "555b3021-43b5-4276-9bc1-ce5356d72eee",
+				"method": "PUT"
+			},
+			{
+				"id": "43c642a0-5c60-410c-b28e-732296f3fbdd",
+				"method": "DELETE"
+			},
+			{
+				"id": "ebc45ecb-e571-4e27-ae3b-b66fa51f3b75",
+				"method": "GET"
+			},
+			{
+				"id": "e8429bf9-4b16-4db6-a69a-7af5c0d8ca6d",
+				"method": "POST"
+			},
+			{
+				"id": "0a9a27d6-21a2-4dc2-86a0-fec9b7fec67b",
+				"method": "GET"
+			},
+			{
+				"id": "c51187d6-a48f-4b4d-b797-ce2c7e5f6d77",
+				"method": "GET"
+			},
+			{
+				"id": "cf36ac6f-e9dc-4446-ba60-88b82c0af985",
+				"method": "PUT"
+			},
+			{
+				"id": "59b218f6-bc5a-40aa-bf2e-7af8c2321ae8",
+				"method": "POST"
+			},
+			{
+				"id": "b54d5127-740e-4272-a4f5-233d15a7bc94",
+				"method": "POST"
+			},
+			{
+				"id": "3b0ba014-37be-4e92-9c75-c9b0cb3f0a6f",
+				"method": "POST"
+			},
+			{
+				"id": "502afee0-c618-49fe-b592-619dfd983edf",
+				"method": "DELETE"
+			},
+			{
+				"id": "e1575f08-c7a2-451b-919b-a1f9cd941cb5",
+				"method": "GET"
+			},
+			{
+				"id": "c12aec90-8f73-4746-a930-05fed0cdc871",
+				"method": "GET"
+			},
+			{
+				"id": "6ed9832c-39dd-45d9-a128-dcde5575bc38",
+				"method": "PUT"
+			},
+			{
+				"id": "d39255e6-0451-42c4-aeb6-46239001deab",
+				"method": "POST"
+			},
+			{
+				"id": "3c2962b1-7958-471a-9598-f5a7c8376411",
+				"method": "GET"
+			},
+			{
+				"id": "336f1996-2c9a-4cfe-b021-830f8752ddd7",
+				"method": "GET"
+			},
+			{
+				"id": "c69965db-6e90-42f3-96f7-6a56213fc5e1",
+				"method": "PUT"
+			},
+			{
+				"id": "68d9cf11-8090-4ccd-8988-b706a91ea91c",
+				"method": "POST"
+			},
+			{
+				"id": "8e012c18-0ac5-4955-993a-3babfaca92b3",
+				"method": "DELETE"
+			},
+			{
+				"id": "5f95d54d-69ef-4e8f-a64a-5f910b1f55c1",
+				"method": "GET"
+			},
+			{
+				"id": "bdd7acea-1f3d-4fa3-b501-8a3f588705ec",
+				"method": "GET"
+			},
+			{
+				"id": "d746d745-81e8-477b-a845-e0424181ead7",
+				"method": "PUT"
+			},
+			{
+				"id": "dbc14893-24e1-4b53-ac62-8b060274dac0",
+				"method": "POST"
+			},
+			{
+				"id": "a8d05d21-1434-4e7b-b9c6-55735c9bca0d",
+				"method": "POST"
+			},
+			{
+				"id": "f42cc733-ebae-4097-b91d-0b81056f0319",
+				"method": "DELETE"
+			},
+			{
+				"id": "6445f91f-e9a9-4fe8-9a37-3018da823500",
+				"method": "DELETE"
+			},
+			{
+				"id": "2f066290-479b-4f3c-9008-a5f3182c4b22",
+				"method": "GET"
+			},
+			{
+				"id": "b4a3c55c-b0de-4f2c-846e-a54a01f6e770",
+				"method": "PUT"
+			},
+			{
+				"id": "314f247d-1276-4756-8846-8be2db829075",
+				"method": "POST"
+			},
+			{
+				"id": "d0c74eae-cd02-471a-9c34-56f1eb001987",
+				"method": "DELETE"
+			},
+			{
+				"id": "02729e13-fc0a-44e3-a000-59ac8c86ac35",
+				"method": "POST"
+			},
+			{
+				"id": "b614fd31-700f-4966-abf0-00326a3f57e6",
+				"method": "GET"
+			},
+			{
+				"id": "02f36133-37d6-4836-873c-5162dc63ac20",
+				"method": "GET"
+			},
+			{
+				"id": "1db8a295-9a7b-45fd-8248-919bdc7d1357",
+				"method": "GET"
+			},
+			{
+				"id": "7d8dc9f2-e866-47a0-af62-40ca5968fb48",
+				"method": "POST"
+			},
+			{
+				"id": "038f8cf0-222d-4e74-bec4-3b64bb1cc941",
+				"method": "POST"
+			},
+			{
+				"id": "8192204f-18bd-4b69-a30a-9ae974797006",
+				"method": "POST"
+			},
+			{
+				"id": "3ebbd932-cdd6-4a66-b090-c6c9ca7b4bbd",
+				"method": "POST"
+			},
+			{
+				"id": "370d93a7-6d25-42e9-94bd-af3c5e3875b8",
+				"method": "POST"
+			},
+			{
+				"id": "dfd1818b-410b-467b-b008-7f18f9e41bd3",
+				"method": "DELETE"
+			},
+			{
+				"id": "427363a1-6382-47c5-92f2-f9de7169b97e",
+				"method": "DELETE"
+			},
+			{
+				"id": "2f83ccdb-6a00-41ab-8537-d2bb995d0cd0",
+				"method": "GET"
+			},
+			{
+				"id": "74ae40a7-b2cc-4039-9399-6b67a466c66d",
+				"method": "POST"
+			},
+			{
+				"id": "d2a40984-528f-40ca-badc-dcdc2bfcc200",
+				"method": "GET"
+			},
+			{
+				"id": "ccbbd77c-4349-42ff-80ed-8dbec3302cb9",
+				"method": "PUT"
+			},
+			{
+				"id": "96308725-576b-49f2-a19c-2e922591b074",
+				"method": "PUT"
+			},
+			{
+				"id": "8b62b69c-072b-4df1-a73b-01e7aa87d735",
+				"method": "POST"
+			},
+			{
+				"id": "79fddc61-0bb2-4c06-866c-dca2be1add54",
+				"method": "POST"
+			},
+			{
+				"id": "d29ad672-9263-4037-ae30-3ed4ee3b4398",
+				"method": "DELETE"
+			},
+			{
+				"id": "37d44eba-e2bb-4c05-affa-3d4859f82ecc",
+				"method": "GET"
+			},
+			{
+				"id": "a1b924d9-eec5-4050-be88-f66be649d1a4",
+				"method": "GET"
+			},
+			{
+				"id": "2bbd5317-e183-4281-8323-40984876bbe5",
+				"method": "GET"
+			},
+			{
+				"id": "eaf04324-e732-4429-9eae-58bd5283d954",
+				"method": "PUT"
+			},
+			{
+				"id": "3981683e-bb21-42fc-9aec-d602c43baac7",
+				"method": "PUT"
+			},
+			{
+				"id": "22dc6fcd-c77c-4304-a52e-c9cb92d1a9e9",
+				"method": "POST"
+			},
+			{
+				"id": "15b1114d-2e36-4931-935f-675087804ac4",
+				"method": "DELETE"
+			},
+			{
+				"id": "9e3d8781-4ecb-4c88-94cb-a8829d20830e",
+				"method": "GET"
+			},
+			{
+				"id": "d5647d51-b7a5-4838-bd23-3bd50d385a32",
+				"method": "GET"
+			},
+			{
+				"id": "4f82c998-9c79-4929-b45f-03a61a556844",
+				"method": "GET"
+			},
+			{
+				"id": "e4d60fd3-4b22-45e6-a2de-23f0093ea0a0",
+				"method": "GET"
+			},
+			{
+				"id": "d174454b-d2eb-40a9-8554-0fb7e3f7b130",
+				"method": "GET"
+			},
+			{
+				"id": "131b4042-ab5c-456f-bdb1-c58c55cdc462",
+				"method": "PUT"
+			},
+			{
+				"id": "e0ed4388-3ece-4c34-8550-225efd1716c2",
+				"method": "PUT"
+			},
+			{
+				"id": "1abb2f6d-5348-49bb-acb3-f1ae309be297",
+				"method": "PUT"
+			},
+			{
+				"id": "1c329b04-07ec-4cfa-9eac-cdb48763c514",
+				"method": "POST"
+			}
+		]
+	}
+}

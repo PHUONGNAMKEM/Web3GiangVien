@@ -1,0 +1,4262 @@
+{
+  "info": {
+    "name": "Web3GiangVien API (Auto-generated)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "101 route từ server.js.\nAuth: Bearer {{token}} (collection-level).\nBody mẫu + test scripts tự động lưu ID giữa request.\nChạy: Collection → Run → select environment → Run."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "default"
+    }
+  ],
+  "item": [
+    {
+      "name": "admin",
+      "item": [
+        {
+          "name": "GET /api/admin/requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/requests",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "requests"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/admin/approve/:id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/approve/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "approve",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/admin/reject/:id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/reject/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "reject",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/admin/lecturers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/lecturers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "lecturers"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ai",
+      "item": [
+        {
+          "name": "POST /api/ai/analyze-report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/analyze-report",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ai",
+                "analyze-report"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Hệ thống quản lý đề tài được xây dựng dùng Node.js backend, React frontend, Ethereum Sepolia testnet, và FastAPI ML service. Mô hình SBERT được dùng để gợi ý đề tài theo năng lực sinh viên, mô hình PhoBERT được dùng để chấm điểm báo cáo PDF dựa trên độ khớp nội dung với yêu cầu đề tài.\",\n  \"topic_requirements\": [\n    \"blockchain\",\n    \"web3\",\n    \"ethereum\",\n    \"smart contract\",\n    \"sbert\",\n    \"phobert\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/ai/analyze-rubrics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/analyze-rubrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ai",
+                "analyze-rubrics"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/ai/match-student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/ai/match-student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "ai",
+                "match-student"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student\": {\n    \"gpa\": 3.5,\n    \"major_scores\": {\n      \"Blockchain\": 7.5,\n      \"Machine Learning\": 8,\n      \"Web Development\": 7\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"{{deTaiId}}\",\n      \"requirements\": [\n        \"Blockchain\",\n        \"Web3\",\n        \"SBERT\"\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "POST /api/auth/challenge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/challenge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "challenge"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/auth/verify",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/auth/register-role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register-role",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register-role"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "POST /api/auth/logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "GET /api/auth/qr-session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/qr-session",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "qr-session"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/auth/qr-submit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/qr-submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "qr-submit"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "baitest",
+      "item": [
+        {
+          "name": "POST /api/baitest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"baiTestId\", id);\n      console.log(\"✅ Lưu baiTestId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/baitest/detai/:deTaiId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/detai/:deTaiId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                "detai",
+                ":deTaiId"
+              ],
+              "variable": [
+                {
+                  "key": "deTaiId",
+                  "value": "{{deTaiId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"baiTestId\", id);\n      console.log(\"✅ Lưu baiTestId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/baitest/detai/:deTaiId/student",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/detai/:deTaiId/student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                "detai",
+                ":deTaiId",
+                "student"
+              ],
+              "variable": [
+                {
+                  "key": "deTaiId",
+                  "value": "{{deTaiId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"baiTestId\", id);\n      console.log(\"✅ Lưu baiTestId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/baitest/:id/start",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/:id/start",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                ":id",
+                "start"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"baiTestId\", id);\n      console.log(\"✅ Lưu baiTestId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/baitest/:id/submit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/:id/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                ":id",
+                "submit"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"baiTestId\", id);\n      console.log(\"✅ Lưu baiTestId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/baitest/:id/results",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/:id/results",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                ":id",
+                "results"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"baiTestId\", id);\n      console.log(\"✅ Lưu baiTestId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/baitest/:id/select-winner",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/:id/select-winner",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                ":id",
+                "select-winner"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"baiTestId\", id);\n      console.log(\"✅ Lưu baiTestId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/baitest/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"baiTestId\", id);\n      console.log(\"✅ Lưu baiTestId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/baitest/check/:deTaiId/:sinhVienId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baitest/check/:deTaiId/:sinhVienId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baitest",
+                "check",
+                ":deTaiId",
+                ":sinhVienId"
+              ],
+              "variable": [
+                {
+                  "key": "deTaiId",
+                  "value": "{{deTaiId}}",
+                  "type": "default"
+                },
+                {
+                  "key": "sinhVienId",
+                  "value": "{{sinhVienId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"baiTestId\", id);\n      console.log(\"✅ Lưu baiTestId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "baocao",
+      "item": [
+        {
+          "name": "POST /api/baocao/upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baocao/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baocao",
+                "upload"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "de_tai_id",
+                  "value": "{{deTaiId}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"baoCaoId\", id);\n      console.log(\"✅ Lưu baoCaoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/baocao/detai/:deTaiId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baocao/detai/:deTaiId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baocao",
+                "detai",
+                ":deTaiId"
+              ],
+              "variable": [
+                {
+                  "key": "deTaiId",
+                  "value": "{{deTaiId}}",
+                  "type": "default"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/baocao/sinhvien/:svId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baocao/sinhvien/:svId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baocao",
+                "sinhvien",
+                ":svId"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}",
+                  "type": "default"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/baocao/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baocao/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baocao",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/baocao/giangvien/:gvId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baocao/giangvien/:gvId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baocao",
+                "giangvien",
+                ":gvId"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}",
+                  "type": "default"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/baocao/:id/extracted",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/baocao/:id/extracted",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "baocao",
+                ":id",
+                "extracted"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "blockchain",
+      "item": [
+        {
+          "name": "GET /api/blockchain/contracts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blockchain/contracts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "blockchain",
+                "contracts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/blockchain/db-records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blockchain/db-records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "blockchain",
+                "db-records"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/blockchain/thesis/db-records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blockchain/thesis/db-records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "blockchain",
+                "thesis",
+                "db-records"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/blockchain/thesis/topic/:topicId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blockchain/thesis/topic/:topicId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "blockchain",
+                "thesis",
+                "topic",
+                ":topicId"
+              ],
+              "variable": [
+                {
+                  "key": "topicId",
+                  "value": "{{topicId}}",
+                  "type": "default"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/blockchain/thesis/submissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/blockchain/thesis/submissions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "blockchain",
+                "thesis",
+                "submissions"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "dangky",
+      "item": [
+        {
+          "name": "GET /api/dangky/sinhvien/:svId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dangky/sinhvien/:svId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dangky",
+                "sinhvien",
+                ":svId"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"dangKyId\", id);\n      console.log(\"✅ Lưu dangKyId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/dangky/giangvien/:gvId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dangky/giangvien/:gvId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dangky",
+                "giangvien",
+                ":gvId"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"dangKyId\", id);\n      console.log(\"✅ Lưu dangKyId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/dangky/:id/approve",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dangky/:id/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dangky",
+                ":id",
+                "approve"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"dangKyId\", id);\n      console.log(\"✅ Lưu dangKyId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/dangky/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dangky/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "dangky",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"dangKyId\", id);\n      console.log(\"✅ Lưu dangKyId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "detai",
+      "item": [
+        {
+          "name": "GET /api/detai",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai"
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"deTaiId\", id);\n      console.log(\"✅ Lưu deTaiId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/detai/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"deTaiId\", id);\n      console.log(\"✅ Lưu deTaiId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/detai",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"MaDeTai\": \"DT{{$timestamp}}\",\n  \"TenDeTai\": \"Hệ thống quản lý khóa luận Web3 + AI\",\n  \"MoTa\": \"Đề tài tích hợp blockchain và machine learning\",\n  \"MoTaChiTiet\": \"Phát triển nền tảng quản lý đề tài khóa luận sử dụng Ethereum + SBERT/PhoBERT\",\n  \"YeuCau\": [\n    \"Blockchain\",\n    \"Web3\",\n    \"SBERT\",\n    \"PhoBERT\"\n  ],\n  \"SoLuongSinhVien\": 3,\n  \"Deadline\": \"2026-08-28T08:25:27.856Z\",\n  \"GiangVienHuongDan\": \"{{gvId}}\",\n  \"CoBaiTest\": false,\n  \"SuDungRubrics\": true,\n  \"Rubrics\": [\n    {\n      \"TenTieuChi\": \"Nội dung kỹ thuật\",\n      \"MoTa\": \"Mức độ hiểu biết về Web3 và AI\",\n      \"TrongSo\": 40,\n      \"DiemToiDa\": 10,\n      \"GoiYChoAI\": [\n        \"blockchain\",\n        \"smart contract\",\n        \"web3\"\n      ]\n    },\n    {\n      \"TenTieuChi\": \"Cài đặt và test\",\n      \"MoTa\": \"Hoàn thành deployment và kiểm thử\",\n      \"TrongSo\": 35,\n      \"DiemToiDa\": 10,\n      \"GoiYChoAI\": [\n        \"hardhat\",\n        \"testnet\",\n        \"deployment\"\n      ]\n    },\n    {\n      \"TenTieuChi\": \"Tài liệu\",\n      \"MoTa\": \"Chất lượng tài liệu và báo cáo\",\n      \"TrongSo\": 25,\n      \"DiemToiDa\": 10,\n      \"GoiYChoAI\": [\n        \"documentation\",\n        \"report\"\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"deTaiId\", id);\n      console.log(\"✅ Lưu deTaiId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/detai/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"deTaiId\", id);\n      console.log(\"✅ Lưu deTaiId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/detai/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"deTaiId\", id);\n      console.log(\"✅ Lưu deTaiId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/detai/:id/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai/:id/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai",
+                ":id",
+                "register"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"deTaiId\", id);\n      console.log(\"✅ Lưu deTaiId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/detai/:id/invite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai/:id/invite",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai",
+                ":id",
+                "invite"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"deTaiId\", id);\n      console.log(\"✅ Lưu deTaiId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/detai/invitations/:svId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai/invitations/:svId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai",
+                "invitations",
+                ":svId"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"deTaiId\", id);\n      console.log(\"✅ Lưu deTaiId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/detai/invitation/:id/respond",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/detai/invitation/:id/respond",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "detai",
+                "invitation",
+                ":id",
+                "respond"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"deTaiId\", id);\n      console.log(\"✅ Lưu deTaiId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "diemso",
+      "item": [
+        {
+          "name": "POST /api/diemso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/diemso",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diemso"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"de_tai_id\": \"{{deTaiId}}\",\n  \"sinh_vien_id\": \"{{svId}}\",\n  \"diem\": 8.5,\n  \"nhan_xet\": \"Báo cáo đạt yêu cầu, cài đặt chính xác, tài liệu chi tiết.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"diemSoId\", id);\n      console.log(\"✅ Lưu diemSoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/diemso/:id/retry-blockchain",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/diemso/:id/retry-blockchain",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diemso",
+                ":id",
+                "retry-blockchain"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"diemSoId\", id);\n      console.log(\"✅ Lưu diemSoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/diemso/sinhvien/:svId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/diemso/sinhvien/:svId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diemso",
+                "sinhvien",
+                ":svId"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"diemSoId\", id);\n      console.log(\"✅ Lưu diemSoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/diemso/comparison/:gvId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/diemso/comparison/:gvId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diemso",
+                "comparison",
+                ":gvId"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"diemSoId\", id);\n      console.log(\"✅ Lưu diemSoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "giangvien",
+      "item": [
+        {
+          "name": "GET /api/giangvien",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/giangvien",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "giangvien"
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"gvId\", id);\n      console.log(\"✅ Lưu gvId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/giangvien/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/giangvien/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "giangvien",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"gvId\", id);\n      console.log(\"✅ Lưu gvId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/giangvien",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/giangvien",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "giangvien"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"gvId\", id);\n      console.log(\"✅ Lưu gvId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/giangvien/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/giangvien/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "giangvien",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"gvId\", id);\n      console.log(\"✅ Lưu gvId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/giangvien/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/giangvien/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "giangvien",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"gvId\", id);\n      console.log(\"✅ Lưu gvId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "lophoc",
+      "item": [
+        {
+          "name": "GET /api/lophoc/giangvien/:gvId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lophoc/giangvien/:gvId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lophoc",
+                "giangvien",
+                ":gvId"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"lopHocId\", id);\n      console.log(\"✅ Lưu lopHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/lophoc/:id/detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lophoc/:id/detail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lophoc",
+                ":id",
+                "detail"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"lopHocId\", id);\n      console.log(\"✅ Lưu lopHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/lophoc",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lophoc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lophoc"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"lopHocId\", id);\n      console.log(\"✅ Lưu lopHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/lophoc/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lophoc/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lophoc",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"lopHocId\", id);\n      console.log(\"✅ Lưu lopHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/lophoc/:id/sinhvien",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lophoc/:id/sinhvien",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lophoc",
+                ":id",
+                "sinhvien"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"lopHocId\", id);\n      console.log(\"✅ Lưu lopHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/lophoc/:id/sinhvien/:svId",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lophoc/:id/sinhvien/:svId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lophoc",
+                ":id",
+                "sinhvien",
+                ":svId"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                },
+                {
+                  "key": "svId",
+                  "value": "{{svId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"lopHocId\", id);\n      console.log(\"✅ Lưu lopHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/lophoc/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lophoc/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lophoc",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"lopHocId\", id);\n      console.log(\"✅ Lưu lopHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "monhoc",
+      "item": [
+        {
+          "name": "GET /api/monhoc/giangvien/:gvId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/monhoc/giangvien/:gvId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "monhoc",
+                "giangvien",
+                ":gvId"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"monHocId\", id);\n      console.log(\"✅ Lưu monHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/monhoc",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/monhoc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "monhoc"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"monHocId\", id);\n      console.log(\"✅ Lưu monHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/monhoc/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/monhoc/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "monhoc",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"monHocId\", id);\n      console.log(\"✅ Lưu monHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/monhoc/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/monhoc/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "monhoc",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"monHocId\", id);\n      console.log(\"✅ Lưu monHocId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "nhom",
+      "item": [
+        {
+          "name": "POST /api/nhom",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tenNhom\": \"Nhóm Web3 Giảng Viên\",\n  \"soLuong\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/nhom/sinhvien/:svId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/sinhvien/:svId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                "sinhvien",
+                ":svId"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/nhom/invites/:svId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/invites/:svId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                "invites",
+                ":svId"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/nhom/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/nhom/:id/invite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/:id/invite",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                ":id",
+                "invite"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/nhom/:id/respond",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/:id/respond",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                ":id",
+                "respond"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/nhom/:id/kick/:svId",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/:id/kick/:svId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                ":id",
+                "kick",
+                ":svId"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                },
+                {
+                  "key": "svId",
+                  "value": "{{svId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/nhom/:id/leave",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/:id/leave",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                ":id",
+                "leave"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/nhom/:id/transfer-leader",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/:id/transfer-leader",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                ":id",
+                "transfer-leader"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/nhom/:id/chot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/:id/chot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                ":id",
+                "chot"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/nhom/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/nhom/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "nhom",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"nhomId\", id);\n      console.log(\"✅ Lưu nhomId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "qr",
+      "item": [
+        {
+          "name": "GET /api/qr/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/qr/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "qr",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/qr/generate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/qr/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "qr",
+                "generate"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "rubrics",
+      "item": [
+        {
+          "name": "GET /api/rubrics/giangvien/:gvId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rubrics/giangvien/:gvId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rubrics",
+                "giangvien",
+                ":gvId"
+              ],
+              "variable": [
+                {
+                  "key": "gvId",
+                  "value": "{{gvId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"rubricsId\", id);\n      console.log(\"✅ Lưu rubricsId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/rubrics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rubrics",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rubrics"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"rubricsId\", id);\n      console.log(\"✅ Lưu rubricsId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/rubrics/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rubrics/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rubrics",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"rubricsId\", id);\n      console.log(\"✅ Lưu rubricsId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/rubrics/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rubrics/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rubrics",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"rubricsId\", id);\n      console.log(\"✅ Lưu rubricsId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/rubrics/:id/default",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rubrics/:id/default",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rubrics",
+                ":id",
+                "default"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"rubricsId\", id);\n      console.log(\"✅ Lưu rubricsId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/rubrics/:id/apply/:deTaiId",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/rubrics/:id/apply/:deTaiId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "rubrics",
+                ":id",
+                "apply",
+                ":deTaiId"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                },
+                {
+                  "key": "deTaiId",
+                  "value": "{{deTaiId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"rubricsId\", id);\n      console.log(\"✅ Lưu rubricsId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "sinhvien",
+      "item": [
+        {
+          "name": "GET /api/sinhvien",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sinhvien",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sinhvien"
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"svId\", id);\n      console.log(\"✅ Lưu svId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/sinhvien/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sinhvien/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sinhvien",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"svId\", id);\n      console.log(\"✅ Lưu svId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "POST /api/sinhvien",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sinhvien",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sinhvien"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"svId\", id);\n      console.log(\"✅ Lưu svId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/sinhvien/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sinhvien/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sinhvien",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"svId\", id);\n      console.log(\"✅ Lưu svId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/sinhvien/:id/profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sinhvien/:id/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sinhvien",
+                ":id",
+                "profile"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gpa\": 3.5,\n  \"ky_nang\": {\n    \"Machine Learning\": 8.5,\n    \"Web3/Blockchain\": 7,\n    \"Python\": 8,\n    \"Solidity\": 6.5\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"svId\", id);\n      console.log(\"✅ Lưu svId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/sinhvien/masv/:maSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sinhvien/masv/:maSV",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sinhvien",
+                "masv",
+                ":maSV"
+              ],
+              "variable": [
+                {
+                  "key": "maSV",
+                  "value": "{{maSV}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"svId\", id);\n      console.log(\"✅ Lưu svId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "DELETE /api/sinhvien/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sinhvien/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sinhvien",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"svId\", id);\n      console.log(\"✅ Lưu svId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "tiendo",
+      "item": [
+        {
+          "name": "POST /api/tiendo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tiendo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tiendo"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"de_tai_id\": \"{{deTaiId}}\",\n  \"noi_dung\": \"Tuần 1: Phân tích yêu cầu, lập kế hoạch architecture\",\n  \"phan_tram\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"tienDoId\", id);\n      console.log(\"✅ Lưu tienDoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/tiendo/sinhvien/:svId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tiendo/sinhvien/:svId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tiendo",
+                "sinhvien",
+                ":svId"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"tienDoId\", id);\n      console.log(\"✅ Lưu tienDoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/tiendo/detail/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tiendo/detail/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tiendo",
+                "detail",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"tienDoId\", id);\n      console.log(\"✅ Lưu tienDoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/tiendo/:id",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tiendo/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tiendo",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"tienDoId\", id);\n      console.log(\"✅ Lưu tienDoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/tiendo/:id/danhgia",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tiendo/:id/danhgia",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tiendo",
+                ":id",
+                "danhgia"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"tienDoId\", id);\n      console.log(\"✅ Lưu tienDoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/tiendo/:id/ai-suggest",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tiendo/:id/ai-suggest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tiendo",
+                ":id",
+                "ai-suggest"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"tienDoId\", id);\n      console.log(\"✅ Lưu tienDoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/tiendo/:svId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tiendo/:svId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tiendo",
+                ":svId"
+              ],
+              "variable": [
+                {
+                  "key": "svId",
+                  "value": "{{svId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"tienDoId\", id);\n      console.log(\"✅ Lưu tienDoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "GET /api/tiendo/detai/:deTaiId",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tiendo/detai/:deTaiId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tiendo",
+                "detai",
+                ":deTaiId"
+              ],
+              "variable": [
+                {
+                  "key": "deTaiId",
+                  "value": "{{deTaiId}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"tienDoId\", id);\n      console.log(\"✅ Lưu tienDoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "PUT /api/tiendo/:id/nhanxet",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tiendo/:id/nhanxet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "tiendo",
+                ":id",
+                "nhanxet"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{id}}",
+                  "type": "default"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "// Lưu ID từ response vào environment variable\nif (pm.response.code === 200 || pm.response.code === 201) {\n  try {\n    const data = pm.response.json();\n    const id = data.data?._id || data._id || data.id;\n    if (id) {\n      pm.environment.set(\"tienDoId\", id);\n      console.log(\"✅ Lưu tienDoId:\", id);\n    }\n  } catch (e) {\n    console.log(\"⚠️ Không thể lưu ID từ response:\", e.message);\n  }\n}\n\n// Delay trước request tiếp theo (tránh race condition)\nif (pm.response.code === 200 || pm.response.code === 201) {\n  pm.request.setTimeout(750); // 750ms trước request sau\n}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

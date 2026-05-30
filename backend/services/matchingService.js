@@ -57,7 +57,8 @@ exports.matchStudentToTopics = async (studentProfile, topics) => {
             },
             {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Internal-Token': process.env.INTERNAL_TOKEN || ''
                 }
             }
         );
