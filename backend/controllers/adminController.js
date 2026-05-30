@@ -50,7 +50,8 @@ const approveRequest = async (req, res) => {
     // Emit Socket
     const io = req.app.get('io');
     if (io) {
-      io.to(`pending:${request.walletAddress}`).emit('request_result', {
+      console.log(`Emitting approve to room: pending:${request.walletAddress.toLowerCase()}`);
+      io.to(`pending:${request.walletAddress.toLowerCase()}`).emit('request_result', {
         success: true,
         status: 'approved',
         token,
@@ -95,7 +96,8 @@ const rejectRequest = async (req, res) => {
     // Emit Socket
     const io = req.app.get('io');
     if (io) {
-      io.to(`pending:${request.walletAddress}`).emit('request_result', {
+      console.log(`Emitting reject to room: pending:${request.walletAddress.toLowerCase()}`);
+      io.to(`pending:${request.walletAddress.toLowerCase()}`).emit('request_result', {
         success: false,
         status: 'rejected',
         reason
