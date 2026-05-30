@@ -111,6 +111,89 @@ const rejectRequest = async (req, res) => {
   }
 };
 
+const getProcessedRequests = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const statusFilter = req.query.status; // 'approved' | 'rejected' | undefined (both)
+    const search = req.query.search?.trim();
+    const fromDate = req.query.fromDate;
+    const toDate = req.query.toDate;
+
+    const filter = { status: { $in: ['approved', 'rejected'] } };
+    if (statusFilter && ['approved', 'rejected'].includes(statusFilter)) {
+      filter.status = statusFilter;
+    }
+
+    // Search by name, email or chuyenNganh
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      filter.$or = [
+        { hoTen: searchRegex },
+        { email: searchRegex },
+        { chuyenNganh: searchRegex }
+      ];
+    }
+
+    // Date range filter on reviewedAt
+    if (fromDate || toDate) {
+      filter.reviewedAt = {};
+      if (fromDate) {
+        filter.reviewedAt.$gte = new Date(fromDate);
+      }
+      if (toDate) {
+        // Set to end of day
+        const endDate = new Date(toDate);
+        endDate.setHours(23, 59, 59, 999);
+        filter.reviewedAt.$lte = endDate;
+      }
+    }
+
+    const [requests, total] = await Promise.all([
+      RoleRequest.find(filter)
+        .sort({ reviewedAt: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('reviewedBy', 'HoTen')
+        .lean(),
+      RoleRequest.countDocuments(filter)
+    ]);
+
+    res.json({
+      success: true,
+      requests,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('getProcessedRequests error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi khi lấy lịch sử yêu cầu.' });
+  }
+};
+
+const getRequestDetail = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const request = await RoleRequest.findById(id)
+      .populate('reviewedBy', 'HoTen')
+      .lean();
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy yêu cầu.' });
+    }
+
+    res.json({ success: true, request });
+  } catch (error) {
+    console.error('getRequestDetail error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi khi lấy chi tiết yêu cầu.' });
+  }
+};
+
 const getAllLecturers = async (req, res) => {
   try {
     const lecturers = await GiangVien.find().sort({ createdAt: -1 });
@@ -125,5 +208,7 @@ module.exports = {
   getPendingRequests,
   approveRequest,
   rejectRequest,
+  getProcessedRequests,
+  getRequestDetail,
   getAllLecturers
 };

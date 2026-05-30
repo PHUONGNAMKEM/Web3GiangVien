@@ -189,6 +189,8 @@ app.post('/api/qr/generate', ...requireAuth, qrController.generateQrCode);
 
 // 2c. Admin Routes
 app.get('/api/admin/requests', ...requireAdmin, adminController.getPendingRequests);
+app.get('/api/admin/requests/history', ...requireAdmin, adminController.getProcessedRequests);
+app.get('/api/admin/requests/:id', ...requireAdmin, adminController.getRequestDetail);
 app.post('/api/admin/approve/:id', ...requireAdmin, adminController.approveRequest);
 app.post('/api/admin/reject/:id', ...requireAdmin, adminController.rejectRequest);
 app.get('/api/admin/lecturers', ...requireAdmin, adminController.getAllLecturers);
