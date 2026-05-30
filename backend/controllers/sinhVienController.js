@@ -1,8 +1,21 @@
 const SinhVien = require('../models/SinhVien');
 
+// Cache cho getAll - TTL 30 giay
+let _svCache = { data: null, ts: 0 };
+const SV_CACHE_TTL = 30 * 1000;
+
+function invalidateSvCache() {
+    _svCache = { data: null, ts: 0 };
+}
+
 exports.getAll = async (req, res) => {
     try {
+        if (_svCache.data && Date.now() - _svCache.ts < SV_CACHE_TTL) {
+            return res.json(_svCache.data);
+        }
+
         const list = await SinhVien.find({});
+        _svCache = { data: list, ts: Date.now() };
         res.json(list);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -23,6 +36,7 @@ exports.create = async (req, res) => {
     try {
         const newSV = new SinhVien(req.body);
         await newSV.save();
+        invalidateSvCache();
         res.status(201).json(newSV);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -32,6 +46,7 @@ exports.create = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const updated = await SinhVien.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        invalidateSvCache();
         res.json(updated);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -41,6 +56,7 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
     try {
         await SinhVien.findByIdAndDelete(req.params.id);
+        invalidateSvCache();
         res.json({ message: 'Deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -90,6 +106,7 @@ exports.updateProfile = async (req, res) => {
 
         if (!updated) return res.status(404).json({ error: 'Không tìm thấy sinh viên.' });
 
+        invalidateSvCache();
         res.json({ message: 'Cập nhật hồ sơ thành công!', data: updated });
     } catch (err) {
         res.status(500).json({ error: err.message });

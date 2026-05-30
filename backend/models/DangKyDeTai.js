@@ -29,5 +29,7 @@ const dangKyDeTaiSchema = new mongoose.Schema({
 dangKyDeTaiSchema.index({ DeTai: 1, Nhom: 1 }, { unique: true, sparse: true });
 // Backward compat: SinhVien index
 dangKyDeTaiSchema.index({ DeTai: 1, SinhVien: 1 }, { unique: true, sparse: true });
+// Index cho query getAll: lọc trạng thái active rồi nhóm theo đề tài
+dangKyDeTaiSchema.index({ TrangThai: 1, DeTai: 1 });
 
 module.exports = mongoose.model('DangKyDeTai', dangKyDeTaiSchema);

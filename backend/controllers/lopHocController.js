@@ -5,10 +5,26 @@ const DeTai = require('../models/DeTai');
 const Nhom = require('../models/Nhom');
 const logger = require('../config/logger');
 
+const _lopHocCache = new Map();
+const LOPHOC_CACHE_TTL = 30 * 1000;
+
+function invalidateLopHocCache(gvId) {
+  if (gvId) {
+    _lopHocCache.delete(String(gvId));
+  } else {
+    _lopHocCache.clear();
+  }
+}
+
 // Lấy danh sách lớp học của giảng viên
 exports.getByGiangVien = async (req, res) => {
   try {
     const { gvId } = req.params;
+    const cached = _lopHocCache.get(String(gvId));
+    if (cached && Date.now() - cached.ts < LOPHOC_CACHE_TTL) {
+      return res.json({ success: true, data: cached.data });
+    }
+
     const lopHocs = await LopHoc.find({ GiangVien: gvId })
       .populate('MonHoc', 'MaMonHoc TenMonHoc')
       .populate('GiangVien', 'HoTen MaGV')
@@ -19,6 +35,7 @@ exports.getByGiangVien = async (req, res) => {
       siSo: lh.SinhVien ? lh.SinhVien.length : 0
     }));
 
+    _lopHocCache.set(String(gvId), { data: result, ts: Date.now() });
     res.json({ success: true, data: result });
   } catch (error) {
     logger.error(`[LopHoc] getByGiangVien error: ${error.message}`);
@@ -102,6 +119,7 @@ exports.create = async (req, res) => {
       .populate('GiangVien', 'HoTen MaGV');
 
     logger.info(`[LopHoc] Created: ${MaLopHoc} - ${TenLopHoc}`);
+    invalidateLopHocCache(GiangVien);
     res.status(201).json({ success: true, data: { ...populated.toObject(), siSo: 0 } });
   } catch (error) {
     logger.error(`[LopHoc] create error: ${error.message}`);
@@ -127,6 +145,7 @@ exports.update = async (req, res) => {
     }
 
     logger.info(`[LopHoc] Updated: ${lopHoc.MaLopHoc}`);
+    invalidateLopHocCache();
     res.json({ success: true, data: lopHoc });
   } catch (error) {
     logger.error(`[LopHoc] update error: ${error.message}`);
@@ -167,6 +186,7 @@ exports.addSinhVien = async (req, res) => {
       .populate('SinhVien', 'MaSV HoTen Email GPA ChuyenNganh');
 
     logger.info(`[LopHoc] Added SV ${sv.MaSV} to class ${lopHoc.MaLopHoc}`);
+    invalidateLopHocCache();
     res.json({ success: true, data: updated });
   } catch (error) {
     logger.error(`[LopHoc] addSinhVien error: ${error.message}`);
@@ -188,6 +208,7 @@ exports.removeSinhVien = async (req, res) => {
     await lopHoc.save();
 
     logger.info(`[LopHoc] Removed SV ${svId} from class ${lopHoc.MaLopHoc}`);
+    invalidateLopHocCache();
     res.json({ success: true, message: 'Đã xóa sinh viên khỏi lớp' });
   } catch (error) {
     logger.error(`[LopHoc] removeSinhVien error: ${error.message}`);
@@ -206,6 +227,7 @@ exports.delete = async (req, res) => {
     }
 
     logger.info(`[LopHoc] Deleted: ${lopHoc.MaLopHoc}`);
+    invalidateLopHocCache();
     res.json({ success: true, message: 'Đã xóa lớp học' });
   } catch (error) {
     logger.error(`[LopHoc] delete error: ${error.message}`);
