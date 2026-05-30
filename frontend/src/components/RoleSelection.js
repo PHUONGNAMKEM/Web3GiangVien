@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { School as SchoolIcon, AccountBox as TeacherIcon, ArrowForward as ArrowForwardIcon } from '@mui/icons-material';
 
-const RoleSelection = ({ walletAddress, onSelectStudent, onSelectLecturer, loading }) => {
+const RoleSelection = ({ walletAddress, onSelectStudent, onSelectLecturer, loading, rejectedCountToday = 0 }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState({ hoTen: '', email: '', chuyenNganh: '' });
 
@@ -88,11 +88,16 @@ const RoleSelection = ({ walletAddress, onSelectStudent, onSelectLecturer, loadi
               color="success"
               endIcon={<ArrowForwardIcon />}
               onClick={() => setModalOpen(true)}
-              disabled={loading}
+              disabled={loading || rejectedCountToday >= 3}
               sx={{ borderRadius: 8 }}
             >
               Yêu cầu cấp quyền Giảng Viên
             </Button>
+            {rejectedCountToday > 0 && (
+              <Typography variant="caption" color={rejectedCountToday >= 3 ? "error" : "text.secondary"} mt={2} display="block">
+                Đã bị từ chối {rejectedCountToday}/3 lần hôm nay
+              </Typography>
+            )}
           </Paper>
         </Grid>
       </Grid>

@@ -70,12 +70,24 @@ const verifySignature = async (req, res) => {
       } else {
         userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
         if (!userRecord) {
+          const startOfDay = new Date();
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date();
+          endOfDay.setHours(23, 59, 59, 999);
+          
+          const rejectedCountToday = await RoleRequest.countDocuments({
+            walletAddress: walletAddress.toLowerCase(),
+            status: 'rejected',
+            createdAt: { $gte: startOfDay, $lte: endOfDay }
+          });
+
           // Not found anywhere - needs role selection
           challenges.delete(challengeId);
           return res.json({
             success: true,
             needsRoleSelection: true,
             walletAddress: walletAddress.toLowerCase(),
+            rejectedCountToday,
             message: 'Vui lòng chọn vai trò để tiếp tục'
           });
         }
@@ -190,11 +202,23 @@ const verifyQrSignature = async (req, res) => {
       } else {
         userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
         if (!userRecord) {
+          const startOfDay = new Date();
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date();
+          endOfDay.setHours(23, 59, 59, 999);
+
+          const rejectedCountToday = await RoleRequest.countDocuments({
+            walletAddress: walletAddress.toLowerCase(),
+            status: 'rejected',
+            createdAt: { $gte: startOfDay, $lte: endOfDay }
+          });
+
           qrSessions.delete(sessionId);
           return res.json({
             success: true,
             needsRoleSelection: true,
             walletAddress: walletAddress.toLowerCase(),
+            rejectedCountToday,
             message: 'Vui lòng chọn vai trò để tiếp tục'
           });
         }
