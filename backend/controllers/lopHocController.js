@@ -39,8 +39,11 @@ exports.getDetail = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy lớp học' });
     }
 
-    // Lấy danh sách đề tài thuộc môn học của lớp này
-    const deTais = await DeTai.find({ MonHoc: lopHoc.MonHoc._id }).select('_id MaDeTai TenDeTai TrangThai');
+    // MỚI: Query trực tiếp theo LopHoc, fallback MonHoc cho data cũ
+    let deTais = await DeTai.find({ LopHoc: id }).select('_id MaDeTai TenDeTai TrangThai SoLuongSinhVien');
+    if (deTais.length === 0) {
+      deTais = await DeTai.find({ MonHoc: lopHoc.MonHoc._id }).select('_id MaDeTai TenDeTai TrangThai SoLuongSinhVien');
+    }
 
     // Lấy danh sách đăng ký đề tài của các SV trong lớp
     const svIds = lopHoc.SinhVien.map(sv => sv._id);
@@ -89,9 +92,9 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Thiếu thông tin bắt buộc' });
     }
 
-    const existing = await LopHoc.findOne({ MaLopHoc });
+    const existing = await LopHoc.findOne({ MaLopHoc, MonHoc });
     if (existing) {
-      return res.status(409).json({ success: false, message: `Mã lớp học '${MaLopHoc}' đã tồn tại` });
+      return res.status(409).json({ success: false, message: `Lớp '${MaLopHoc}' đã tồn tại cho môn học này` });
     }
 
     const lopHoc = new LopHoc({ MaLopHoc, TenLopHoc, MonHoc, GiangVien, SinhVien: [] });
@@ -138,17 +141,23 @@ exports.update = async (req, res) => {
 exports.addSinhVien = async (req, res) => {
   try {
     const { id } = req.params;
-    const { sinhVienId } = req.body;
+    let { sinhVienId, maSV } = req.body;
 
-    if (!sinhVienId) {
-      return res.status(400).json({ success: false, message: 'Thiếu sinhVienId' });
+    if (!sinhVienId && !maSV) {
+      return res.status(400).json({ success: false, message: 'Thiếu sinhVienId hoặc maSV' });
     }
 
     // Kiểm tra SV tồn tại
-    const sv = await SinhVien.findById(sinhVienId);
+    let sv;
+    if (sinhVienId) {
+      sv = await SinhVien.findById(sinhVienId);
+    } else {
+      sv = await SinhVien.findOne({ MaSV: maSV });
+    }
     if (!sv) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sinh viên' });
     }
+    sinhVienId = sv._id;
 
     const lopHoc = await LopHoc.findById(id);
     if (!lopHoc) {
@@ -212,3 +221,113 @@ exports.delete = async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi xóa lớp học' });
   }
 };
+
+// Import batch sinh viên vào lớp
+exports.importSinhVien = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { danhSachMaSV } = req.body;
+
+    if (!danhSachMaSV || !Array.isArray(danhSachMaSV)) {
+      return res.status(400).json({ success: false, message: 'Danh sách mã sinh viên không hợp lệ' });
+    }
+
+    const lopHoc = await LopHoc.findById(id);
+    if (!lopHoc) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy lớp học' });
+    }
+
+    const svList = await SinhVien.find({ MaSV: { $in: danhSachMaSV } });
+    
+    let addedCount = 0;
+    const duplicateSV = [];
+    const notFoundMaSV = [...danhSachMaSV];
+
+    svList.forEach(sv => {
+      const index = notFoundMaSV.indexOf(sv.MaSV);
+      if (index > -1) {
+        notFoundMaSV.splice(index, 1);
+      }
+
+      const exists = lopHoc.SinhVien.some(svId => svId.equals(sv._id));
+      if (!exists) {
+        lopHoc.SinhVien.push(sv._id);
+        addedCount++;
+      } else {
+        duplicateSV.push(sv.MaSV);
+      }
+    });
+
+    if (addedCount > 0) {
+      await lopHoc.save();
+    }
+
+    res.json({
+      success: true,
+      message: `Import thành công. Thêm mới: ${addedCount}, trùng lặp: ${duplicateSV.length}, không tìm thấy: ${notFoundMaSV.length}`,
+      data: {
+        addedCount,
+        duplicateSV,
+        notFoundMaSV
+      }
+    });
+  } catch (error) {
+    logger.error(`[LopHoc] importSinhVien error: ${error.message}`);
+    res.status(500).json({ success: false, message: 'Lỗi import sinh viên' });
+  }
+};
+
+// Lấy lớp học của sinh viên
+exports.getBySinhVien = async (req, res) => {
+  try {
+    const { svId } = req.params;
+    const lopHocs = await LopHoc.find({ SinhVien: svId })
+      .populate('MonHoc', 'MaMonHoc TenMonHoc')
+      .populate('GiangVien', 'HoTen MaGV')
+      .sort({ createdAt: -1 });
+
+    const result = lopHocs.map(lh => ({
+      ...lh.toObject(),
+      siSo: lh.SinhVien ? lh.SinhVien.length : 0
+    }));
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    logger.error(`[LopHoc] getBySinhVien error: ${error.message}`);
+    res.status(500).json({ success: false, message: 'Lỗi lấy lớp học của sinh viên' });
+  }
+};
+
+// Lấy danh sách sinh viên thuộc các lớp của giảng viên (flat list kèm context lớp/môn/GV)
+exports.getSinhVienByGiangVien = async (req, res) => {
+  try {
+    const { gvId } = req.params;
+    const lopHocs = await LopHoc.find({ GiangVien: gvId })
+      .populate('SinhVien', 'MaSV HoTen Email GPA ChuyenNganh KyNang WalletAddress DaCapNhatHoSo')
+      .populate('MonHoc', 'MaMonHoc TenMonHoc')
+      .populate('GiangVien', 'HoTen MaGV');
+
+    // Flatten: mỗi item = { sinhVien, lopHoc info }
+    const flatList = [];
+    for (const lh of lopHocs) {
+      for (const sv of (lh.SinhVien || [])) {
+        flatList.push({
+          sinhVien: sv,
+          lopHoc: {
+            _id: lh._id,
+            MaLopHoc: lh.MaLopHoc,
+            TenLopHoc: lh.TenLopHoc
+          },
+          monHoc: lh.MonHoc,
+          giangVien: lh.GiangVien
+        });
+      }
+    }
+
+    res.json({ success: true, data: flatList });
+  } catch (error) {
+    logger.error(`[LopHoc] getSinhVienByGiangVien error: ${error.message}`);
+    res.status(500).json({ success: false, message: 'Lỗi lấy danh sách sinh viên theo giảng viên' });
+  }
+};
+

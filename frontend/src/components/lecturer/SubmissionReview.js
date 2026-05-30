@@ -4,6 +4,7 @@ import { CheckSquare, ShieldCheck, BrainCircuit, ScanSearch, Fingerprint, Extern
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
+import { useLecturerClassContext } from '../../contexts/LecturerClassContext';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -48,6 +49,7 @@ const getBlockchainStatusMeta = (status) => {
 
 const SubmissionReview = () => {
   const isMobile = useIsMobile();
+  const { selectedClassId } = useLecturerClassContext();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -59,6 +61,67 @@ const SubmissionReview = () => {
   const [commentDrafts, setCommentDrafts] = useState({});
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [weeklyModalVisible, setWeeklyModalVisible] = useState(false);
+  const [activeProgressStudentId, setActiveProgressStudentId] = useState(null);
+
+  // MỚI: Trạng thái điều chỉnh điểm cá nhân
+  const [adjustModalVisible, setAdjustModalVisible] = useState(false);
+  const [adjustTarget, setAdjustTarget] = useState(null);
+  const [adjustScore, setAdjustScore] = useState(0);
+  const [adjustComment, setAdjustComment] = useState('');
+  const [adjustSaving, setAdjustSaving] = useState(false);
+
+  const openAdjustModal = (member) => {
+    setAdjustTarget(member);
+    setAdjustScore(member.grade?.Diem ?? 0);
+    setAdjustComment(member.grade?.NhanXet || '');
+    setAdjustModalVisible(true);
+  };
+
+  const handleAdjustGrade = async () => {
+    if (!adjustTarget?.grade?._id) return;
+    try {
+      setAdjustSaving(true);
+      const res = await aiApiService.adjustGrade(adjustTarget.grade._id, adjustScore, adjustComment);
+      message.success('Đã điều chỉnh điểm cho sinh viên!');
+      setAdjustModalVisible(false);
+      setAdjustTarget(null);
+      
+      setSubmissions(prev => prev.map(sub => {
+        if (sub.grade?._id === res.data?._id) {
+          return {
+            ...sub,
+            grade: res.data
+          };
+        }
+        return sub;
+      }));
+
+      if (selectedSubmission?.grade?._id === res.data?._id) {
+        setSelectedSubmission(prev => ({
+          ...prev,
+          grade: res.data
+        }));
+      }
+    } catch (err) {
+      message.error(err.response?.data?.error || 'Điều chỉnh điểm thất bại');
+    } finally {
+      setAdjustSaving(false);
+    }
+  };
+
+  const groupMembers = useMemo(() => {
+    if (!selectedSubmission) return [];
+    if (selectedSubmission.members) return selectedSubmission.members;
+    if (!selectedSubmission.submission?.Nhom) return [];
+    const nhomId = selectedSubmission.submission.Nhom._id || selectedSubmission.submission.Nhom;
+    
+    return submissions.filter(sub => {
+      const subNhomId = sub.submission?.Nhom?._id || sub.submission?.Nhom;
+      return subNhomId && subNhomId.toString() === nhomId.toString();
+    });
+  }, [selectedSubmission, submissions]);
+
+  const isGroupTopic = selectedSubmission && (selectedSubmission.topic?.SoLuongSinhVien || 1) > 1;
   const [weeklyTarget, setWeeklyTarget] = useState(null);
   const [weeklyRubrics, setWeeklyRubrics] = useState([]);
   const [weeklyStatus, setWeeklyStatus] = useState('ChoDanhGia');
@@ -69,25 +132,38 @@ const SubmissionReview = () => {
   const [weeklyAiLoading, setWeeklyAiLoading] = useState(false);
   const [weeklyAiScore, setWeeklyAiScore] = useState(null);
 
-  const viewProgress = async (record) => {
-    setSelectedSubmission(record);
-    setProgressDrawerVisible(true);
+  const fetchStudentProgress = async (svId, topicId, record) => {
     setLoading(true);
     try {
-      const svId = record.student._id;
-      const res = await aiApiService.getProgressBySinhVien(svId, record.topic?._id);
+      const res = await aiApiService.getProgressBySinhVien(svId, topicId);
       const logs = res.data || [];
       setProgressLogs(logs);
       setProgressSummary(buildProgressSummary(logs));
+      const matchedMember = record?.members?.find(m => m.student?._id === svId) || record;
       setProgressPendingMap(prev => ({
         ...prev,
-        [getSubmissionKey(record)]: countPendingProgress(logs)
+        [getSubmissionKey(matchedMember)]: countPendingProgress(logs)
       }));
     } catch (e) {
       console.error(e);
       message.error("Lỗi lấy nhật ký tiến độ");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const viewProgress = async (record) => {
+    setSelectedSubmission(record);
+    const defaultSvId = record.student?._id;
+    setActiveProgressStudentId(defaultSvId);
+    setProgressDrawerVisible(true);
+    await fetchStudentProgress(defaultSvId, record.topic?._id, record);
+  };
+
+  const handleProgressStudentChange = async (svId) => {
+    setActiveProgressStudentId(svId);
+    if (selectedSubmission) {
+      await fetchStudentProgress(svId, selectedSubmission.topic?._id, selectedSubmission);
     }
   };
 
@@ -329,6 +405,8 @@ const SubmissionReview = () => {
         duration: 4,
         icon: <ShieldCheck color="#52c41a" />,
       });
+
+      await fetchData();
     } catch (error) {
       console.error('Lệnh lỗi khi chấm điểm:', error);
       message.error(error.response?.data?.error || "Có lỗi xảy ra khi gọi hàm chấm điểm.");
@@ -502,18 +580,56 @@ const SubmissionReview = () => {
 
   const columns = [
     {
-      title: 'Sinh Viên',
-      key: 'student',
-      width: 180,
-      render: (_, record) => (
-        <strong>{record.student?.HoTen || 'N/A'} ({record.student?.MaSV || ''})</strong>
-      ),
+      title: 'Nhóm / Sinh Viên',
+      key: 'group',
+      width: 220,
+      render: (_, record) => {
+        const isGroup = record.members && record.members.length > 1;
+        const groupName = record.registration?.Nhom?.TenNhom || record.submission?.Nhom?.TenNhom;
+        
+        return (
+          <div>
+            {isGroup ? (
+              <Space direction="vertical" size={2}>
+                <Text strong style={{ color: '#1677ff' }}>{groupName || 'Nhóm học tập'}</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Trưởng nhóm: {record.student?.HoTen || 'N/A'}
+                </Text>
+              </Space>
+            ) : (
+              <Space direction="vertical" size={2}>
+                <Text strong>{record.student?.HoTen || 'N/A'}</Text>
+                <Tag color="default" style={{ fontSize: 10, margin: 0 }}>👤 Cá nhân</Tag>
+              </Space>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      title: 'Thông Tin Ngữ Cảnh',
+      key: 'context',
+      width: 280,
+      render: (_, record) => {
+        const classes = record.topic?.LopHoc || [];
+        const classNameStr = classes.map(c => c.TenLopHoc || c.MaLopHoc).join(', ') || 'N/A';
+        const subjectName = record.topic?.MonHoc?.TenMonHoc || 'N/A';
+        const lecturerName = record.topic?.GiangVienHuongDan?.HoTen || 'N/A';
+        
+        return (
+          <Space direction="vertical" size={2} style={{ fontSize: 13 }}>
+            <div><Text type="secondary">Lớp:</Text> <Text strong>{classNameStr}</Text></div>
+            <div><Text type="secondary">Môn:</Text> <Text>{subjectName}</Text></div>
+            <div><Text type="secondary">GVHD:</Text> <Text italic style={{ color: '#555' }}>{lecturerName}</Text></div>
+          </Space>
+        );
+      }
     },
     {
       title: 'Đề Tài',
       key: 'topic',
       ellipsis: true,
-      width: 360,
+      width: 320,
       render: (_, record) => record.topic?.TenDeTai || 'N/A',
     },
     {
@@ -521,10 +637,10 @@ const SubmissionReview = () => {
       key: 'status',
       width: 170,
       render: (_, record) => {
-        if (record.status === 'DaCham') {
+        if (record.groupStatus === 'DaCham') {
           return <Badge status="success" text={<Text strong style={{ color: '#eb2f96' }}>Đã chấm điểm</Text>} />
         }
-        return record.submission ? (
+        return record.hasSubmission ? (
           <Badge status="processing" text={<Text strong style={{ color: '#1677ff' }}>Đã nộp bài</Text>} />
         ) : (
           <Badge status="default" text={<Text type="secondary">Chưa nộp</Text>} />
@@ -547,7 +663,7 @@ const SubmissionReview = () => {
       key: 'scoreDetail',
       width: 130,
       render: (_, record) => {
-        if (record.status !== 'DaCham' || !record.grade) return <Text type="secondary">—</Text>;
+        if (record.groupStatus !== 'DaCham' || !record.grade) return <Text type="secondary">—</Text>;
         const gvScore = record.grade.Diem;
         const aiScore = record.grade.AI_Score;
         if (aiScore != null) {
@@ -576,7 +692,7 @@ const SubmissionReview = () => {
       key: 'action',
       width: 260,
       render: (_, record) => {
-        const hasPendingProgress = (progressPendingMap[getSubmissionKey(record)] || 0) > 0;
+        const hasPendingProgress = record.members?.some(m => (progressPendingMap[getSubmissionKey(m)] || 0) > 0);
 
         return (
           <Space size={[8, 8]} wrap>
@@ -587,11 +703,11 @@ const SubmissionReview = () => {
                 </Button>
               </Badge>
             </Tooltip>
-            {record.status === 'DaCham' ? (
+            {record.groupStatus === 'DaCham' ? (
               <Button type="default" icon={<ShieldCheck size={16} />} onClick={() => viewDetails(record)}>
                 Xem Điểm & Review
               </Button>
-            ) : record.submission ? (
+            ) : record.hasSubmission ? (
               <Button type="primary" icon={<ScanSearch size={16} />} onClick={() => viewDetails(record)}>
                 Chấm Điểm & Review
               </Button>
@@ -604,6 +720,141 @@ const SubmissionReview = () => {
     },
   ];
 
+  const memberColumns = [
+    {
+      title: 'Họ và Tên',
+      dataIndex: ['student', 'HoTen'],
+      key: 'name',
+      render: (text, member) => (
+        <Text strong>
+          {text} {member.isLeader && <Tag color="gold" style={{ marginLeft: 8 }}>Trưởng Nhóm</Tag>}
+        </Text>
+      )
+    },
+    {
+      title: 'Mã SV',
+      dataIndex: ['student', 'MaSV'],
+      key: 'maSV'
+    },
+    {
+      title: 'Trạng Thái Nộp',
+      key: 'status',
+      render: (_, member) => {
+        if (member.status === 'DaCham') {
+          return <Badge status="success" text="Đã chấm điểm" />
+        }
+        return member.submission ? (
+          <Badge status="processing" text="Đã nộp bài" />
+        ) : (
+          <Badge status="default" text="Chưa nộp" />
+        );
+      }
+    },
+    {
+      title: 'Điểm Cá Nhân',
+      key: 'memberGrade',
+      render: (_, member) => {
+        if (member.status !== 'DaCham' || !member.grade) {
+          return <Text type="secondary">—</Text>;
+        }
+        const isAdjusted = member.grade.LaDieuChinh;
+        return (
+          <Space>
+            <Text strong style={{ color: isAdjusted ? '#fa8c16' : '#52c41a', fontSize: 15 }}>
+              {member.grade.Diem}
+            </Text>
+            {isAdjusted && (
+              <Tag color="orange" style={{ margin: 0, fontSize: 10 }}>Đã chỉnh</Tag>
+            )}
+          </Space>
+        );
+      }
+    },
+    {
+      title: 'Thao Tác',
+      key: 'action',
+      render: (_, member) => {
+        if (member.status !== 'DaCham' || !member.grade) {
+          return null;
+        }
+        return (
+          <Button size="small" type="link" onClick={() => openAdjustModal(member)}>
+            Điều chỉnh điểm
+          </Button>
+        );
+      }
+    }
+  ];
+
+  const filteredSubmissions = submissions.filter(record => {
+    if (!selectedClassId || selectedClassId === 'ALL') return true;
+    const topicLopHocs = record.topic?.LopHoc || [];
+    return topicLopHocs.some(lh => (lh._id || lh).toString() === selectedClassId.toString());
+  });
+
+  const groupedSubmissions = useMemo(() => {
+    const groups = {};
+    filteredSubmissions.forEach(sub => {
+      const regId = sub.registration?._id;
+      if (!regId) return;
+
+      if (!groups[regId]) {
+        groups[regId] = {
+          key: regId,
+          registration: sub.registration,
+          topic: sub.topic,
+          members: [],
+          leader: null,
+          hasSubmission: false,
+          hasGrade: false,
+          submission: null,
+          grade: null,
+          status: 'ChuaNop'
+        };
+      }
+
+      groups[regId].members.push(sub);
+
+      if (sub.isLeader) {
+        groups[regId].leader = sub;
+      }
+
+      if (sub.submission) {
+        groups[regId].hasSubmission = true;
+        if (!groups[regId].submission || sub.isLeader) {
+          groups[regId].submission = sub.submission;
+        }
+      }
+
+      if (sub.grade) {
+        groups[regId].hasGrade = true;
+        if (!groups[regId].grade || sub.isLeader) {
+          groups[regId].grade = sub.grade;
+        }
+      }
+    });
+
+    return Object.values(groups).map(g => {
+      if (!g.leader && g.members.length > 0) {
+        g.leader = g.members[0];
+      }
+
+      const hasCham = g.members.some(m => m.status === 'DaCham');
+      const hasNop = g.members.some(m => m.status === 'DaNop');
+      const status = hasCham ? 'DaCham' : (hasNop ? 'DaNop' : 'ChuaNop');
+
+      return {
+        ...g.leader,
+        _id: g.key,
+        key: g.key,
+        members: g.members,
+        groupStatus: status,
+        hasGrade: g.hasGrade,
+        hasSubmission: g.hasSubmission
+      };
+    });
+  }, [filteredSubmissions]);
+
   return (
     <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
       <Title level={3} style={{ marginBottom: 24 }}>Duyệt Báo Cáo & Chấm Điểm</Title>
@@ -613,11 +864,27 @@ const SubmissionReview = () => {
 
       <Table
         columns={columns}
-        dataSource={submissions}
+        dataSource={groupedSubmissions}
         rowKey="_id"
         loading={loading}
-        locale={{ emptyText: <Empty description="Chưa có sinh viên nào được duyệt đề tài. Hãy duyệt đề tài ở trang Quản Lý Đề Tài trước." /> }}
+        locale={{ emptyText: <Empty description="Chưa có nhóm nào được duyệt đề tài. Hãy duyệt đề tài ở trang Quản Lý Đề Tài trước." /> }}
         scroll={{ x: 'max-content' }}
+        expandable={{
+          expandedRowRender: (record) => (
+            <div style={{ padding: '8px 16px', background: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+              <Title level={5} style={{ marginBottom: 12, color: '#1677ff' }}>👥 Danh Sách Thành Viên Nhóm</Title>
+              <Table
+                columns={memberColumns}
+                dataSource={record.members}
+                rowKey={(member) => member.student?._id || member._id}
+                pagination={false}
+                size="small"
+                bordered
+              />
+            </div>
+          ),
+          rowExpandable: (record) => record.members && record.members.length > 1,
+        }}
       />
 
       <Drawer
@@ -893,6 +1160,36 @@ const SubmissionReview = () => {
                               showIcon
                               style={{ marginBottom: 12 }}
                             />
+
+                            {/* MỚI: Section danh sách thành viên nhóm */}
+                            {isGroupTopic && groupMembers.length > 0 && (
+                              <div style={{ padding: 16, background: '#f6ffed', borderRadius: 8, marginBottom: 16, border: '1px solid #b7eb8f' }}>
+                                <Text strong>👥 Điểm các thành viên trong nhóm</Text>
+                                <Text type="secondary"> (Điểm gốc: {selectedSubmission.grade?.DiemGoc ?? selectedSubmission.grade?.Diem})</Text>
+                                <List
+                                  size="small"
+                                  style={{ marginTop: 8 }}
+                                  dataSource={groupMembers}
+                                  renderItem={member => (
+                                    <List.Item actions={[
+                                      member.grade && (
+                                        <Button size="small" type="link" onClick={() => openAdjustModal(member)}>
+                                          Điều chỉnh
+                                        </Button>
+                                      )
+                                    ]}>
+                                      <Space>
+                                        <Text>{member.student?.HoTen} ({member.student?.MaSV})</Text>
+                                        <Tag color={member.grade?.LaDieuChinh ? 'orange' : 'success'}>
+                                          {member.grade?.Diem ?? '—'}/10 {member.grade?.LaDieuChinh ? '(đã chỉnh)' : ''}
+                                        </Tag>
+                                      </Space>
+                                    </List.Item>
+                                  )}
+                                />
+                              </div>
+                            )}
+
                             <Descriptions column={1} size="small" bordered style={{ background: '#f6ffed', borderRadius: 8 }}>
                               <Descriptions.Item label="Điểm GV chấm">
                                 <Text strong style={{ color: '#eb2f96', fontSize: 16 }}>{selectedSubmission.grade?.Diem || score}</Text>
@@ -967,7 +1264,28 @@ const SubmissionReview = () => {
 
       {/* Drawer xem Tiến Độ */}
       <Drawer
-        title={`Tiến độ của sinh viên: ${selectedSubmission?.student?.HoTen || 'N/A'}`}
+        title={
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={{ fontSize: 16, fontWeight: 600 }}>
+              Tiến độ: {selectedSubmission?.registration?.Nhom?.TenNhom ? `Nhóm ${selectedSubmission.registration.Nhom.TenNhom}` : (selectedSubmission?.student?.HoTen || 'N/A')}
+            </span>
+            {selectedSubmission?.members && selectedSubmission.members.length > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, color: '#555' }}>Chọn sinh viên:</span>
+                <Select
+                  value={activeProgressStudentId}
+                  onChange={handleProgressStudentChange}
+                  style={{ width: 220 }}
+                  options={selectedSubmission.members.map(m => ({
+                    value: m.student?._id,
+                    label: `${m.student?.HoTen} (${m.student?.MaSV})`
+                  }))}
+                  size="small"
+                />
+              </div>
+            )}
+          </div>
+        }
         width={isMobile ? '100vw' : 550}
         placement="right"
         onClose={() => setProgressDrawerVisible(false)}
@@ -1238,6 +1556,46 @@ const SubmissionReview = () => {
               </Text>
             </div>
           </div>
+        )}
+      </Modal>
+
+      {/* Modal Điều Chỉnh Điểm Cá Nhân */}
+      <Modal
+        title={adjustTarget ? `Điều chỉnh điểm: ${adjustTarget.student?.HoTen} (${adjustTarget.student?.MaSV})` : 'Điều chỉnh điểm cá nhân'}
+        open={adjustModalVisible}
+        onOk={handleAdjustGrade}
+        onCancel={() => { setAdjustModalVisible(false); setAdjustTarget(null); }}
+        confirmLoading={adjustSaving}
+        okText="Xác nhận"
+        cancelText="Hủy"
+      >
+        {adjustTarget && (
+          <Space direction="vertical" style={{ width: '100%', marginTop: 12 }} size="middle">
+            <div>
+              <Text type="secondary">Điểm gốc nhóm: </Text>
+              <Text strong>{adjustTarget.grade?.DiemGoc ?? adjustTarget.grade?.Diem}/10</Text>
+            </div>
+            <div>
+              <Text strong>Điểm số điều chỉnh: </Text>
+              <InputNumber
+                min={0} max={10} step={0.5}
+                value={adjustScore}
+                onChange={setAdjustScore}
+                style={{ width: '100%', marginTop: 8 }}
+                size="large"
+              />
+            </div>
+            <div>
+              <Text strong>Lý do điều chỉnh (nhận xét): </Text>
+              <Input.TextArea
+                rows={4}
+                placeholder="Nhập lý do điều chỉnh điểm..."
+                value={adjustComment}
+                onChange={e => setAdjustComment(e.target.value)}
+                style={{ marginTop: 8 }}
+              />
+            </div>
+          </Space>
         )}
       </Modal>
     </div>

@@ -4,11 +4,13 @@ import { CheckCircle, Clock, Search, BookOpen, BrainCircuit } from 'lucide-react
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
+import { useClassContext } from '../../contexts/ClassContext';
 
 const { Title, Paragraph, Text } = Typography;
 
 const ProgressTracking = () => {
   const isMobile = useIsMobile();
+  const { selectedClassId } = useClassContext();
   const [loading, setLoading] = useState(true);
   const [registration, setRegistration] = useState(null);
   const [aiResult, setAiResult] = useState(null);
@@ -23,66 +25,81 @@ const ProgressTracking = () => {
       if (!user) return;
 
       try {
+        setLoading(true);
+        setRegistration(null);
+        setFinalGrade(null);
+        setLatestProgress(null);
+        setAiResult(null);
+
+        if (!selectedClassId) {
+          setLoading(false);
+          return;
+        }
+
         // Lấy thông tin đăng ký đề tài
-        const regRes = await aiApiService.getMyRegistration(user.id);
+        const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
         const activeReg = regRes.registration;
         setRegistration(activeReg);
 
-        // Lấy điểm nhận xét cuối cùng từ GV
-        try {
-          if (activeReg?.TrangThai === 'DaDuyet') {
-            const diemRes = await aiApiService.getDiemBySinhVien(user.id);
-            if (diemRes && diemRes.length > 0) {
-              // Tìm điểm của đề tài đang đăng ký
-              const topicGrade = diemRes.find(g => g.DeTai?._id === activeReg.DeTai?._id);
-              if (topicGrade) {
-                setFinalGrade(topicGrade);
+        if (activeReg) {
+          const deTaiId = activeReg.DeTai?._id || activeReg.DeTai;
+
+          // Lấy điểm nhận xét cuối cùng từ GV
+          try {
+            if (activeReg.TrangThai === 'DaDuyet') {
+              const diemRes = await aiApiService.getDiemBySinhVien(user.id);
+              if (diemRes && diemRes.length > 0) {
+                // Tìm điểm của đề tài đang đăng ký
+                const topicGrade = diemRes.find(g => (g.DeTai?._id || g.DeTai).toString() === deTaiId.toString());
+                if (topicGrade) {
+                  setFinalGrade(topicGrade);
+                }
               }
             }
+          } catch (e) {
+            console.warn('Lỗi lấy điểm sinh viên:', e);
           }
-        } catch (e) {
-          console.warn('Lỗi lấy điểm sinh viên:', e);
-        }
 
-        // Lấy tiến độ tuần gần nhất
-        if (activeReg?.TrangThai === 'DaDuyet') {
-          try {
-            setProgressLoading(true);
-            const progressRes = await aiApiService.getProgressBySinhVien(user.id, activeReg.DeTai?._id);
-            const logs = progressRes?.data || [];
-            const latest = [...logs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-            setLatestProgress(latest || null);
-          } catch (err) {
-            console.warn('Lỗi lấy tiến độ gần nhất:', err);
-            setLatestProgress(null);
-          } finally {
-            setProgressLoading(false);
-          }
-        }
-
-        // Nếu đề tài đã duyệt, KHÔNG gọi AI ngay mà phải chờ có bài nộp
-        if (regRes.registration?.TrangThai === 'DaDuyet' && regRes.registration?.DeTai) {
-          try {
-            // Kiểm tra xem sinh viên đã nộp báo cáo chưa
-            const bcRes = await aiApiService.getMyBaoCao(user.id);
-            if (bcRes && bcRes.baocao) {
-              setAiLoading(true);
-              try {
-                const topic = regRes.registration.DeTai;
-                // Nếu đã nộp, tạo text phân tích nội dung
-                const demoText = `Báo cáo: ${bcRes.baocao.TieuDe}. Đề tài đồ án: ${topic.TenDeTai}. Báo cáo hoàn chỉnh.`;
-
-                const aiRes = await aiApiService.analyzeReportAI(demoText, topic.YeuCau || []);
-                setAiResult(aiRes);
-              } catch (e) {
-                console.warn('PhoBERT analysis failed:', e);
-                setAiResult(null);
-              } finally {
-                setAiLoading(false);
-              }
+          // Lấy tiến độ tuần gần nhất
+          if (activeReg.TrangThai === 'DaDuyet') {
+            try {
+              setProgressLoading(true);
+              const progressRes = await aiApiService.getProgressBySinhVien(user.id, deTaiId);
+              const logs = progressRes?.data || [];
+              const latest = [...logs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+              setLatestProgress(latest || null);
+            } catch (err) {
+              console.warn('Lỗi lấy tiến độ gần nhất:', err);
+              setLatestProgress(null);
+            } finally {
+              setProgressLoading(false);
             }
-          } catch (err) {
-            console.warn('Lỗi kiểm tra báo cáo:', err);
+          }
+
+          // Nếu đề tài đã duyệt, KHÔNG gọi AI ngay mà phải chờ có bài nộp
+          if (activeReg.TrangThai === 'DaDuyet') {
+            try {
+              // Kiểm tra xem sinh viên đã nộp báo cáo chưa
+              const bcRes = await aiApiService.getMyBaoCao(user.id, deTaiId);
+              if (bcRes && bcRes.baocao) {
+                setAiLoading(true);
+                try {
+                  const topic = activeReg.DeTai;
+                  // Nếu đã nộp, tạo text phân tích nội dung
+                  const demoText = `Báo cáo: ${bcRes.baocao.TieuDe}. Đề tài đồ án: ${topic?.TenDeTai || ''}. Báo cáo hoàn chỉnh.`;
+
+                  const aiRes = await aiApiService.analyzeReportAI(demoText, topic?.YeuCau || []);
+                  setAiResult(aiRes);
+                } catch (e) {
+                  console.warn('PhoBERT analysis failed:', e);
+                  setAiResult(null);
+                } finally {
+                  setAiLoading(false);
+                }
+              }
+            } catch (err) {
+              console.warn('Lỗi kiểm tra báo cáo:', err);
+            }
           }
         }
       } catch (e) {
@@ -92,7 +109,7 @@ const ProgressTracking = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [selectedClassId]);
 
   // Tính step hiện tại dựa trên trạng thái thực
   const getCurrentStep = () => {

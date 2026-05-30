@@ -10,8 +10,9 @@ const getAuthHeaders = () => {
 
 const aiApiService = {
     // Lấy danh sách đề tài từ MongoDB
-    getTopics: async () => {
-        const response = await axios.get(`${API_URL}/detai`, { headers: getAuthHeaders() });
+    getTopics: async (lopHocId) => {
+        const query = lopHocId ? `?lopHocId=${lopHocId}` : '';
+        const response = await axios.get(`${API_URL}/detai${query}`, { headers: getAuthHeaders() });
         return response.data;
     },
 
@@ -40,8 +41,15 @@ const aiApiService = {
     },
 
     // Kiểm tra SV đã đăng ký đề tài nào chưa
-    getMyRegistration: async (svId) => {
-        const response = await axios.get(`${API_URL}/dangky/sinhvien/${svId}`, { headers: getAuthHeaders() });
+    getMyRegistration: async (svId, lopHocId) => {
+        const query = lopHocId ? `?lopHocId=${lopHocId}` : '';
+        const response = await axios.get(`${API_URL}/dangky/sinhvien/${svId}${query}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // Lấy tất cả đăng ký của 1 sinh viên
+    getMyRegistrations: async (svId) => {
+        const response = await axios.get(`${API_URL}/dangky/sinhvien/${svId}/all`, { headers: getAuthHeaders() });
         return response.data;
     },
 
@@ -101,8 +109,9 @@ const aiApiService = {
     },
 
     // SV lấy báo cáo đã nộp
-    getMyBaoCao: async (svId) => {
-        const response = await axios.get(`${API_URL}/baocao/sinhvien/${svId}`, { headers: getAuthHeaders() });
+    getMyBaoCao: async (svId, deTaiId) => {
+        const query = deTaiId ? `?deTaiId=${deTaiId}` : '';
+        const response = await axios.get(`${API_URL}/baocao/sinhvien/${svId}${query}`, { headers: getAuthHeaders() });
         return response.data;
     },
 
@@ -296,6 +305,13 @@ const aiApiService = {
 
     checkTestSubmitted: async (deTaiId, sinhVienId) => {
         const response = await axios.get(`${API_URL}/baitest/check/${deTaiId}/${sinhVienId}`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    adjustGrade: async (gradeId, diem, nhanXet) => {
+        const response = await axios.put(`${API_URL}/diemso/${gradeId}/adjust`, {
+            diem, nhanXet
+        }, { headers: getAuthHeaders() });
         return response.data;
     }
 };

@@ -4,6 +4,7 @@ import { PlusCircle, Clock, CheckCircle } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
+import { useClassContext } from '../../contexts/ClassContext';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -23,6 +24,7 @@ const formatWarningLabel = (warning) => WARNING_LABELS[warning] || warning;
 
 const ProgressLog = () => {
     const isMobile = useIsMobile();
+    const { selectedClassId } = useClassContext();
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [registration, setRegistration] = useState(null);
@@ -37,12 +39,21 @@ const ProgressLog = () => {
         if (!user) return;
         try {
             setLoading(true);
-            const [regRes, logsRes] = await Promise.all([
-                aiApiService.getMyRegistration(user.id),
-                aiApiService.getProgressBySinhVien(user.id)
-            ]);
+            if (!selectedClassId) {
+                setRegistration(null);
+                setLogs([]);
+                return;
+            }
+            const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
             setRegistration(regRes.registration);
-            setLogs(logsRes.data || []);
+            
+            if (regRes.registration) {
+                const deTaiId = regRes.registration.DeTai?._id || regRes.registration.DeTai;
+                const logsRes = await aiApiService.getProgressBySinhVien(user.id, deTaiId);
+                setLogs(logsRes.data || []);
+            } else {
+                setLogs([]);
+            }
         } catch (e) {
             console.error(e);
             message.error('Không thể lấy dữ liệu tiến độ');
@@ -53,7 +64,7 @@ const ProgressLog = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [selectedClassId]);
 
     const handleCreateLog = async (values) => {
         if (!registration || registration.TrangThai !== 'DaDuyet') {

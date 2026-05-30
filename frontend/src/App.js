@@ -20,6 +20,8 @@ import ProgressLog from './components/student/ProgressLog';
 import EntranceTest from './components/student/EntranceTest';
 import BlockchainDebugPage from './components/debug/BlockchainDebugPage';
 import GroupManagement from './components/student/GroupManagement';
+import { ClassProvider } from './contexts/ClassContext';
+import { LecturerClassProvider } from './contexts/LecturerClassContext';
 
 // Protected Route component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -78,7 +80,9 @@ function App() {
         {/* Nested User Routes under MainLayout */}
         <Route path="/lecturer" element={
           <ProtectedRoute allowedRoles={['LECTURER_ROLE']}>
-            <MainLayout />
+            <LecturerClassProvider>
+              <MainLayout />
+            </LecturerClassProvider>
           </ProtectedRoute>
         }>
           <Route index element={<LecturerDashboard />} />
@@ -94,7 +98,9 @@ function App() {
 
         <Route path="/student" element={
           <ProtectedRoute allowedRoles={['STUDENT_ROLE']}>
-            <MainLayout />
+            <ClassProvider>
+              <MainLayout />
+            </ClassProvider>
           </ProtectedRoute>
         }>
           <Route index element={<StudentDashboard />} />

@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card, Typography, Table, Button, Modal, Form, Input, Select, Space, Tag,
-  Popconfirm, message, Spin, Descriptions, List, Avatar, Badge, Tabs, Divider, AutoComplete
+  Popconfirm, message, Spin, Descriptions, List, Avatar, Badge, Tabs, Divider, AutoComplete, Alert
 } from 'antd';
-import { Plus, Pencil, Trash2, School, Eye, UserPlus, UserMinus, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, School, Eye, UserPlus, UserMinus, Users, Clock, XCircle, CheckCircle } from 'lucide-react';
 import authService from '../../services/authService';
 import managementService from '../../services/managementService';
 
@@ -23,6 +23,12 @@ const ClassManagement = () => {
   const [selectedSvId, setSelectedSvId] = useState(null);
   const [svSearchOptions, setSvSearchOptions] = useState([]);
   const [form] = Form.useForm();
+  const [svSearchText, setSvSearchText] = useState('');
+  const [importModalVisible, setImportModalVisible] = useState(false);
+  const [importText, setImportText] = useState('');
+  // Lời mời pending
+  const [pendingInvites, setPendingInvites] = useState([]);
+  const [invitesLoading, setInvitesLoading] = useState(false);
 
   const currentUser = authService.getCurrentUser();
 
@@ -101,9 +107,15 @@ const ClassManagement = () => {
     try {
       setDetailLoading(true);
       setDetailVisible(true);
-      const res = await managementService.getLopHocDetail(record._id);
+      const [res, invRes] = await Promise.all([
+        managementService.getLopHocDetail(record._id),
+        managementService.getInvitesByLopHoc(record._id),
+      ]);
       if (res.success) {
         setDetailData(res.data);
+      }
+      if (invRes.success) {
+        setPendingInvites((invRes.data || []).filter(inv => inv.TrangThai === 'ChoChapNhan'));
       }
     } catch (err) {
       message.error('Lỗi tải chi tiết lớp học');
@@ -112,35 +124,99 @@ const ClassManagement = () => {
     }
   };
 
-  // Thêm SV vào lớp
+  // Mở modal thêm SV → gửi lời mời thay vì add trực tiếp
   const handleOpenAddSv = async () => {
     try {
       const res = await managementService.getAllSinhVien();
       const svList = Array.isArray(res) ? res : (res?.data || []);
       setAllSinhVien(svList);
-      setSvSearchOptions(svList.map(sv => ({
-        value: sv._id,
-        label: `${sv.MaSV} - ${sv.HoTen} (${sv.Email})`,
-      })));
+      // Lọc ra SV chưa có trong lớp VÀ chưa có lời mời pending
+      const currentSvIds = (detailData?.lopHoc?.SinhVien || []).map(sv => sv._id);
+      const pendingSvIds = pendingInvites.map(inv => inv.SinhVien?._id);
+      const excludeIds = [...currentSvIds, ...pendingSvIds];
+      
+      setSvSearchOptions(
+        svList
+          .filter(sv => !excludeIds.includes(sv._id))
+          .map(sv => ({
+            value: sv._id,
+            label: `${sv.MaSV} - ${sv.HoTen} (${sv.Email})`,
+          }))
+      );
       setAddSvModalVisible(true);
     } catch (err) {
       message.error('Lỗi tải danh sách sinh viên');
     }
   };
 
-  const handleAddSv = async () => {
-    if (!selectedSvId || !detailData?.lopHoc?._id) return;
+  // Gửi lời mời thay vì add trực tiếp
+  const handleInviteSv = async () => {
+    if (!detailData?.lopHoc?._id) return;
     try {
-      const res = await managementService.addSinhVienToLop(detailData.lopHoc._id, selectedSvId);
+      let res;
+      if (selectedSvId) {
+        res = await managementService.inviteSinhVienToLop(detailData.lopHoc._id, selectedSvId);
+      } else if (svSearchText.trim()) {
+        // Tìm SV theo MaSV rồi invite
+        const found = allSinhVien.find(sv => sv.MaSV === svSearchText.trim());
+        if (found) {
+          res = await managementService.inviteSinhVienToLop(detailData.lopHoc._id, found._id);
+        } else {
+          message.warning('Không tìm thấy sinh viên với mã này');
+          return;
+        }
+      } else {
+        return;
+      }
+
       if (res.success) {
-        message.success('Đã thêm sinh viên vào lớp');
+        message.success(res.message || 'Đã gửi lời mời. Chờ sinh viên chấp nhận.');
         setAddSvModalVisible(false);
         setSelectedSvId(null);
+        setSvSearchText('');
         handleViewDetail({ _id: detailData.lopHoc._id });
-        fetchData();
       }
     } catch (err) {
-      message.error(err?.response?.data?.message || 'Lỗi thêm sinh viên');
+      message.error(err?.response?.data?.message || 'Lỗi gửi lời mời');
+    }
+  };
+
+  // Import batch → invite batch
+  const handleImportSv = async () => {
+    if (!importText.trim() || !detailData?.lopHoc?._id) return;
+    try {
+      const danhSachMaSV = importText
+        .split(/[\s,\n]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      if (danhSachMaSV.length === 0) {
+        message.warning('Danh sách trống');
+        return;
+      }
+
+      const res = await managementService.inviteBatchToLop(detailData.lopHoc._id, danhSachMaSV);
+      if (res.success) {
+        message.success(res.message || 'Import lời mời thành công');
+        setImportModalVisible(false);
+        setImportText('');
+        handleViewDetail({ _id: detailData.lopHoc._id });
+      }
+    } catch (err) {
+      message.error(err?.response?.data?.message || 'Lỗi import lời mời');
+    }
+  };
+
+  // Hủy lời mời pending
+  const handleCancelInvite = async (inviteId) => {
+    try {
+      const res = await managementService.cancelClassInvite(inviteId);
+      if (res.success) {
+        message.success('Đã hủy lời mời');
+        handleViewDetail({ _id: detailData.lopHoc._id });
+      }
+    } catch (err) {
+      message.error('Lỗi hủy lời mời');
     }
   };
 
@@ -160,8 +236,11 @@ const ClassManagement = () => {
 
   const handleSvSearch = (searchText) => {
     const currentSvIds = (detailData?.lopHoc?.SinhVien || []).map(sv => sv._id);
+    const pendingSvIds = pendingInvites.map(inv => inv.SinhVien?._id);
+    const excludeIds = [...currentSvIds, ...pendingSvIds];
+
     const filtered = allSinhVien
-      .filter(sv => !currentSvIds.includes(sv._id))
+      .filter(sv => !excludeIds.includes(sv._id))
       .filter(sv => {
         const text = searchText.toLowerCase();
         return (
@@ -202,6 +281,15 @@ const ClassManagement = () => {
       dataIndex: 'MonHoc',
       key: 'MonHoc',
       render: (mh) => mh ? <Tag color="blue">{mh.MaMonHoc} — {mh.TenMonHoc}</Tag> : '—',
+    },
+    {
+      title: 'Giảng Viên',
+      dataIndex: 'GiangVien',
+      key: 'GiangVien',
+      render: (gv) => {
+        if (!gv) return '—';
+        return <Text strong style={{ color: '#595959' }}>{gv.HoTen || gv.MaGV || '—'}</Text>;
+      },
     },
     {
       title: 'Sĩ Số',
@@ -265,6 +353,43 @@ const ClassManagement = () => {
     },
   ];
 
+  // Bảng lời mời pending
+  const inviteColumns = [
+    {
+      title: 'Mã SV',
+      key: 'MaSV',
+      width: 120,
+      render: (_, inv) => <Tag color="orange">{inv.SinhVien?.MaSV || '—'}</Tag>,
+    },
+    {
+      title: 'Họ Tên',
+      key: 'HoTen',
+      render: (_, inv) => inv.SinhVien?.HoTen || '—',
+    },
+    {
+      title: 'Email',
+      key: 'Email',
+      ellipsis: true,
+      render: (_, inv) => <Text type="secondary">{inv.SinhVien?.Email || '—'}</Text>,
+    },
+    {
+      title: 'Trạng Thái',
+      key: 'TrangThai',
+      width: 130,
+      render: () => <Tag icon={<Clock size={12} style={{ marginRight: 4 }} />} color="gold">Chờ chấp nhận</Tag>,
+    },
+    {
+      title: '',
+      key: 'action',
+      width: 50,
+      render: (_, inv) => (
+        <Popconfirm title="Hủy lời mời này?" onConfirm={() => handleCancelInvite(inv._id)} okText="Hủy mời" cancelText="Không" okButtonProps={{ danger: true }}>
+          <Button type="text" icon={<XCircle size={14} />} danger size="small" />
+        </Popconfirm>
+      ),
+    },
+  ];
+
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div>;
   }
@@ -273,7 +398,6 @@ const ClassManagement = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <Title level={2} style={{ margin: 0 }}>
-          <School size={28} style={{ marginRight: 12, verticalAlign: 'middle', color: '#722ed1' }} />
           Quản Lý Lớp Học
         </Title>
         <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
@@ -324,7 +448,7 @@ const ClassManagement = () => {
       <Modal
         title={detailData?.lopHoc ? `Chi Tiết Lớp: ${detailData.lopHoc.TenLopHoc}` : 'Chi Tiết Lớp Học'}
         open={detailVisible}
-        onCancel={() => { setDetailVisible(false); setDetailData(null); }}
+        onCancel={() => { setDetailVisible(false); setDetailData(null); setPendingInvites([]); }}
         footer={null}
         width={900}
         destroyOnClose
@@ -349,14 +473,28 @@ const ClassManagement = () => {
               items={[
                 {
                   key: 'sinhvien',
-                  label: `Sinh Viên (${detailData.lopHoc.SinhVien?.length || 0})`,
+                  label: (
+                    <Space>
+                      <span>Sinh Viên ({detailData.lopHoc.SinhVien?.length || 0})</span>
+                      {pendingInvites.length > 0 && (
+                        <Badge count={pendingInvites.length} size="small" style={{ backgroundColor: '#faad14' }} />
+                      )}
+                    </Space>
+                  ),
                   children: (
                     <div>
                       <div style={{ marginBottom: 12, textAlign: 'right' }}>
-                        <Button type="primary" icon={<UserPlus size={14} />} onClick={handleOpenAddSv}>
-                          Thêm Sinh Viên
-                        </Button>
+                        <Space>
+                          <Button type="primary" icon={<UserPlus size={14} />} onClick={handleOpenAddSv}>
+                            Mời Sinh Viên
+                          </Button>
+                          <Button type="dashed" onClick={() => setImportModalVisible(true)}>
+                            Import Danh Sách SV
+                          </Button>
+                        </Space>
                       </div>
+
+                      {/* Bảng sinh viên đã trong lớp */}
                       <Table
                         columns={svColumns}
                         dataSource={detailData.lopHoc.SinhVien || []}
@@ -365,6 +503,25 @@ const ClassManagement = () => {
                         size="small"
                         locale={{ emptyText: 'Chưa có sinh viên nào trong lớp' }}
                       />
+
+                      {/* Bảng lời mời đang chờ */}
+                      {pendingInvites.length > 0 && (
+                        <div style={{ marginTop: 20 }}>
+                          <Divider orientation="left" orientationMargin={0}>
+                            <Space>
+                              <Clock size={14} style={{ color: '#faad14' }} />
+                              <Text type="warning" strong>Lời mời đang chờ chấp nhận ({pendingInvites.length})</Text>
+                            </Space>
+                          </Divider>
+                          <Table
+                            columns={inviteColumns}
+                            dataSource={pendingInvites}
+                            rowKey="_id"
+                            pagination={false}
+                            size="small"
+                          />
+                        </div>
+                      )}
                     </div>
                   ),
                 },
@@ -446,28 +603,75 @@ const ClassManagement = () => {
         ) : null}
       </Modal>
 
-      {/* Modal Thêm Sinh Viên */}
+      {/* Modal Mời Sinh Viên (trước đây là Thêm) */}
       <Modal
-        title="Thêm Sinh Viên Vào Lớp"
+        title="Mời Sinh Viên Vào Lớp"
         open={addSvModalVisible}
-        onOk={handleAddSv}
-        onCancel={() => { setAddSvModalVisible(false); setSelectedSvId(null); }}
-        okText="Thêm"
+        onOk={handleInviteSv}
+        onCancel={() => { setAddSvModalVisible(false); setSelectedSvId(null); setSvSearchText(''); }}
+        okText="Gửi Lời Mời"
         cancelText="Hủy"
-        okButtonProps={{ disabled: !selectedSvId }}
+        okButtonProps={{ disabled: !selectedSvId && !svSearchText.trim() }}
       >
         <div style={{ marginTop: 16 }}>
+          <Alert
+            message="Sinh viên sẽ nhận được lời mời và cần chấp nhận trước khi được thêm vào lớp."
+            type="info"
+            showIcon
+            style={{ marginBottom: 12 }}
+          />
           <Text type="secondary" style={{ marginBottom: 8, display: 'block' }}>
-            Tìm kiếm theo Mã SV, Họ tên hoặc Email:
+            Tìm kiếm theo Mã SV, Họ tên hoặc Email (hoặc tự gõ Mã SV):
           </Text>
           <AutoComplete
             style={{ width: '100%' }}
             options={svSearchOptions}
-            onSearch={handleSvSearch}
-            onSelect={(value) => setSelectedSvId(value)}
+            onSearch={(text) => {
+              setSvSearchText(text);
+              handleSvSearch(text);
+            }}
+            value={svSearchText}
+            onChange={(val) => {
+              setSvSearchText(val);
+              const found = allSinhVien.find(sv => sv._id === val || sv.MaSV === val);
+              if (!found) setSelectedSvId(null);
+            }}
+            onSelect={(value) => {
+              setSelectedSvId(value);
+              const sv = allSinhVien.find(s => s._id === value);
+              if (sv) setSvSearchText(sv.MaSV);
+            }}
             placeholder="Gõ để tìm sinh viên..."
             allowClear
-            onClear={() => setSelectedSvId(null)}
+            onClear={() => { setSelectedSvId(null); setSvSearchText(''); }}
+          />
+        </div>
+      </Modal>
+
+      {/* Modal Import Sinh Viên Hàng Loạt */}
+      <Modal
+        title="Import Lời Mời Sinh Viên"
+        open={importModalVisible}
+        onOk={handleImportSv}
+        onCancel={() => { setImportModalVisible(false); setImportText(''); }}
+        okText="Gửi Lời Mời"
+        cancelText="Hủy"
+      >
+        <div style={{ marginTop: 16 }}>
+          <Alert
+            message="Tất cả sinh viên trong danh sách sẽ nhận được lời mời và cần chấp nhận trước khi được thêm vào lớp."
+            type="info"
+            showIcon
+            style={{ marginBottom: 12 }}
+          />
+          <Text type="secondary" style={{ marginBottom: 8, display: 'block' }}>
+            Nhập danh sách Mã SV (phân cách bởi dấu phẩy, khoảng trắng hoặc xuống dòng):
+          </Text>
+          <Input.TextArea
+            rows={6}
+            placeholder={"VD: SV001, SV002\nSV003 SV004"}
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
           />
         </div>
       </Modal>

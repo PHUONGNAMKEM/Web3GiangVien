@@ -6,27 +6,43 @@ const logger = require('../config/logger');
 // Tạo nhóm mới (SV tự động làm trưởng nhóm)
 exports.createNhom = async (req, res) => {
   try {
-    const { tenNhom, soLuong } = req.body;
+    const { tenNhom, soLuong, lopHocId } = req.body;
     const sinhVienId = req.user?.id || req.body.sinhVienId;
 
     if (!sinhVienId || !soLuong) {
       return res.status(400).json({ error: 'Thiếu thông tin sinhVienId hoặc soLuong.' });
     }
 
+    if (lopHocId) {
+      const LopHoc = require('../models/LopHoc');
+      const lop = await LopHoc.findById(lopHocId);
+      if (!lop) return res.status(404).json({ error: 'Không tìm thấy lớp học.' });
+      if (!lop.SinhVien.some(sv => sv.toString() === sinhVienId.toString())) {
+        return res.status(400).json({ error: 'Bạn không thuộc lớp học này.' });
+      }
+    }
+
     // Check SV đã có nhóm chưa
-    const existingNhom = await Nhom.findOne({
+    // MỚI: Nếu có lopHocId, chỉ check SV đã có nhóm thuộc cùng lớp này chưa
+    // (SV có thể ở nhiều nhóm ở các lớp khác nhau, nhưng chỉ 1 nhóm mỗi lớp)
+    const nhomQuery = {
       $or: [
         { TruongNhom: sinhVienId },
         { 'ThanhVien.SinhVien': sinhVienId, 'ThanhVien.TrangThai': { $in: ['DaMoi', 'DaChapNhan'] } }
       ]
-    });
+    };
+    if (lopHocId) {
+      nhomQuery.LopHoc = lopHocId;
+    }
+    const existingNhom = await Nhom.findOne(nhomQuery);
 
     if (existingNhom) {
-      return res.status(400).json({ error: 'Bạn đã có nhóm. Không thể tạo nhóm mới.' });
+      return res.status(400).json({ error: 'Bạn đã có nhóm trong lớp này. Không thể tạo nhóm mới.' });
     }
 
     const nhom = new Nhom({
       TenNhom: tenNhom || '',
+      LopHoc: lopHocId || undefined,
       TruongNhom: sinhVienId,
       ThanhVien: [{
         SinhVien: sinhVienId,
@@ -39,7 +55,8 @@ exports.createNhom = async (req, res) => {
     await nhom.save();
     const populated = await Nhom.findById(nhom._id)
       .populate('TruongNhom')
-      .populate('ThanhVien.SinhVien');
+      .populate('ThanhVien.SinhVien')
+      .populate('LopHoc', 'MaLopHoc TenLopHoc');
 
     logger.info(`[NHOM] Created group "${tenNhom || nhom._id}" by SV ${sinhVienId}, max=${soLuong}`);
     res.status(201).json({ message: 'Tạo nhóm thành công!', data: populated });
@@ -53,14 +70,38 @@ exports.createNhom = async (req, res) => {
 exports.getNhomBySinhVien = async (req, res) => {
   try {
     const { svId } = req.params;
-    const nhom = await Nhom.findOne({
+    const { lopHocId } = req.query;
+    const query = {
+      'ThanhVien.SinhVien': svId,
+      'ThanhVien.TrangThai': { $in: ['DaMoi', 'DaChapNhan'] }
+    };
+    if (lopHocId) {
+      query.LopHoc = lopHocId;
+    }
+    const nhom = await Nhom.findOne(query)
+      .populate('TruongNhom')
+      .populate('ThanhVien.SinhVien')
+      .populate('LopHoc', 'MaLopHoc TenLopHoc');
+
+    res.json({ nhom: nhom || null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Lấy tất cả nhóm của 1 SV
+exports.getAllNhomBySinhVien = async (req, res) => {
+  try {
+    const { svId } = req.params;
+    const nhoms = await Nhom.find({
       'ThanhVien.SinhVien': svId,
       'ThanhVien.TrangThai': { $in: ['DaMoi', 'DaChapNhan'] }
     })
       .populate('TruongNhom')
-      .populate('ThanhVien.SinhVien');
+      .populate('ThanhVien.SinhVien')
+      .populate('LopHoc', 'MaLopHoc TenLopHoc');
 
-    res.json({ nhom: nhom || null });
+    res.json({ nhoms });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -71,7 +112,8 @@ exports.getNhomById = async (req, res) => {
   try {
     const nhom = await Nhom.findById(req.params.id)
       .populate('TruongNhom')
-      .populate('ThanhVien.SinhVien');
+      .populate('ThanhVien.SinhVien')
+      .populate('LopHoc', 'MaLopHoc TenLopHoc');
 
     if (!nhom) return res.status(404).json({ error: 'Không tìm thấy nhóm.' });
     res.json(nhom);
@@ -103,14 +145,29 @@ exports.inviteMember = async (req, res) => {
     const svMoi = await SinhVien.findOne({ MaSV: maSV });
     if (!svMoi) return res.status(404).json({ error: 'Không tìm thấy sinh viên với Mã SV này.' });
 
-    // Check SV đã ở nhóm khác chưa
-    const existingNhom = await Nhom.findOne({
+    // MỚI: Nếu nhóm thuộc lớp → kiểm tra SV được mời phải thuộc cùng lớp
+    if (nhom.LopHoc) {
+      const LopHoc = require('../models/LopHoc');
+      const lop = await LopHoc.findById(nhom.LopHoc);
+      if (lop) {
+        if (!lop.SinhVien.some(svId => svId.toString() === svMoi._id.toString())) {
+          return res.status(400).json({ error: 'Sinh viên được mời không thuộc lớp học của nhóm.' });
+        }
+      }
+    }
+
+    // Check SV đã ở nhóm khác TRONG CÙNG LỚP chưa
+    const existingNhomQuery = {
       _id: { $ne: id },
       'ThanhVien.SinhVien': svMoi._id,
       'ThanhVien.TrangThai': { $in: ['DaMoi', 'DaChapNhan'] }
-    });
+    };
+    if (nhom.LopHoc) {
+      existingNhomQuery.LopHoc = nhom.LopHoc;
+    }
+    const existingNhom = await Nhom.findOne(existingNhomQuery);
     if (existingNhom) {
-      return res.status(400).json({ error: 'Sinh viên này đã ở trong nhóm khác.' });
+      return res.status(400).json({ error: 'Sinh viên này đã ở trong nhóm khác của lớp này.' });
     }
 
     // Check SV đã được mời vào nhóm này chưa
@@ -154,14 +211,18 @@ exports.respondToInvite = async (req, res) => {
     }
 
     if (accept) {
-      // Check SV chưa ở nhóm khác (double-check)
-      const existingNhom = await Nhom.findOne({
+      // Check SV chưa ở nhóm khác TRONG CÙNG LỚP (double-check)
+      const existingNhomQuery = {
         _id: { $ne: id },
         'ThanhVien.SinhVien': sinhVienId,
         'ThanhVien.TrangThai': 'DaChapNhan'
-      });
+      };
+      if (nhom.LopHoc) {
+        existingNhomQuery.LopHoc = nhom.LopHoc;
+      }
+      const existingNhom = await Nhom.findOne(existingNhomQuery);
       if (existingNhom) {
-        return res.status(400).json({ error: 'Bạn đã ở trong nhóm khác.' });
+        return res.status(400).json({ error: 'Bạn đã ở trong nhóm khác của lớp này.' });
       }
 
       nhom.ThanhVien[tvIndex].TrangThai = 'DaChapNhan';

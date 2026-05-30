@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const nhomSchema = new mongoose.Schema({
   TenNhom: { type: String, default: '' },
+  LopHoc: { type: mongoose.Schema.Types.ObjectId, ref: 'LopHoc' },
   TruongNhom: { type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien', required: true },
   ThanhVien: [{
     SinhVien: { type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien' },

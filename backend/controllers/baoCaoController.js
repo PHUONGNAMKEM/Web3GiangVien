@@ -148,6 +148,7 @@ exports.uploadBaoCao = async (req, res) => {
         const payload = acceptedMembers.map(tv => ({
             DeTai: deTaiId,
             SinhVien: tv.SinhVien,
+            Nhom: dangKy.Nhom || undefined,
             TieuDe: tieuDe || 'Báo cáo đồ án',
             IPFS_CID: ipfsCid,
             ExtractedText: extractionResult.text || null,
@@ -198,7 +199,12 @@ exports.uploadBaoCao = async (req, res) => {
 exports.getMyBaoCao = async (req, res) => {
     try {
         const svId = req.params.svId;
-        const baocao = await BaoCao.findOne({ SinhVien: svId }).populate('DeTai');
+        const { deTaiId } = req.query;
+        const query = { SinhVien: svId };
+        if (deTaiId) {
+            query.DeTai = deTaiId;
+        }
+        const baocao = await BaoCao.findOne(query).populate('DeTai').populate('Nhom');
         res.json({ baocao: baocao || null });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -267,7 +273,7 @@ exports.deleteBaoCao = async (req, res) => {
 // GV lấy tất cả báo cáo theo đề tài
 exports.getBaoCaoByDeTai = async (req, res) => {
     try {
-        const list = await BaoCao.find({ DeTai: req.params.deTaiId }).populate('SinhVien');
+        const list = await BaoCao.find({ DeTai: req.params.deTaiId }).populate('SinhVien').populate('Nhom');
         res.json(list);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -298,12 +304,24 @@ exports.getBaoCaoByLecturer = async (req, res) => {
         const approvedRegs = await DangKyDeTai.find({
             DeTai: { $in: topicIds },
             TrangThai: 'DaDuyet'
-        }).populate('SinhVien').populate('ThanhVien.SinhVien').populate('DeTai');
+        })
+        .populate('SinhVien')
+        .populate('ThanhVien.SinhVien')
+        .populate({
+            path: 'DeTai',
+            populate: [
+                { path: 'GiangVienHuongDan', select: 'HoTen MaGV' },
+                { path: 'MonHoc', select: 'MaMonHoc TenMonHoc' },
+                { path: 'LopHoc', select: 'MaLopHoc TenLopHoc' }
+            ]
+        })
+        .populate('Nhom');
 
         const submissions = await BaoCao.find({ DeTai: { $in: topicIds } })
             .select('-ExtractedText -ExtractionWarnings')
             .populate('SinhVien')
-            .populate('DeTai');
+            .populate('DeTai')
+            .populate('Nhom');
 
         const diemSoList = await DiemSo.find({ DeTai: { $in: topicIds } });
 

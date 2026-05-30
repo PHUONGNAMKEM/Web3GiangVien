@@ -8,7 +8,7 @@ const AILog = require('../models/AILog');
 const crypto = require('crypto');
 
 // Tạo 1 bản ghi điểm cho 1 báo cáo + ghi blockchain (best-effort). Bỏ qua nếu đã chấm.
-const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs }) => {
+const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, nhomId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs }) => {
     const sinhVienId = baoCao.SinhVien;
     const existing = await DiemSo.findOne({ BaoCao: baoCao._id });
     if (existing) {
@@ -25,7 +25,10 @@ const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, diem, nhanXe
         GiangVienCham: giangVienId,
         SinhVien: sinhVienId,
         DeTai: deTaiId,
+        Nhom: nhomId || undefined,
         Diem: diem,
+        DiemGoc: diem,
+        LaDieuChinh: false,
         NhanXet: nhanXet,
         AI_Score: aiScore,
         AI_Feedback: aiFeedback,
@@ -238,7 +241,17 @@ exports.chamDiem = async (req, res) => {
             return res.status(409).json({ error: 'Báo cáo này đã được chấm điểm.', code: 'DA_CHAM_BAOCAO_NAY' });
         }
 
-        const gradePayload = { deTaiId, giangVienId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs };
+        const dangKy = await DangKyDeTai.findOne({
+            DeTai: deTaiId,
+            TrangThai: 'DaDuyet',
+            $or: [
+                { SinhVien: sinhVienId },
+                { TruongNhom: sinhVienId },
+                { 'ThanhVien.SinhVien': sinhVienId }
+            ]
+        });
+        const nhomId = dangKy?.Nhom;
+        const gradePayload = { deTaiId, giangVienId, nhomId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs };
 
         // Chấm cho báo cáo chính (của thành viên được chọn)
         const primary = await createGradeForReport({ baoCao, ...gradePayload });
@@ -247,18 +260,8 @@ exports.chamDiem = async (req, res) => {
         // #12: Đề tài nhóm → áp CÙNG điểm/nhận xét cho TẤT CẢ thành viên trong nhóm
         let groupGraded = null;
         const isGroupTopic = (ownerCheck.deTai?.SoLuongSinhVien || 1) > 1;
-        if (isGroupTopic) {
-            const dangKy = await DangKyDeTai.findOne({
-                DeTai: deTaiId,
-                TrangThai: 'DaDuyet',
-                $or: [
-                    { SinhVien: sinhVienId },
-                    { TruongNhom: sinhVienId },
-                    { 'ThanhVien.SinhVien': sinhVienId }
-                ]
-            });
-
-            const memberIds = (dangKy?.ThanhVien || [])
+        if (isGroupTopic && dangKy) {
+            const memberIds = (dangKy.ThanhVien || [])
                 .filter(tv => tv.SinhVien && tv.TrangThaiTV === 'DaChapNhan')
                 .map(tv => String(tv.SinhVien));
 
@@ -300,6 +303,7 @@ exports.getDiemBySinhVien = async (req, res) => {
         const list = await DiemSo.find({ SinhVien: req.params.svId })
             .populate('DeTai')
             .populate('BaoCao')
+            .populate('Nhom')
             .populate('GiangVienCham', 'HoTen Email')
             .populate('GiangVienCam', 'HoTen Email');
         res.json(list);
@@ -404,7 +408,8 @@ exports.getComparison = async (req, res) => {
         // Lấy tất cả điểm số cho các đề tài đó
         const allGrades = await DiemSo.find({ DeTai: { $in: topicIds } })
             .populate('SinhVien', 'HoTen MaSV')
-            .populate('DeTai', 'TenDeTai MaDeTai SuDungRubrics');
+            .populate('DeTai', 'TenDeTai MaDeTai SuDungRubrics')
+            .populate('Nhom');
 
         // Tạo danh sách so sánh
         const comparisons = allGrades
@@ -450,6 +455,65 @@ exports.getComparison = async (req, res) => {
         res.json({ comparisons, stats });
     } catch (err) {
         logger.error(`[GRADE] Comparison failed: ${err.message}`);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// MỚI: GV điều chỉnh điểm riêng cho 1 SV trong nhóm
+exports.adjustGrade = async (req, res) => {
+    try {
+        const { id } = req.params;  // DiemSo ID
+        const { diem, nhanXet } = req.body;
+        const giangVienId = req.user?.id || req.body.giangVienId;
+
+        const grade = await DiemSo.findById(id);
+        if (!grade) return res.status(404).json({ error: 'Không tìm thấy điểm số' });
+
+        // Kiểm tra GV sở hữu đề tài
+        const ownerCheck = await assertGiangVienOwnsDeTai(grade.DeTai, giangVienId);
+        if (!ownerCheck.ok) return res.status(403).json({ error: ownerCheck.error });
+
+        // Validate điểm
+        const diemValidation = validateDiem(diem);
+        if (!diemValidation.ok) {
+            return res.status(400).json({ error: diemValidation.error, code: diemValidation.code });
+        }
+
+        // Lưu điểm gốc nếu lần đầu điều chỉnh
+        if (!grade.LaDieuChinh) {
+            grade.DiemGoc = grade.Diem;  // Giữ lại điểm nhóm ban đầu
+        }
+        grade.Diem = diem;
+        if (nhanXet !== undefined) {
+            grade.NhanXet = nhanXet;
+        }
+        grade.LaDieuChinh = true;
+        grade.GiangVienCham = giangVienId;
+        
+        // blockchain write (best-effort)
+        grade.TrangThaiBlockchain = 'Pending';
+        await grade.save();
+
+        try {
+            const txHash = await contractService.finalizeGradeOnChain(
+                grade.SinhVien.toString(),
+                grade.DeTai.toString(),
+                diem,
+                nhanXet || grade.NhanXet || '',
+                grade.SubmissionIndex || 0
+            );
+            grade.TxHash = txHash;
+            grade.TrangThaiBlockchain = 'DaGhi';
+        } catch (error) {
+            grade.TrangThaiBlockchain = 'LoiGhi';
+            grade.LoiBlockchain = error.message;
+            logger.error(`[GRADE] Blockchain adjust failed for student ${grade.SinhVien}: ${error.message}`);
+        }
+        await grade.save();
+
+        res.json({ message: 'Đã điều chỉnh điểm cho SV', data: grade });
+    } catch (err) {
+        logger.error(`[GRADE] Adjust grade failed: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };

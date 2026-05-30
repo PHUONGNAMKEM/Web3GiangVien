@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Typography, Row, Col, Statistic, Alert, Spin, Tag, Tooltip, Form, Input, InputNumber, Select, Button, Modal, message, Divider, Space } from 'antd';
-import { Target, Award, BookOpen, ShieldCheck, BrainCircuit, ExternalLink, Edit2, User, Save } from 'lucide-react';
+import { Target, Award, BookOpen, ShieldCheck, BrainCircuit, ExternalLink, Edit2, User, Save, School, GraduationCap } from 'lucide-react';
 import authService from '../../services/authService';
 import aiApiService from '../../services/aiService';
+import managementService from '../../services/managementService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import QrAuthentication from '../QrAuthentication';
+import { useClassContext } from '../../contexts/ClassContext';
 
 const { Title, Paragraph, Text } = Typography;
 
 const StudentDashboard = () => {
   const isMobile = useIsMobile();
+  const { myClasses, selectedClassId } = useClassContext();
   const [loading, setLoading] = useState(true);
   const [registration, setRegistration] = useState(null);
   const [grade, setGrade] = useState(null);
@@ -17,6 +20,7 @@ const StudentDashboard = () => {
   const [editingProfile, setEditingProfile] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [invitations, setInvitations] = useState([]);
+  const [classInvites, setClassInvites] = useState([]);
   const [progressAverage, setProgressAverage] = useState(null);
   const [progressCount, setProgressCount] = useState(0);
   const [form] = Form.useForm();
@@ -40,38 +44,53 @@ const StudentDashboard = () => {
         // Lấy danh sách lời mời nhóm
         const invs = await aiApiService.getMyInvitations(user.id);
         setInvitations(Array.isArray(invs) ? invs : []);
+
+        // Lấy danh sách lời mời lớp học
+        try {
+          const classInvRes = await managementService.getMyClassInvites(user.id);
+          setClassInvites(classInvRes?.data || []);
+        } catch (e2) {
+          console.warn('Không lấy được lời mời lớp học:', e2);
+        }
       } catch (e) {
         console.warn('Không lấy được hồ sơ SV hoặc lời mời:', e);
       }
 
-      const regData = await aiApiService.getMyRegistration(user.id);
-      if (regData && regData.registration) {
-        setRegistration(regData.registration);
+      setRegistration(null);
+      setGrade(null);
+      setProgressAverage(null);
+      setProgressCount(0);
 
-        if (regData.registration.TrangThai === 'DaDuyet') {
-          try {
-            const gradeData = await aiApiService.getDiemBySinhVien(user.id);
-            if (Array.isArray(gradeData) && gradeData.length > 0) {
-              const topicGrade = gradeData.find(g =>
-                g.DeTai?._id === (regData.registration.DeTai?._id || regData.registration.DeTai)
-              );
-              setGrade(topicGrade);
+      if (selectedClassId) {
+        const regData = await aiApiService.getMyRegistration(user.id, selectedClassId);
+        if (regData && regData.registration) {
+          setRegistration(regData.registration);
+
+          if (regData.registration.TrangThai === 'DaDuyet') {
+            try {
+              const gradeData = await aiApiService.getDiemBySinhVien(user.id);
+              if (Array.isArray(gradeData) && gradeData.length > 0) {
+                const topicGrade = gradeData.find(g =>
+                  g.DeTai?._id === (regData.registration.DeTai?._id || regData.registration.DeTai)
+                );
+                setGrade(topicGrade);
+              }
+            } catch (e) {
+              console.warn('Không lấy được điểm:', e);
             }
-          } catch (e) {
-            console.warn('Không lấy được điểm:', e);
-          }
 
-          try {
-            const progressRes = await aiApiService.getProgressBySinhVien(user.id, regData.registration.DeTai?._id);
-            const logs = progressRes?.data || [];
-            const graded = logs.filter(item => item.TrangThaiDanhGia === 'Dat' && item.DiemTienDo != null);
-            const avg = graded.length > 0
-              ? Math.round((graded.reduce((sum, item) => sum + (item.DiemTienDo || 0), 0) / graded.length) * 100) / 100
-              : null;
-            setProgressAverage(avg);
-            setProgressCount(graded.length);
-          } catch (e) {
-            console.warn('Không lấy được điểm tiến độ tuần:', e);
+            try {
+              const progressRes = await aiApiService.getProgressBySinhVien(user.id, regData.registration.DeTai?._id);
+              const logs = progressRes?.data || [];
+              const graded = logs.filter(item => item.TrangThaiDanhGia === 'Dat' && item.DiemTienDo != null);
+              const avg = graded.length > 0
+                ? Math.round((graded.reduce((sum, item) => sum + (item.DiemTienDo || 0), 0) / graded.length) * 100) / 100
+                : null;
+              setProgressAverage(avg);
+              setProgressCount(graded.length);
+            } catch (e) {
+              console.warn('Không lấy được điểm tiến độ tuần:', e);
+            }
           }
         }
       }
@@ -80,7 +99,7 @@ const StudentDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, selectedClassId]);
 
   useEffect(() => {
     fetchData();
@@ -132,6 +151,16 @@ const StudentDashboard = () => {
     }
   };
 
+  const handleRespondClassInvite = async (inviteId, accept) => {
+    try {
+      await managementService.respondClassInvite(inviteId, accept);
+      message.success(accept ? 'Đã chấp nhận lời mời. Bạn đã được thêm vào lớp!' : 'Đã từ chối lời mời lớp học.');
+      fetchData(); // Reload all data including class context
+    } catch (e) {
+      message.error(e.response?.data?.message || 'Thao tác thất bại');
+    }
+  };
+
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div>;
   }
@@ -169,7 +198,7 @@ const StudentDashboard = () => {
         />
       )}
 
-      {/* Hiển thị lời mời */}
+      {/* Hiển thị lời mời nhóm */}
       {invitations.length > 0 && invitations.map(inv => (
         <Alert
           key={inv._id}
@@ -184,6 +213,33 @@ const StudentDashboard = () => {
                 Chấp nhận
               </Button>
               <Button size="small" danger onClick={() => handleRespondInvitation(inv._id, false)}>
+                Từ chối
+              </Button>
+            </Space>
+          }
+        />
+      ))}
+
+      {/* Hiển thị lời mời lớp học */}
+      {classInvites.length > 0 && classInvites.map(inv => (
+        <Alert
+          key={`class-${inv._id}`}
+          message={
+            <Space>
+              <GraduationCap size={16} />
+              <span>Lời mời vào lớp: <strong>{inv.LopHoc?.TenLopHoc || inv.LopHoc?.MaLopHoc || '—'}</strong></span>
+            </Space>
+          }
+          description={`Môn học: ${inv.LopHoc?.MonHoc?.TenMonHoc || '—'} | Giảng viên: ${inv.GiangVien?.HoTen || '—'}`}
+          type="warning"
+          showIcon
+          style={{ marginBottom: 24, border: '1px solid #faad14', background: '#fffbe6' }}
+          action={
+            <Space direction="vertical">
+              <Button size="small" type="primary" onClick={() => handleRespondClassInvite(inv._id, true)}>
+                Chấp nhận
+              </Button>
+              <Button size="small" danger onClick={() => handleRespondClassInvite(inv._id, false)}>
                 Từ chối
               </Button>
             </Space>
@@ -315,6 +371,45 @@ const StudentDashboard = () => {
               </div>
             ) : (
               <Statistic title="Điểm Số On-chain" value="—" valueStyle={{ color: '#d9d9d9' }} />
+            )}
+          </Card>
+        </Col>
+
+        {/* Card 4: Lớp học của tôi */}
+        <Col xs={24} sm={12} lg={8}>
+          <Card
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <School size={18} style={{ color: '#722ed1' }} />
+                <span>Lớp Học Của Tôi</span>
+              </div>
+            }
+            bordered={false}
+          >
+            {myClasses.length > 0 ? (
+              <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                {myClasses.map((lop, idx) => (
+                  <div key={lop._id || idx} style={{ marginBottom: idx < myClasses.length - 1 ? 12 : 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text strong style={{ color: '#722ed1' }}>{lop.TenLopHoc} ({lop.MaLopHoc})</Text>
+                      <Tag color="purple">{lop.siSo || 0} SV</Tag>
+                    </div>
+                    <div style={{ fontSize: 13, marginTop: 4 }}>
+                      <span style={{ color: '#8c8c8c' }}>Môn học: </span>
+                      <Text>{lop.MonHoc?.TenMonHoc || '—'}</Text>
+                    </div>
+                    <div style={{ fontSize: 13, marginTop: 2 }}>
+                      <span style={{ color: '#8c8c8c' }}>Giảng viên: </span>
+                      <Text>{lop.GiangVien?.HoTen || '—'}</Text>
+                    </div>
+                    {idx < myClasses.length - 1 && <Divider style={{ margin: '10px 0' }} />}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: '#8c8c8c' }}>
+                Chưa tham gia lớp học nào.
+              </div>
             )}
           </Card>
         </Col>
