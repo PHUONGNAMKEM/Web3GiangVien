@@ -1,0 +1,21 @@
+Test Case,Report Source,Target Topic Requirements,PhoBERT Feedback,PhoBERT Score,Expected (Ground Truth),PhoBERT Prediction,Result,Security Flags
+Ca 1,1-nghien-cuu-li-luan-ve-he-thong-quan-li-hoc-tap-truc-tuyen-lms-trong-gd-dh.pdf,"['React', 'NodeJS', 'Database', 'LMS']",Nội dung đạt yêu cầu.,5.88,MATCH (1),MATCH (1),True Positive (TP),Từ vựng nghèo
+Ca 2,2-do-an-2-he-thong-diem-danh-nhan-dien-khuon-mat-voi-rfid.pdf,"['AI', 'Python', 'Deep Learning', 'RFID']",Nội dung đạt yêu cầu.,7.57,MATCH (1),MATCH (1),True Positive (TP),Từ vựng nghèo
+Ca 3,3-do-an-mon-nhap-mon-ung-dung-di-dong-quan-ly-chi-tieu-ca-nhan-monee-23520088.pdf,"['Android', 'Java', 'Mobile App']",Nội dung đạt yêu cầu.,6.17,MATCH (1),MATCH (1),True Positive (TP),Từ vựng nghèo
+Ca 4,4-khoa-luan-tot-nghiep-xay-dung-phan-mem-quan-ly-nhan-su-sua-11213942.pdf,"['C#', '.NET', 'SQL Server']",Nội dung đạt yêu cầu.,6.15,MATCH (1),MATCH (1),True Positive (TP),Từ vựng nghèo
+Ca 5,5-de-tai-nhap-mon-khoa-hoc-du-lieu-2024-phan-tich-du-lieu-mang-xa-hoi.pdf,"['Big Data', 'Data Mining', 'Python']",Cần cải thiện: Thiếu kiến thức chuyên môn.,5.00,MATCH (1),MISMATCH (0),False Negative (FN),None
+Ca 6,6-tong-hop-de-tai-khoa-luan-tot-nghiep-ve-an-toan-thong-tin-2023.pdf,"['Security', 'Network', 'Bảo mật']",Cần cải thiện: Phát hiện lặp lại 43%,4.89,MATCH (1),MISMATCH (0),False Negative (FN),Lặp lại cao (41%)
+Ca 7,7-luan-van-tot-nghiep-he-thong-giam-sat-nha-kinh-thong-minh-qua-web-dh-gtvt.pdf,"['IoT', 'C++', 'Arduino']",Nội dung đạt yêu cầu.,6.04,MATCH (1),MATCH (1),True Positive (TP),Từ vựng nghèo
+Ca 8,8-do-an-tot-nghiep-k63-nghien-cuu-kien-truc-microservice-voi-docker-kubernetes.pdf,"['Linux', 'Docker', 'Kubernetes', 'Microservices']",Nội dung đạt yêu cầu.,6.53,MATCH (1),MATCH (1),True Positive (TP),Từ vựng nghèo
+Ca 9,9-bao-cao-chuyen-de-lap-trinh-blockchain-he-thong-dau-gia-web.pdf,"['Blockchain', 'Solidity', 'Web3']",Nội dung đạt yêu cầu.,8.49,MATCH (1),MATCH (1),True Positive (TP),Từ vựng nghèo
+Ca 10,10-ap-dung-ai-trong-du-doan-gia-co-phieu-hpg-k23ktb-2022-2023.pdf,"['Python', 'Deep Learning', 'AI', 'Machine Learning']",Nội dung đạt yêu cầu.,5.79,MATCH (1),MATCH (1),True Positive (TP),Từ vựng nghèo
+Ca 11,11-xay-dung-ung-dung-di-dong-doc-sach-de-tai-d17ht.pdf,"['Blockchain', 'Solidity', 'Web3']",Cần cải thiện: Thiếu kiến thức chuyên môn.,5.00,MISMATCH (0),MISMATCH (0),True Negative (TN),Từ vựng nghèo
+Ca 12,12-tieu-luan-big-data-va-ung-dung-trong-phan-tich-hanh-vi-nguoi-tieu-dung-its329.pdf,"['Swift', 'iOS', 'Mobile']",Cần cải thiện: Thiếu kiến thức chuyên môn.,4.98,MISMATCH (0),MISMATCH (0),True Negative (TN),Từ vựng nghèo
+Ca 13,13-tieu-luan-mon-khoa-hoc-du-lieu-hop-dong-thong-minh-ethereum-va-blockchain.pdf,"['Unity', 'C#', 'Game Design']",Cần cải thiện: Thiếu kiến thức chuyên môn.,4.99,MISMATCH (0),MISMATCH (0),True Negative (TN),Từ vựng nghèo
+Ca 14,14-do-an-cuoi-ky-mon-thuong-mai-dien-tu-website-ban-my-pham-oneshop.pdf,"['OpenCV', 'Python', 'Machine Learning']",Cần cải thiện: Thiếu kiến thức chuyên môn.,4.78,MISMATCH (0),MISMATCH (0),True Negative (TN),None
+Ca 15,15-k44-khoa-luan-tot-nghiep-ke-toan-doanh-thu-va-chi-phi-tai-lasun.pdf,"['C', 'Embedded Systems', 'IoT', 'GPS']",Nội dung đạt yêu cầu.,5.26,MISMATCH (0),MATCH (1),False Positive (FP),Lặp lại (26%)
+Ca 16,16-do-an-tot-nghiep-nhan-dang-bien-so-xe-nghien-cuu-he-thong-tu-dong.pdf,"['React', 'NodeJS', 'MongoDB', 'E-commerce']",Cần cải thiện: Thiếu kiến thức chuyên môn.,4.96,MISMATCH (0),MISMATCH (0),True Negative (TN),Prompt Injection
+Ca 17,17-khoa-luan-tot-nghiep-thiet-ke-va-xay-dung-game-2d-11210917.pdf,"['Hadoop', 'Spark', 'Big Data']",Cần cải thiện: Thiếu kiến thức chuyên môn.,4.95,MISMATCH (0),MISMATCH (0),True Negative (TN),Từ vựng nghèo
+Ca 18,18-de-tai-nen-tang-dat-va-giao-do-an-truc-tuyen-food-delivery-platform.pdf,"['Security', 'Network', 'Bảo mật']",Nội dung đạt yêu cầu.,6.17,MISMATCH (0),MATCH (1),False Positive (FP),None
+Ca 19,19-dinh-huong-va-dieu-khien-robot-di-dong-tren-co-so-gps-va-cam-bien.pdf,"['React', 'NodeJS', 'Database', 'LMS']",Cần cải thiện: Thiếu kiến thức chuyên môn.,5.00,MISMATCH (0),MISMATCH (0),True Negative (TN),Prompt Injection
+Ca 20,10-du-doan-gia-co-phieu-bang-machine-learning-va-deep-learning-tai-lieu-nghien.pdf,"['Android', 'Java', 'Mobile App']",Cần cải thiện: Thiếu kiến thức chuyên môn.,5.00,MISMATCH (0),MISMATCH (0),True Negative (TN),None

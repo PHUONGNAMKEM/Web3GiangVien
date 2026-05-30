@@ -1,0 +1,278 @@
+{
+  "info": {
+    "name": "SBERT Matching Test",
+    "description": "Chạy 20 ca kiểm thử cho mô hình SBERT",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Ca 1 (Khớp hoàn toàn)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://127.0.0.1:8001/match-student",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "8001",
+          "path": [
+            "match-student"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.7,\n    \"major_scores\": {\n      \"React\": 8.0,\n      \"NodeJS\": 8.0,\n      \"Lập trình Web\": 8.8,\n      \"Hệ CSDL\": 10.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_1\",\n      \"requirements\": [\"React\", \"NodeJS\", \"Database\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 2 (Khớp hoàn toàn)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "http://127.0.0.1:8001/match-student",
+          "protocol": "http",
+          "host": ["127", "0", "0", "1"],
+          "port": "8001",
+          "path": ["match-student"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.6,\n    \"major_scores\": {\n      \"Trí tuệ nhân tạo\": 9.2,\n      \"Python\": 8.0,\n      \"Deep learning\": 8.8\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_2\",\n      \"requirements\": [\"AI\", \"Python\", \"Deep Learning\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 3 (Khớp hoàn toàn)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.2,\n    \"major_scores\": {\n      \"Lập trình di động\": 8.2,\n      \"Java\": 8.0,\n      \"Android\": 8.0,\n      \"Firebase\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_3\",\n      \"requirements\": [\"Android\", \"Java\", \"Mobile App\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 4 (Khớp)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.9,\n    \"major_scores\": {\n      \"Thiết kế web\": 9.5,\n      \"Hệ cơ sở dữ liệu\": 10.0,\n      \"PHP\": 8.0,\n      \"MySQL\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_4\",\n      \"requirements\": [\"PHP\", \"MySQL\", \"Web\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 5 (Khớp)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.6,\n    \"major_scores\": {\n      \"Công nghệ .NET\": 8.1,\n      \"C#\": 8.0,\n      \"SQL Server\": 8.0,\n      \"Phân tích thiết kế\": 10.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_5\",\n      \"requirements\": [\"C#\", \".NET\", \"SQL Server\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 6 (Khớp)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 9.0,\n    \"major_scores\": {\n      \"Nhập môn Big Data\": 9.0,\n      \"Khai phá dữ liệu\": 9.7,\n      \"Python\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_6\",\n      \"requirements\": [\"Big Data\", \"Data Mining\", \"Python\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 7 (Khớp)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.8,\n    \"major_scores\": {\n      \"Bảo mật máy tính\": 9.5,\n      \"An toàn mạng máy tính\": 8.0,\n      \"Linux\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_7\",\n      \"requirements\": [\"Security\", \"Network\", \"Bảo mật\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 8 (Khớp)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 9.1,\n    \"major_scores\": {\n      \"Internet of Things\": 9.5,\n      \"C++\": 8.0,\n      \"Arduino\": 8.0,\n      \"Điện toán đám mây\": 10.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_8\",\n      \"requirements\": [\"IoT\", \"C++\", \"Arduino\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 9 (Khớp)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.4,\n    \"major_scores\": {\n      \"Lập trình mã nguồn mở\": 8.6,\n      \"Linux\": 8.0,\n      \"Docker\": 8.0,\n      \"DevOps\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_9\",\n      \"requirements\": [\"Linux\", \"Docker\", \"Open Source\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 10 (Khớp)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.7,\n    \"major_scores\": {\n      \"Blockchain\": 8.0,\n      \"Solidity\": 8.0,\n      \"Web3\": 8.0,\n      \"Phân tích thiết kế hệ thống\": 10.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_10\",\n      \"requirements\": [\"Blockchain\", \"Solidity\", \"Web3\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 11 (Lệch)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.5,\n    \"major_scores\": {\n      \"Thiết kế web\": 9.5,\n      \"HTML\": 8.0,\n      \"CSS\": 8.0,\n      \"JavaScript\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_11\",\n      \"requirements\": [\"Python\", \"Deep Learning\", \"AI\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 12 (Lệch)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.9,\n    \"major_scores\": {\n      \"Trí tuệ nhân tạo\": 9.2,\n      \"Deep learning\": 8.8,\n      \"Python\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_12\",\n      \"requirements\": [\"Swift\", \"iOS\", \"Mobile\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 13 (Lệch)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.2,\n    \"major_scores\": {\n      \"Công nghệ .NET\": 8.1,\n      \"C#\": 8.0,\n      \"Lập trình hướng đối tượng\": 9.5\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_13\",\n      \"requirements\": [\"Hadoop\", \"Spark\", \"Big Data\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 14 (Lệch)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.7,\n    \"major_scores\": {\n      \"Lập trình di động\": 8.2,\n      \"Flutter\": 8.0,\n      \"Dart\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_14\",\n      \"requirements\": [\"Solidity\", \"Web3\", \"Smart Contract\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 15 (Lệch)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 9.0,\n    \"major_scores\": {\n      \"Mạng máy tính\": 8.3,\n      \"Quản trị hệ thống mạng\": 9.0,\n      \"Cisco\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_15\",\n      \"requirements\": [\"React\", \"NodeJS\", \"MongoDB\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 16 (Lệch)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.6,\n    \"major_scores\": {\n      \"Internet of Things\": 9.5,\n      \"Arduino\": 8.0,\n      \"Mạch điện\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_16\",\n      \"requirements\": [\"C#\", \"SQL Server\", \"WinForms\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 17 (Lệch)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.4,\n    \"major_scores\": {\n      \"Blockchain\": 8.0,\n      \"Smart Contract\": 8.0,\n      \"Ethereum\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_17\",\n      \"requirements\": [\"OpenCV\", \"Python\", \"Machine Learning\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 18 (Lệch)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 9.1,\n    \"major_scores\": {\n      \"Nhập môn Big Data\": 9.0,\n      \"Khai phá dữ liệu\": 9.7,\n      \"R\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_18\",\n      \"requirements\": [\"Unity\", \"C#\", \"Game Design\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 19 (Lệch)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.8,\n    \"major_scores\": {\n      \"Bảo mật máy tính\": 9.5,\n      \"An toàn mạng máy tính\": 8.0,\n      \"Penetration Testing\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_19\",\n      \"requirements\": [\"React Native\", \"Firebase\", \"Google Maps API\"]\n    }\n  ]\n}"
+        }
+      }
+    },
+    {
+      "name": "Ca 20 (Lệch)",
+      "request": {
+        "method": "POST",
+        "header": [{"key": "Content-Type", "value": "application/json"}],
+        "url": {"raw": "http://127.0.0.1:8001/match-student", "protocol": "http", "host": ["127","0","0","1"], "port": "8001", "path": ["match-student"]},
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"student\": {\n    \"gpa\": 8.5,\n    \"major_scores\": {\n      \"Lập trình mã nguồn mở\": 8.6,\n      \"PHP\": 8.0,\n      \"Laravel\": 8.0\n    }\n  },\n  \"topics\": [\n    {\n      \"topic_id\": \"ca_20\",\n      \"requirements\": [\"C\", \"Embedded Systems\", \"IoT\"]\n    }\n  ]\n}"
+        }
+      }
+    }
+  ]
+}

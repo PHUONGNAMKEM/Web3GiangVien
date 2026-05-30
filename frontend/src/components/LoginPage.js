@@ -69,6 +69,7 @@ function LoginPage() {
   // Role Selection State
   const [needsRoleSelection, setNeedsRoleSelection] = useState(false);
   const [tempWallet, setTempWallet] = useState(null);
+  const [rejectedCountToday, setRejectedCountToday] = useState(0);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -150,6 +151,7 @@ function LoginPage() {
       if (result.needsRoleSelection) {
         setNeedsRoleSelection(true);
         setTempWallet(result.walletAddress);
+        setRejectedCountToday(result.rejectedCountToday || 0);
         setSuccess('Vui lòng chọn vai trò để tiếp tục.');
         return;
       }
@@ -193,6 +195,7 @@ function LoginPage() {
       if (result.needsRoleSelection) {
         setNeedsRoleSelection(true);
         setTempWallet(result.walletAddress);
+        setRejectedCountToday(result.rejectedCountToday || 0);
         setSuccess('Vui lòng chọn vai trò để tiếp tục.');
         return;
       }
@@ -455,7 +458,7 @@ function LoginPage() {
 
   // --- Login View ---
   return (
-    <Container maxWidth="sm">
+    <Container maxWidth={needsRoleSelection ? "md" : "sm"}>
       <Box
         display="flex"
         flexDirection="column"
@@ -527,6 +530,7 @@ function LoginPage() {
               )}
               <RoleSelection
                 walletAddress={tempWallet}
+                rejectedCountToday={rejectedCountToday}
                 onSelectStudent={handleSelectStudent}
                 onSelectLecturer={handleSelectLecturer}
                 loading={loading}

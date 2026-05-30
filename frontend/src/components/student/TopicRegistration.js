@@ -137,6 +137,7 @@ const TopicRegistration = () => {
     Modal.confirm({
       title: 'Xác nhận Đăng ký Đề tài',
       width: '60%',
+      maskClosable: true,
       content: (
         <div>
           <Paragraph>
@@ -172,12 +173,12 @@ const TopicRegistration = () => {
           <Text strong>Mô tả cốt lõi:</Text>
           <Paragraph style={{ marginTop: 4 }}>{topic.MoTa}</Paragraph>
 
-          {topic.MoTaChiTiet && (
-            <div style={{ marginBottom: 12 }}>
-              <Text strong>Chi tiết:</Text>
-              <Paragraph style={{ marginTop: 4, whiteSpace: 'pre-line' }}>{topic.MoTaChiTiet}</Paragraph>
-            </div>
-          )}
+          <div style={{ marginBottom: 12 }}>
+            <Text strong>Mô tả chi tiết:</Text>
+            <Paragraph style={{ marginTop: 4, whiteSpace: 'pre-line', color: topic.MoTaChiTiet ? 'inherit' : '#bfbfbf' }}>
+              {topic.MoTaChiTiet || 'Không có mô tả chi tiết.'}
+            </Paragraph>
+          </div>
 
           {topic.ChiTietBoSung && topic.ChiTietBoSung.length > 0 && (
             <div style={{ marginBottom: 12 }}>
