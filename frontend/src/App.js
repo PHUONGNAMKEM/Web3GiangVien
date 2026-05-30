@@ -23,6 +23,8 @@ import GroupManagement from './components/student/GroupManagement';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRequests from './components/admin/AdminRequests';
 import PendingApproval from './components/PendingApproval';
+import { ClassProvider } from './contexts/ClassContext';
+import { LecturerClassProvider } from './contexts/LecturerClassContext';
 
 // Protected Route component
 function ProtectedRoute({ children, allowedRoles }) {
@@ -93,7 +95,9 @@ function App() {
 
         <Route path="/lecturer" element={
           <ProtectedRoute allowedRoles={['LECTURER_ROLE']}>
-            <MainLayout />
+            <LecturerClassProvider>
+              <MainLayout />
+            </LecturerClassProvider>
           </ProtectedRoute>
         }>
           <Route index element={<LecturerDashboard />} />
@@ -109,7 +113,9 @@ function App() {
 
         <Route path="/student" element={
           <ProtectedRoute allowedRoles={['STUDENT_ROLE']}>
-            <MainLayout />
+            <ClassProvider>
+              <MainLayout />
+            </ClassProvider>
           </ProtectedRoute>
         }>
           <Route index element={<StudentDashboard />} />

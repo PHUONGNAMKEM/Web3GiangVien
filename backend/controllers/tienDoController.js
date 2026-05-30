@@ -196,6 +196,7 @@ exports.createProgressEntry = async (req, res) => {
         if (!registrationCheck.ok) {
             return res.status(403).json({ error: registrationCheck.error, code: registrationCheck.code });
         }
+        const nhomId = registrationCheck.dangKy?.Nhom;
 
         const existingEntries = await TienDo.find({ DeTai: deTaiId, SinhVien: sinhVienId })
             .sort({ createdAt: -1 });
@@ -216,6 +217,7 @@ exports.createProgressEntry = async (req, res) => {
         const draftEntry = {
             DeTai: deTaiId,
             SinhVien: sinhVienId,
+            Nhom: nhomId || undefined,
             NoiDung: noiDung || noiDungDaLam || 'Cap nhat tien do',
             PhanTramHoanThanh: phanTramHoanThanh || 0,
             LoaiCapNhat: loaiCapNhat || 'Khác',
@@ -279,6 +281,7 @@ exports.getProgressBySinhVien = async (req, res) => {
 
         const tienDoList = await TienDo.find(filter)
             .populate('DeTai', 'TenDeTai MaDeTai')
+            .populate('Nhom')
             .sort({ TuanSo: 1, createdAt: -1 });
 
         res.json({ data: tienDoList });
@@ -305,6 +308,7 @@ exports.getProgressByTopic = async (req, res) => {
 
         const tienDoList = await TienDo.find(filter)
             .populate('SinhVien', 'HoTen MaSV Email')
+            .populate('Nhom')
             .sort({ TuanSo: 1, SinhVien: 1, LanNopLai: -1, createdAt: -1 });
 
         res.json({ data: tienDoList });

@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Typography, Table, Button, Modal, Form, Input, Space, Tag, Popconfirm, message, Spin } from 'antd';
 import { Plus, Pencil, Trash2, BookOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 import managementService from '../../services/managementService';
+import aiApiService from '../../services/aiService';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 const CourseManagement = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [monHocs, setMonHocs] = useState([]);
+  const [allTopics, setAllTopics] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [form] = Form.useForm();
@@ -23,6 +27,15 @@ const CourseManagement = () => {
       const res = await managementService.getMonHocByGV(currentUser.id);
       if (res.success) {
         setMonHocs(res.data || []);
+      }
+
+      // Fetch all topics to populate the expanded view
+      try {
+        const topics = await aiApiService.getTopics();
+        setAllTopics(Array.isArray(topics) ? topics : []);
+      } catch (err) {
+        console.warn('Lỗi tải danh sách đề tài cho môn học:', err);
+        setAllTopics([]);
       }
     } catch (err) {
       message.error('Lỗi tải danh sách môn học');
@@ -153,6 +166,17 @@ const CourseManagement = () => {
     },
   ];
 
+  const getTopicsForMonHoc = (monHocId) => {
+    return allTopics.filter(t => {
+      const mhId = t.MonHoc?._id || t.MonHoc;
+      if (mhId && mhId.toString() === monHocId.toString()) return true;
+      return (t.LopHoc || []).some(lh => {
+        const lhMhId = lh.MonHoc?._id || lh.MonHoc;
+        return lhMhId && lhMhId.toString() === monHocId.toString();
+      });
+    });
+  };
+
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div>;
   }
@@ -161,7 +185,6 @@ const CourseManagement = () => {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <Title level={2} style={{ margin: 0 }}>
-          <BookOpen size={28} style={{ marginRight: 12, verticalAlign: 'middle', color: '#1677ff' }} />
           Quản Lý Môn Học
         </Title>
         <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()}>
@@ -176,6 +199,75 @@ const CourseManagement = () => {
           rowKey="_id"
           pagination={{ pageSize: 10 }}
           locale={{ emptyText: 'Chưa có môn học nào. Hãy nhấn "Thêm Môn Học" để bắt đầu.' }}
+          expandable={{
+            expandedRowRender: (record) => {
+              const subjectTopics = getTopicsForMonHoc(record._id);
+              return (
+                <div style={{ padding: '12px 24px', background: '#fafafa', borderRadius: 8 }}>
+                  <Typography.Title level={5} style={{ margin: '0 0 12px 0', color: '#1677ff', fontSize: '14px' }}>
+                    Danh Sách Đề Tài Thuộc Môn Học ({subjectTopics.length})
+                  </Typography.Title>
+                  {subjectTopics.length > 0 ? (
+                    <Table
+                      size="small"
+                      bordered
+                      pagination={false}
+                      dataSource={subjectTopics}
+                      rowKey="_id"
+                      columns={[
+                        {
+                          title: 'Mã Đề Tài',
+                          dataIndex: 'MaDeTai',
+                          key: 'MaDeTai',
+                          width: 140,
+                          render: (text) => <Tag color="blue">{text}</Tag>
+                        },
+                        {
+                          title: 'Tên Đề Tài',
+                          dataIndex: 'TenDeTai',
+                          key: 'TenDeTai',
+                          render: (text, topicRecord) => (
+                            <a
+                              style={{ fontWeight: 600, color: '#1677ff' }}
+                              onClick={() => {
+                                navigate('/lecturer/topics', { state: { highlightTopicId: topicRecord._id } });
+                              }}
+                            >
+                              {text}
+                            </a>
+                          )
+                        },
+                        {
+                          title: 'Giảng Viên Hướng Dẫn',
+                          key: 'giangVien',
+                          width: 180,
+                          render: (_, topicRecord) => {
+                            const gv = topicRecord.GiangVienHuongDan;
+                            return <Text strong style={{ color: '#595959' }}>{gv?.HoTen || 'N/A'}</Text>;
+                          }
+                        },
+                        {
+                          title: 'Lớp Áp Dụng',
+                          key: 'lophoc',
+                          width: 180,
+                          render: (_, topicRecord) => (
+                            <Space size={2} wrap>
+                              {(topicRecord.LopHoc || []).map(lh => (
+                                <Tag key={lh._id || lh} color="cyan">{lh.MaLopHoc || lh.TenLopHoc || lh}</Tag>
+                              ))}
+                            </Space>
+                          )
+                        }
+                      ]}
+                    />
+                  ) : (
+                    <Text type="secondary">Chưa có đề tài nào thuộc môn học này.</Text>
+                  )}
+                </div>
+              );
+            },
+            rowExpandable: (record) => true,
+          }}
         />
       </Card>
 

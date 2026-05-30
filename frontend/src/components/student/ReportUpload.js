@@ -4,12 +4,14 @@ import { UploadCloud, BookOpen, Trash2, CheckCircle, ExternalLink, ShieldCheck }
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
+import { useClassContext } from '../../contexts/ClassContext';
 
 const { Title, Paragraph, Text } = Typography;
 const { Dragger } = Upload;
 
 const ReportUpload = () => {
   const isMobile = useIsMobile();
+  const { selectedClassId } = useClassContext();
   const [fileList, setFileList] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -25,24 +27,39 @@ const ReportUpload = () => {
     if (!user) return;
     try {
       setLoadingData(true);
-      const [regRes, bcRes] = await Promise.all([
-        aiApiService.getMyRegistration(user.id),
-        aiApiService.getMyBaoCao(user.id)
-      ]);
+      if (!selectedClassId) {
+        setRegistration(null);
+        setExistingBaoCao(null);
+        setIsGraded(false);
+        return;
+      }
+      
+      const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
       setRegistration(regRes.registration);
-      setExistingBaoCao(bcRes.baocao);
+
+      let reportData = null;
+      if (regRes.registration) {
+        const deTaiId = regRes.registration.DeTai?._id || regRes.registration.DeTai;
+        const bcRes = await aiApiService.getMyBaoCao(user.id, deTaiId);
+        reportData = bcRes.baocao;
+        setExistingBaoCao(reportData);
+      } else {
+        setExistingBaoCao(null);
+      }
 
       // Kiểm tra đã chấm điểm chưa
-      if (bcRes.baocao) {
+      if (reportData) {
         try {
           const diemRes = await aiApiService.getDiemBySinhVien(user.id);
           const graded = Array.isArray(diemRes) && diemRes.some(d =>
-            d.BaoCao && (d.BaoCao._id || d.BaoCao).toString() === bcRes.baocao._id.toString()
+            d.BaoCao && (d.BaoCao._id || d.BaoCao).toString() === reportData._id.toString()
           );
           setIsGraded(graded);
         } catch (e) {
           setIsGraded(false);
         }
+      } else {
+        setIsGraded(false);
       }
     } catch (e) {
       console.error('Lỗi:', e);
@@ -51,7 +68,9 @@ const ReportUpload = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+  }, [selectedClassId]);
 
   const topicName = registration?.DeTai?.TenDeTai || 'Chưa xác định';
   const topicRequires = registration?.DeTai?.YeuCau || [];

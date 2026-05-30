@@ -10,14 +10,21 @@ const getAuthHeaders = () => {
 
 const nhomService = {
   // Tạo nhóm mới
-  createNhom: async (sinhVienId, tenNhom, soLuong) => {
-    const response = await axios.post(`${API_URL}/nhom`, { sinhVienId, tenNhom, soLuong }, { headers: getAuthHeaders() });
+  createNhom: async (sinhVienId, tenNhom, soLuong, lopHocId) => {
+    const response = await axios.post(`${API_URL}/nhom`, { sinhVienId, tenNhom, soLuong, lopHocId }, { headers: getAuthHeaders() });
     return response.data;
   },
 
   // Lấy nhóm của SV
-  getNhomBySinhVien: async (svId) => {
-    const response = await axios.get(`${API_URL}/nhom/sinhvien/${svId}`, { headers: getAuthHeaders() });
+  getNhomBySinhVien: async (svId, lopHocId) => {
+    const query = lopHocId ? `?lopHocId=${lopHocId}` : '';
+    const response = await axios.get(`${API_URL}/nhom/sinhvien/${svId}${query}`, { headers: getAuthHeaders() });
+    return response.data;
+  },
+
+  // Lấy tất cả nhóm của SV
+  getAllNhomBySinhVien: async (svId) => {
+    const response = await axios.get(`${API_URL}/nhom/sinhvien/${svId}/all`, { headers: getAuthHeaders() });
     return response.data;
   },
 

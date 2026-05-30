@@ -3,10 +3,13 @@ import { Card, Button, Typography, Tag, message, Modal, Input, InputNumber, Spac
 import { Users, UserPlus, Crown, LogOut, Trash2, CheckCircle, XCircle, Lock, ArrowRightLeft } from 'lucide-react';
 import authService from '../../services/authService';
 import nhomService from '../../services/nhomService';
+import managementService from '../../services/managementService';
+import { useClassContext } from '../../contexts/ClassContext';
 
 const { Title, Text, Paragraph } = Typography;
 
 const GroupManagement = () => {
+  const { selectedClassId, selectedClass } = useClassContext();
   const [loading, setLoading] = useState(true);
   const [nhom, setNhom] = useState(null);
   const [pendingInvites, setPendingInvites] = useState([]);
@@ -23,10 +26,15 @@ const GroupManagement = () => {
 
   const fetchData = useCallback(async () => {
     if (!user) return;
+    if (!selectedClassId) {
+      setNhom(null);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const [nhomRes, invitesRes] = await Promise.all([
-        nhomService.getNhomBySinhVien(user.id),
+        nhomService.getNhomBySinhVien(user.id, selectedClassId),
         nhomService.getPendingInvites(user.id)
       ]);
       setNhom(nhomRes.nhom);
@@ -36,21 +44,25 @@ const GroupManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, selectedClassId]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // === Tạo nhóm ===
   const handleCreateNhom = async () => {
+    if (!selectedClassId) {
+      message.warning('Vui lòng chọn lớp học hoạt động.');
+      return;
+    }
     if (soLuong < 1) {
       message.warning('Số lượng thành viên phải >= 1');
       return;
     }
     setCreating(true);
     try {
-      await nhomService.createNhom(user.id, tenNhom, soLuong);
+      await nhomService.createNhom(user.id, tenNhom, soLuong, selectedClassId);
       message.success('Tạo nhóm thành công!');
       setCreateModalVisible(false);
       setTenNhom('');
@@ -420,6 +432,14 @@ const GroupManagement = () => {
               onChange={e => setTenNhom(e.target.value)}
               style={{ marginTop: 8 }}
             />
+          </div>
+          <div>
+            <Text strong>Lớp học áp dụng:</Text>
+            <div style={{ marginTop: 8, padding: '8px 12px', background: '#f5f5f5', borderRadius: 4, border: '1px solid #d9d9d9' }}>
+              <Text strong style={{ color: '#722ed1' }}>
+                {selectedClass ? `${selectedClass.MaLopHoc} - ${selectedClass.TenLopHoc}` : 'Chưa chọn lớp học'}
+              </Text>
+            </div>
           </div>
           <div>
             <Text strong>Số lượng thành viên tối đa: <Text type="danger">*</Text></Text>

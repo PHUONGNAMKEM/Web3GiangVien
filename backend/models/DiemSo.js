@@ -6,6 +6,9 @@ const diemSoSchema = new mongoose.Schema({
   GiangVienCham: { type: mongoose.Schema.Types.ObjectId, ref: 'GiangVien' },
   SinhVien: { type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien', required: true },
   DeTai: { type: mongoose.Schema.Types.ObjectId, ref: 'DeTai', required: true },
+  Nhom: { type: mongoose.Schema.Types.ObjectId, ref: 'Nhom' },
+  DiemGoc: { type: Number, min: 0, max: 10 },
+  LaDieuChinh: { type: Boolean, default: false },
   Diem: { type: Number, required: true, min: 0, max: 10 },
   NhanXet: { type: String },
   AI_Score: { type: Number },      // Điểm đánh giá dự kiến từ AI

@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Button, Typography, Tag, Badge, message, Row, Col, Modal, Skeleton, Alert, Input, Space, List, Divider, Tooltip } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, Button, Typography, Tag, Badge, message, Row, Col, Modal, Skeleton, Alert, Input, Space, List, Divider, Tooltip, Select } from 'antd';
 import { CheckCircle, Code, Zap, Lock, ListChecks, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import aiApiService from '../../services/aiService';
 import nhomService from '../../services/nhomService';
 import authService from '../../services/authService';
+import { useClassContext } from '../../contexts/ClassContext';
 
 const { Title, Paragraph, Text } = Typography;
 
 const TopicRegistration = () => {
   const navigate = useNavigate();
+  const { selectedClassId, selectedClass } = useClassContext();
   const [loadingId, setLoadingId] = useState(null);
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,100 +24,115 @@ const TopicRegistration = () => {
   const [testSubmitted, setTestSubmitted] = useState(false);
   const [myNhom, setMyNhom] = useState(null); // Nhóm của SV
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    const user = authService.getCurrentUser();
+    if (!user) return;
+
+    if (!selectedClassId) {
+      setMyNhom(null);
+      setRegisteredTopicId(null);
+      setRegistrationStatus(null);
+      setRegistrationId(null);
+      setFullRegistration(null);
+      setTopics([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setRegisteredTopicId(null);
+      setRegistrationStatus(null);
+      setRegistrationId(null);
+      setFullRegistration(null);
+      setTestSubmitted(false);
+
+      // 0. Lấy nhóm của SV
       try {
-        setLoading(true);
-        const user = authService.getCurrentUser();
-        if (!user) return;
-
-        // 0. Lấy nhóm của SV
-        try {
-          const nhomRes = await nhomService.getNhomBySinhVien(user.id);
-          setMyNhom(nhomRes.nhom);
-        } catch (e) {
-          console.warn('Không lấy được thông tin nhóm');
-        }
-
-        // 1. Kiểm tra SV đã đăng ký đề tài nào chưa
-        const regRes = await aiApiService.getMyRegistration(user.id);
-        if (regRes.registration) {
-          setRegisteredTopicId(regRes.registration.DeTai?._id || regRes.registration.DeTai);
-          setRegistrationStatus(regRes.registration.TrangThai);
-          setRegistrationId(regRes.registration._id);
-          setFullRegistration(regRes.registration);
-
-          // Kiểm tra đã nộp bài test chưa
-          if (regRes.registration.TrangThai === 'ChoTest') {
-            const deTaiIdForTest = regRes.registration.DeTai?._id || regRes.registration.DeTai;
-            try {
-              const checkTest = await aiApiService.checkTestSubmitted(deTaiIdForTest, user.id);
-              if (checkTest.submitted) {
-                setTestSubmitted(true);
-              }
-            } catch (e) {
-              console.warn('Không kiểm tra được trạng thái test');
-            }
-          }
-        }
-
-        // 2. Lấy danh sách đề tài từ DB
-        const dbRes = await aiApiService.getTopics();
-        const topicList = Array.isArray(dbRes) ? dbRes : (dbRes.data || []);
-
-        if (topicList.length === 0) {
-          setLoading(false);
-          return;
-        }
-
-        // 3. Lấy profile SV thật từ DB
-        let studentProfile = { chuyen_nganh: '', ky_nang: [], bang_diem_ky_nang: [] };
-        try {
-          const svProfile = await aiApiService.getStudentProfile(user.id);
-          studentProfile = {
-            chuyen_nganh: svProfile.ChuyenNganh || '',
-            ky_nang: svProfile.KyNang || [],
-            bang_diem_ky_nang: svProfile.BangDiemKyNang || [],
-            gpa: svProfile.GPA || 0
-          };
-        } catch (e) {
-          console.warn('Không lấy được profile SV, dùng default');
-        }
-
-        // 4. Gọi SBERT matching với profile thật
-        let enriched = topicList.map(t => ({ ...t, ai_score: '0.0', isRecommended: false }));
-
-        try {
-          const matchRes = await aiApiService.matchTopicsAI(studentProfile, topicList);
-          if (matchRes.status === "success" && matchRes.recommendations) {
-            const recs = matchRes.recommendations;
-            enriched = topicList.map(t => {
-              const rec = recs.find(r => r.topicId === (t._id || '').toString());
-              const score = rec ? rec.matchScore : 0;
-              return {
-                ...t,
-                ai_score: (score * 10).toFixed(1),
-                isRecommended: score > 0.3
-              };
-            });
-          }
-        } catch (e) {
-          console.warn('SBERT matching failed, hiển thị không có điểm AI');
-        }
-
-        setTopics(enriched
-          .sort((a, b) => parseFloat(b.ai_score) - parseFloat(a.ai_score))
-        );
-      } catch (error) {
-        console.error("Lỗi lấy đề tài:", error);
-        message.warning("Có lỗi khi tải dữ liệu đề tài.");
-      } finally {
-        setLoading(false);
+        const nhomRes = await nhomService.getNhomBySinhVien(user.id, selectedClassId);
+        setMyNhom(nhomRes.nhom);
+      } catch (e) {
+        console.warn('Không lấy được thông tin nhóm');
       }
-    };
 
+      // 1. Kiểm tra SV đã đăng ký đề tài nào chưa
+      const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
+      if (regRes.registration) {
+        setRegisteredTopicId(regRes.registration.DeTai?._id || regRes.registration.DeTai);
+        setRegistrationStatus(regRes.registration.TrangThai);
+        setRegistrationId(regRes.registration._id);
+        setFullRegistration(regRes.registration);
+
+        // Kiểm tra đã nộp bài test chưa
+        if (regRes.registration.TrangThai === 'ChoTest') {
+          const deTaiIdForTest = regRes.registration.DeTai?._id || regRes.registration.DeTai;
+          try {
+            const checkTest = await aiApiService.checkTestSubmitted(deTaiIdForTest, user.id);
+            if (checkTest.submitted) {
+              setTestSubmitted(true);
+            }
+          } catch (e) {
+            console.warn('Không kiểm tra được trạng thái test');
+          }
+        }
+      }
+
+      // 2. Lấy danh sách đề tài theo lớp đã chọn
+      const dbRes = await aiApiService.getTopics(selectedClassId);
+      const topicList = Array.isArray(dbRes) ? dbRes : (dbRes.data || []);
+
+      if (topicList.length === 0) {
+        setTopics([]);
+        setLoading(false);
+        return;
+      }
+
+      // 3. Lấy profile SV thật từ DB
+      let studentProfile = { chuyen_nganh: '', ky_nang: [] };
+      try {
+        const svProfile = await aiApiService.getStudentProfile(user.id);
+        studentProfile = {
+          chuyen_nganh: svProfile.ChuyenNganh || '',
+          ky_nang: svProfile.KyNang || [],
+          gpa: svProfile.GPA || 0
+        };
+      } catch (e) {
+        console.warn('Không lấy được profile SV, dùng default');
+      }
+
+      // 4. Gọi SBERT matching với profile thật
+      let enriched = topicList.map(t => ({ ...t, ai_score: '0.0', isRecommended: false }));
+
+      try {
+        const matchRes = await aiApiService.matchTopicsAI(studentProfile, topicList);
+        if (matchRes.status === "success" && matchRes.recommendations) {
+          const recs = matchRes.recommendations;
+          enriched = topicList.map(t => {
+            const rec = recs.find(r => r.topicId === (t._id || '').toString());
+            const score = rec ? rec.matchScore : 0;
+            return {
+              ...t,
+              ai_score: (score * 10).toFixed(1),
+              isRecommended: score > 0.3
+            };
+          });
+        }
+      } catch (e) {
+        console.warn('SBERT matching failed, hiển thị không có điểm AI');
+      }
+
+      setTopics(enriched.sort((a, b) => parseFloat(b.ai_score) - parseFloat(a.ai_score)));
+    } catch (error) {
+      console.error("Lỗi lấy đề tài:", error);
+      message.warning("Có lỗi khi tải dữ liệu đề tài.");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedClassId]);
+
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleRegister = (topic) => {
     const user = authService.getCurrentUser();
@@ -151,7 +168,27 @@ const TopicRegistration = () => {
             <br />
             <Text type="secondary">Sinh viên tối đa:</Text>
             <Tag color="geekblue" style={{ marginLeft: 8, marginTop: 4 }}>{topic.SoLuongSinhVien || 1} SV</Tag>
-            {topic.CoBaiTest && <Tag color="volcano" style={{ marginLeft: 4, marginTop: 4 }}>🏆 Có bài test</Tag>}
+            <br />
+            <Text type="secondary">Môn học:</Text>
+            <Space size={2} wrap style={{ marginLeft: 8, marginTop: 4 }}>
+              {(() => {
+                const monHocSet = new Map();
+                (topic.LopHoc || []).forEach(lh => {
+                  if (lh.MonHoc && lh.MonHoc._id) {
+                    monHocSet.set(lh.MonHoc._id, lh.MonHoc);
+                  }
+                });
+                if (monHocSet.size === 0 && topic.MonHoc) {
+                  const mh = topic.MonHoc;
+                  return <Tag color="geekblue">{mh.TenMonHoc || mh.MaMonHoc || '—'}</Tag>;
+                }
+                return Array.from(monHocSet.values()).map(mh => (
+                  <Tag key={mh._id} color="geekblue">{mh.TenMonHoc || mh.MaMonHoc}</Tag>
+                ));
+              })()}
+            </Space>
+            <br />
+            {topic.CoBaiTest && <Tag color="volcano" style={{ marginTop: 4 }}>🏆 Có bài test</Tag>}
             {topic.SoDangKy > 0 && (
               <Tag color="magenta" style={{ marginLeft: 4, marginTop: 4 }}>
                 <Users size={12} style={{ marginRight: 4 }} />
@@ -206,16 +243,7 @@ const TopicRegistration = () => {
         setLoadingId(topic._id);
         try {
           await aiApiService.registerTopic(topic._id, user.id, myNhom._id);
-          // Reload đầy đủ state đăng ký
-          const regRes = await aiApiService.getMyRegistration(user.id);
-          if (regRes.registration) {
-            setRegisteredTopicId(regRes.registration.DeTai?._id || regRes.registration.DeTai);
-            setRegistrationStatus(regRes.registration.TrangThai);
-            setRegistrationId(regRes.registration._id);
-            setFullRegistration(regRes.registration);
-          } else {
-            setRegisteredTopicId(topic._id);
-          }
+          await fetchData();
           const msg = topic.CoBaiTest
             ? 'Đăng ký thành công! Trưởng nhóm cần hoàn thành bài test đầu vào.'
             : 'Đã gửi yêu cầu đăng ký đề tài thành công! Chờ Giảng viên duyệt.';
@@ -249,7 +277,7 @@ const TopicRegistration = () => {
           setRegistrationStatus(null);
           setRegistrationId(null);
           setFullRegistration(null);
-          setTimeout(() => window.location.reload(), 1000); // Tải lại trang cho chắc ăn
+          await fetchData();
         } catch (err) {
           message.error(err.response?.data?.error || 'Hủy đăng ký thất bại');
         }
@@ -268,8 +296,7 @@ const TopicRegistration = () => {
       await aiApiService.inviteMember(deTaiId, inviteMaSV);
       message.success(`Đã gửi lời mời đến sinh viên có mã ${inviteMaSV}`);
       setInviteMaSV('');
-      // Refresh thì tải lại or setup function
-      setTimeout(() => window.location.reload(), 1000);
+      await fetchData();
     } catch (err) {
       message.error(err.response?.data?.error || 'Gửi lời mời thất bại');
     } finally {
@@ -436,11 +463,16 @@ const TopicRegistration = () => {
           ))}
         </Row>
       ) : (
-        <Row gutter={[24, 24]} className="topic-row" style={{ marginTop: 24 }}>
-          {topics.map(topic => {
-            const thisRegistered = isRegistered(topic._id);
-            const disabled = hasAnyRegistration || !myNhom || !myNhom.DaChot || topic.DaChotNhom;
-            const sizeMismatch = myNhom && myNhom.DaChot && (topic.SoLuongSinhVien || 1) !== (myNhom.ThanhVien?.filter(tv => tv.TrangThai === 'DaChapNhan').length || 0);
+        <div>
+          <Row gutter={[24, 24]} className="topic-row">
+            {topics.filter(topic => {
+              if (!selectedClassId) return false;
+              if (!topic.LopHoc || topic.LopHoc.length === 0) return true;
+              return topic.LopHoc.some(lh => (lh._id || lh).toString() === selectedClassId.toString());
+            }).map(topic => {
+              const thisRegistered = isRegistered(topic._id);
+              const disabled = hasAnyRegistration || !myNhom || !myNhom.DaChot || topic.DaChotNhom;
+              const sizeMismatch = myNhom && myNhom.DaChot && (topic.SoLuongSinhVien || 1) !== (myNhom.ThanhVien?.filter(tv => tv.TrangThai === 'DaChapNhan').length || 0);
 
             const cardContent = (
               <Card
@@ -494,7 +526,38 @@ const TopicRegistration = () => {
                   <br />
                   <Text type="secondary">Sinh viên tối đa:</Text>
                   <Tag color="geekblue" style={{ marginLeft: 8, marginTop: 4 }}>{topic.SoLuongSinhVien || 1} SV</Tag>
-                  {topic.CoBaiTest && <Tag color="volcano" style={{ marginLeft: 4, marginTop: 4 }}>🏆 Có bài test</Tag>}
+                  <br />
+                  <Text type="secondary">Lớp học áp dụng:</Text>
+                  <Space size={2} wrap style={{ marginLeft: 8, marginTop: 4 }}>
+                    {(topic.LopHoc || []).length > 0 ? (
+                      topic.LopHoc.map(lh => (
+                        <Tag key={lh._id || lh} color="cyan">{lh.MaLopHoc || lh.TenLopHoc || lh}</Tag>
+                      ))
+                    ) : (
+                      <Tag color="default">Tất cả lớp</Tag>
+                    )}
+                  </Space>
+                  <br />
+                  <Text type="secondary">Môn học:</Text>
+                  <Space size={2} wrap style={{ marginLeft: 8, marginTop: 4 }}>
+                    {(() => {
+                      const monHocSet = new Map();
+                      (topic.LopHoc || []).forEach(lh => {
+                        if (lh.MonHoc && lh.MonHoc._id) {
+                          monHocSet.set(lh.MonHoc._id, lh.MonHoc);
+                        }
+                      });
+                      if (monHocSet.size === 0 && topic.MonHoc) {
+                        const mh = topic.MonHoc;
+                        return <Tag color="geekblue">{mh.TenMonHoc || mh.MaMonHoc || '—'}</Tag>;
+                      }
+                      return Array.from(monHocSet.values()).map(mh => (
+                        <Tag key={mh._id} color="geekblue">{mh.TenMonHoc || mh.MaMonHoc}</Tag>
+                      ));
+                    })()}
+                  </Space>
+                  {topic.CoBaiTest && <br />}
+                  {topic.CoBaiTest && <Tag color="volcano" style={{ marginTop: 4 }}>🏆 Có bài test</Tag>}
                   {topic.SoDangKy > 0 && (
                     <Tag color="magenta" style={{ marginLeft: 4, marginTop: 4 }}>
                       <Users size={12} style={{ marginRight: 4 }} />
@@ -543,8 +606,9 @@ const TopicRegistration = () => {
                 ) : cardContent}
               </Col>
             );
-          })}
-        </Row>
+            })}
+          </Row>
+        </div>
       )}
     </div>
   );

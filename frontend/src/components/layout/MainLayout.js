@@ -6,6 +6,7 @@ import authService from '../../services/authService';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { useIsMobile } from '../../hooks/useResponsive';
+import ClassSelector from '../common/ClassSelector';
 
 const { Header, Content, Sider } = Layout;
 
@@ -134,7 +135,10 @@ const MainLayout = () => {
         />
       </Sider>
       <Layout>
-        <Header style={{ padding: isMobile ? '0 12px' : '0 24px', background: colorBgContainer, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+        <Header style={{ padding: isMobile ? '0 12px' : '0 24px', background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <ClassSelector />
+          </div>
           <Dropdown menu={{
             items: [
               { key: 'wallet', label: `Ví: ${currentUser?.walletAddress?.substring(0, 6)}...` },

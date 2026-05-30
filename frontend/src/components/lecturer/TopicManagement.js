@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider, Descriptions, Switch, Alert } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider, Descriptions, Switch, Alert, Row, Col } from 'antd';
 import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle, NotebookText, ListChecks, Trophy, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import dayjs from 'dayjs';
 import { useIsMobile } from '../../hooks/useResponsive';
+import managementService from '../../services/managementService';
+import { useLecturerClassContext } from '../../contexts/LecturerClassContext';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -13,16 +15,18 @@ const { Option } = Select;
 const TopicManagement = () => {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { selectedClassId, setSelectedClassId } = useLecturerClassContext();
   const [topics, setTopics] = useState([]);
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const [selectedTopic, setSelectedTopic] = useState(null);
   const [editingTopic, setEditingTopic] = useState(null);
   const [approvingId, setApprovingId] = useState(null);
   const [chiTietBoSung, setChiTietBoSung] = useState([]);
   const [form] = Form.useForm();
+  const [lopHocList, setLopHocList] = useState([]);
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
 
   // === RUBRICS STATE ===
   const [suDungRubrics, setSuDungRubrics] = useState(false);
@@ -39,16 +43,29 @@ const TopicManagement = () => {
     try {
       setLoading(true);
 
+      // Fetch LopHoc first so we can filter topics in classes taught by this lecturer
+      let myClasses = [];
+      try {
+        const lhRes = await managementService.getLopHocByGV(user.id);
+        myClasses = lhRes.data || [];
+        setLopHocList(myClasses);
+      } catch (e) {
+        setLopHocList([]);
+      }
+
       const allTopics = await aiApiService.getTopics();
       const topicList = Array.isArray(allTopics) ? allTopics : [];
 
-      const myTopics = topicList.filter(t => {
+      const myClassIds = new Set(myClasses.map(lh => (lh._id || lh).toString()));
+      const filteredList = topicList.filter(t => {
         const gvHD = t.GiangVienHuongDan;
         if (!gvHD) return false;
         const gvId = typeof gvHD === 'object' ? (gvHD._id || gvHD).toString() : gvHD.toString();
-        return gvId === user.id;
+        // Keep if advised by this lecturer OR belongs to classes taught by this lecturer
+        if (gvId === user.id) return true;
+        return (t.LopHoc || []).some(lh => myClassIds.has((lh._id || lh).toString()));
       });
-      setTopics(myTopics);
+      setTopics(filteredList);
 
       try {
         const regs = await aiApiService.getRegistrationsByLecturer(user.id);
@@ -76,6 +93,23 @@ const TopicManagement = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (location.state?.highlightTopicId && topics.length > 0) {
+      const topicId = location.state.highlightTopicId;
+      const targetTopic = topics.find(t => t._id.toString() === topicId.toString());
+      if (targetTopic) {
+        // If the topic is not visible under current filter, change selectedClassId to 'ALL'
+        const isVisible = !selectedClassId || selectedClassId === 'ALL' || (targetTopic.LopHoc || []).some(lh => (lh._id || lh).toString() === selectedClassId.toString());
+        if (!isVisible) {
+          setSelectedClassId('ALL');
+        }
+        setExpandedRowKeys([targetTopic._id]);
+        navigate(location.pathname, { replace: true, state: {} });
+        message.success(`Đã tự động mở chi tiết đề tài: ${targetTopic.TenDeTai}`);
+      }
+    }
+  }, [location.state, topics, selectedClassId, setSelectedClassId, navigate, location.pathname]);
 
   const countRegistrations = (topicId) => {
     return registrations.filter(r => {
@@ -157,6 +191,8 @@ const TopicManagement = () => {
         HanNopBaoCao: values.hanNopBaoCao ? values.hanNopBaoCao.toDate() : undefined,
         GiangVienHuongDan: user.id,
         TrangThai: editingTopic ? editingTopic.TrangThai : 'MoDangKy',
+        // LopHoc
+        LopHoc: values.lopHoc || [],
         // Rubrics
         SuDungRubrics: suDungRubrics,
         HienThiChiTietChoSV: hienThiChiTietChoSV,
@@ -194,6 +230,7 @@ const TopicManagement = () => {
       deadline: record.Deadline ? dayjs(record.Deadline) : null,
       hanDangKy: record.HanDangKy ? dayjs(record.HanDangKy) : null,
       hanNopBaoCao: record.HanNopBaoCao ? dayjs(record.HanNopBaoCao) : null,
+      lopHoc: (record.LopHoc || []).map(lh => lh._id || lh),
     });
     setChiTietBoSung(record.ChiTietBoSung || []);
     setSuDungRubrics(record.SuDungRubrics || false);
@@ -238,10 +275,7 @@ const TopicManagement = () => {
     }
   };
 
-  const showRegistrationDrawer = (topic) => {
-    setSelectedTopic(topic);
-    setDrawerVisible(true);
-  };
+
 
   // Thêm/Xóa ChiTietBoSung
   const addChiTiet = () => {
@@ -273,6 +307,53 @@ const TopicManagement = () => {
           </Space>
         </div>
       ),
+    },
+    {
+      title: 'Lớp',
+      key: 'lopHoc',
+      width: 120,
+      render: (_, record) => (
+        <Space size={2} wrap>
+          {(record.LopHoc || []).map(lh => (
+            <Tag key={lh._id || lh} color="cyan">{lh.MaLopHoc || lh.TenLopHoc || lh}</Tag>
+          ))}
+        </Space>
+      ),
+    },
+    {
+      title: 'Môn Học',
+      key: 'monHoc',
+      width: 140,
+      render: (_, record) => {
+        // Lấy MonHoc từ LopHoc (đã populate) hoặc từ DeTai.MonHoc
+        const monHocSet = new Map();
+        (record.LopHoc || []).forEach(lh => {
+          if (lh.MonHoc && lh.MonHoc._id) {
+            monHocSet.set(lh.MonHoc._id, lh.MonHoc);
+          }
+        });
+        if (monHocSet.size === 0 && record.MonHoc) {
+          const mh = record.MonHoc;
+          return <Tag color="geekblue">{mh.TenMonHoc || mh.MaMonHoc || '—'}</Tag>;
+        }
+        return (
+          <Space size={2} wrap>
+            {Array.from(monHocSet.values()).map(mh => (
+              <Tag key={mh._id} color="geekblue">{mh.TenMonHoc || mh.MaMonHoc}</Tag>
+            ))}
+          </Space>
+        );
+      },
+    },
+    {
+      title: 'Giảng Viên',
+      key: 'giangVien',
+      width: 145,
+      render: (_, record) => {
+        const gv = record.GiangVienHuongDan;
+        if (!gv) return '—';
+        return <Text strong style={{ color: '#595959' }}>{gv.HoTen || 'N/A'}</Text>;
+      },
     },
     {
       title: 'SV',
@@ -331,46 +412,46 @@ const TopicManagement = () => {
     {
       title: 'Thao Tác',
       key: 'action',
-      width: 180,
+      width: 160,
       align: 'center',
       render: (_, record) => {
         const regCount = countRegistrations(record._id);
+        const gvId = record.GiangVienHuongDan ? (record.GiangVienHuongDan._id || record.GiangVienHuongDan).toString() : '';
+        const isOwner = gvId === user.id;
+
         return (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-            <Space size={4}>
-              {regCount > 0 && (
-                <Button type="primary" size="small" icon={<Eye size={12} />}
-                  onClick={() => showRegistrationDrawer(record)} style={{ fontSize: 12, padding: '0 6px', height: 24 }}>
-                  Duyệt ({regCount})
-                </Button>
-              )}
-              {record.TrangThai === 'MoDangKy' && (
-                <Tooltip title="Bài test"><span>
-                  <Button size="small" icon={<ListChecks size={12} />}
-                    onClick={() => navigate(`/lecturer/entrance-test/${record._id}`)}
-                    style={{ fontSize: 12, padding: '0 6px', height: 24 }}>
-                    Test
-                  </Button>
-                </span></Tooltip>
-              )}
-            </Space>
-            <Space size={0}>
-              <Tooltip title="Sửa"><span>
-                <Button type="text" size="small" icon={<Edit2 size={14} />}
-                  onClick={() => handleEdit(record)} style={{ height: 24, width: 24, padding: 0 }} />
+          <Space size={8} style={{ justifyContent: 'center', width: '100%' }}>
+            {record.TrangThai === 'MoDangKy' && (
+              <Tooltip title="Bài test"><span>
+                <Button size="small" icon={<ListChecks size={12} />}
+                  onClick={() => navigate(`/lecturer/entrance-test/${record._id}`)}
+                  style={{ fontSize: 12, padding: '0 6px', height: 24 }}
+                  disabled={!isOwner} />
               </span></Tooltip>
-              <Tooltip title="Xóa"><span>
-                <Button type="text" danger size="small" icon={<Trash2 size={14} />}
-                  onClick={() => handleDelete(record._id)} style={{ height: 24, width: 24, padding: 0 }} />
-              </span></Tooltip>
-            </Space>
-          </div>
+            )}
+
+            <Tooltip title={isOwner ? "Sửa" : "Bạn không phải GV hướng dẫn của đề tài này"}><span>
+              <Button type="text" size="small" icon={<Edit2 size={14} />}
+                disabled={!isOwner}
+                onClick={() => handleEdit(record)} style={{ height: 24, width: 24, padding: 0 }} />
+            </span></Tooltip>
+            <Tooltip title={isOwner ? "Xóa" : "Bạn không phải GV hướng dẫn của đề tài này"}><span>
+              <Button type="text" danger size="small" icon={<Trash2 size={14} />}
+                disabled={!isOwner}
+                onClick={() => handleDelete(record._id)} style={{ height: 24, width: 24, padding: 0 }} />
+            </span></Tooltip>
+          </Space>
         );
       },
     },
   ];
 
-  return (
+      const filteredTopics = topics.filter(topic => {
+        if (!selectedClassId || selectedClassId === 'ALL') return true;
+        return (topic.LopHoc || []).some(lh => (lh._id || lh).toString() === selectedClassId.toString());
+      });
+
+      return (
     <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0 }}>Quản Lý Đề Tài Hướng Dẫn</Title>
@@ -387,6 +468,9 @@ const TopicManagement = () => {
             setRubricsSource('new');
             setSelectedTemplateId(null);
             form.resetFields();
+            if (selectedClassId && selectedClassId !== 'ALL') {
+              form.setFieldsValue({ lopHoc: [selectedClassId] });
+            }
             setIsModalVisible(true);
           }}
         >
@@ -396,71 +480,199 @@ const TopicManagement = () => {
 
       <Table
         columns={columns}
-        dataSource={topics}
+        dataSource={filteredTopics}
         rowKey="_id"
         loading={loading}
         pagination={{ pageSize: 5 }}
         size="small"
         scroll={{ x: 'max-content' }}
         expandable={{
-          expandedRowRender: record => (
-            <div style={{ padding: '8px 24px', background: '#fafafa', borderRadius: 8 }}>
-              <Descriptions size="small" column={1} bordered>
-                <Descriptions.Item label={<strong style={{ color: '#1677ff' }}>Mô tả chi tiết</strong>}>
-                  {record.MoTaChiTiet ? (
-                    <Typography.Paragraph style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
-                      {record.MoTaChiTiet}
-                    </Typography.Paragraph>
-                  ) : <span style={{ color: '#aaa' }}>Không có.</span>}
-                </Descriptions.Item>
-                {record.Deadline && (
-                  <Descriptions.Item label={<strong style={{ color: '#1677ff' }}>Hạn chót đăng ký</strong>}>
-                    {new Date(record.Deadline).toLocaleString('vi-VN')}
-                  </Descriptions.Item>
-                )}
-                {record.ChiTietBoSung && record.ChiTietBoSung.length > 0 && (
-                  <Descriptions.Item label={<strong style={{ color: '#1677ff' }}>Thông tin bổ sung</strong>}>
-                    <List
-                      size="small"
-                      dataSource={record.ChiTietBoSung}
-                      renderItem={item => (
-                        <List.Item style={{ padding: '4px 0', borderBottom: 'none' }}>
-                          <Typography.Text strong>{item.TieuDe}: </Typography.Text>
-                          <Typography.Text>{item.NoiDung}</Typography.Text>
-                        </List.Item>
-                      )}
-                    />
-                  </Descriptions.Item>
-                )}
-                {/* Hiển thị Rubrics nếu đề tài có */}
-                {record.SuDungRubrics && record.Rubrics && record.Rubrics.length > 0 && (
-                  <Descriptions.Item label={<strong style={{ color: '#722ed1' }}>📋 Rubrics Chấm Điểm</strong>}>
-                    <div>
-                      <Space style={{ marginBottom: 8 }}>
-                        <Tag color="purple">{record.Rubrics.length} tiêu chí</Tag>
-                        <Tag color={record.HienThiChiTietChoSV ? 'green' : 'default'}>
-                          SV {record.HienThiChiTietChoSV ? 'xem được' : 'không xem được'} chi tiết
-                        </Tag>
-                      </Space>
-                      {record.Rubrics.map((tc, idx) => (
-                        <div key={idx} style={{ marginBottom: 4, paddingLeft: 8, borderLeft: '2px solid #722ed1' }}>
-                          <Text strong>{tc.TenTieuChi}</Text>
-                          <Tag color="blue" style={{ marginLeft: 8 }}>{tc.TrongSo}%</Tag>
-                          <Tag>{tc.DiemToiDa || 10} điểm</Tag>
-                          {tc.MoTa && <Text type="secondary" style={{ display: 'block', fontSize: 12 }}>{tc.MoTa}</Text>}
-                          {tc.GoiYChoAI && tc.GoiYChoAI.length > 0 && (
-                            <div>
-                              {tc.GoiYChoAI.map((kw, ki) => <Tag key={ki} color="geekblue" style={{ fontSize: 10 }}>{kw}</Tag>)}
-                            </div>
-                          )}
+          expandedRowKeys: expandedRowKeys,
+          onExpandedRowsChange: (keys) => setExpandedRowKeys(keys),
+          expandedRowRender: record => {
+            const topicRegs = getRegistrationsForTopic(record._id);
+            const approvedReg = topicRegs.find(r => r.TrangThai === 'DaDuyet');
+
+            return (
+              <div style={{ padding: '16px 24px', background: '#fafafa', borderRadius: 8, border: '1px solid #e8e8e8' }}>
+                <Row gutter={[24, 24]}>
+                  {/* Cột trái: Chi tiết đề tài */}
+                  <Col xs={24} lg={12}>
+                    <Title level={5} style={{ color: '#1677ff', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <NotebookText size={16} /> Chi Tiết Đề Tài
+                    </Title>
+                    <Descriptions size="small" column={1} bordered style={{ background: '#fff' }}>
+                      <Descriptions.Item label={<strong>Mã đề tài</strong>}>
+                        <Tag color="blue">{record.MaDeTai}</Tag>
+                      </Descriptions.Item>
+                      <Descriptions.Item label={<strong>Giảng viên hướng dẫn</strong>}>
+                        <Text strong style={{ color: '#1677ff' }}>{record.GiangVienHuongDan?.HoTen || '—'}</Text>
+                      </Descriptions.Item>
+                      <Descriptions.Item label={<strong>Mô tả cốt lõi</strong>}>
+                        {record.MoTa || <span style={{ color: '#aaa' }}>Không có</span>}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={<strong>Mô tả chi tiết</strong>}>
+                        {record.MoTaChiTiet ? (
+                          <Paragraph style={{ whiteSpace: 'pre-wrap', margin: 0, fontSize: 13 }}>
+                            {record.MoTaChiTiet}
+                          </Paragraph>
+                        ) : <span style={{ color: '#aaa' }}>Không có</span>}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={<strong>Yêu cầu / Tech Stack</strong>}>
+                        <Space wrap size={4}>
+                          {(record.YeuCau || []).map(req => (
+                            <Tag key={req} color="blue" style={{ margin: 0 }}>{req}</Tag>
+                          ))}
+                          {(record.YeuCau || []).length === 0 && <span style={{ color: '#aaa' }}>Không có</span>}
+                        </Space>
+                      </Descriptions.Item>
+                      <Descriptions.Item label={<strong>Lớp học & Môn học</strong>}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          {(record.LopHoc || []).map(lh => (
+                            <span key={lh._id || lh}>
+                              <Tag color="cyan">{lh.MaLopHoc}</Tag> 
+                              <Text type="secondary" style={{ fontSize: 12 }}>{lh.TenLopHoc} {lh.MonHoc?.TenMonHoc ? `(${lh.MonHoc.TenMonHoc})` : ''} - GV: {lh.GiangVien?.HoTen || 'N/A'}</Text>
+                            </span>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-            </div>
-          ),
+                      </Descriptions.Item>
+                      <Descriptions.Item label={<strong>Hạn chót đăng ký</strong>}>
+                        {record.Deadline ? new Date(record.Deadline).toLocaleString('vi-VN') : 'Không giới hạn'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={<strong>Số lượng SV tối đa</strong>}>
+                        {record.SoLuongSinhVien || 1} SV ({record.SoLuongSinhVien > 1 ? 'Đề tài nhóm' : 'Đề tài cá nhân'})
+                      </Descriptions.Item>
+                    </Descriptions>
+
+                    {/* Rubrics nếu có */}
+                    {record.SuDungRubrics && record.Rubrics && record.Rubrics.length > 0 && (
+                      <div style={{ padding: 12, background: '#faf0ff', border: '1px solid #d3adf7', borderRadius: 8, marginTop: 16 }}>
+                        <Text strong style={{ color: '#722ed1', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                          <NotebookText size={16} /> Rubrics chấm điểm
+                        </Text>
+                        {record.Rubrics.map((tc, idx) => (
+                          <div key={idx} style={{ marginBottom: 6, paddingLeft: 8, borderLeft: '2px solid #722ed1' }}>
+                            <Text strong>{tc.TenTieuChi}</Text>
+                            <Tag color="purple" style={{ marginLeft: 8 }}>{tc.TrongSo}%</Tag>
+                            <Tag>{tc.DiemToiDa || 10}đ</Tag>
+                            {tc.MoTa && <Text type="secondary" style={{ display: 'block', fontSize: 12 }}>{tc.MoTa}</Text>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Col>
+
+                  {/* Cột phải: Đăng ký & Phê duyệt */}
+                  <Col xs={24} lg={12}>
+                    <Title level={5} style={{ color: '#52c41a', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Users size={16} /> Nhóm Đăng Ký & Phê Duyệt ({topicRegs.length})
+                    </Title>
+
+                    {/* Banner kiểm tra trạng thái giao đề tài */}
+                    {approvedReg ? (
+                      <Alert
+                        message={
+                          <span>
+                            <strong>Đề tài đã có chủ!</strong> Đã phê duyệt chính thức cho nhóm <strong>{approvedReg.Nhom?.TenNhom || `Nhóm của ${approvedReg.TruongNhom?.HoTen || approvedReg.SinhVien?.HoTen || 'N/A'}`}</strong> làm đề tài này.
+                          </span>
+                        }
+                        type="success"
+                        showIcon
+                        style={{ marginBottom: 16 }}
+                      />
+                    ) : (
+                      <Alert
+                        message="Đề tài này hiện chưa được giao cho nhóm nào chính thức (đang chờ duyệt)."
+                        type="info"
+                        showIcon
+                        style={{ marginBottom: 16 }}
+                      />
+                    )}
+
+                    <List
+                      dataSource={topicRegs}
+                      style={{ background: '#fff', padding: '0 16px', borderRadius: 8, border: '1px solid #e8e8e8' }}
+                      renderItem={(reg) => {
+                        const trangThaiColor = {
+                          'ChoDuyet': 'orange', 'ChoTest': 'gold', 'DangLamTest': 'processing',
+                          'DaSubmit': 'cyan', 'ChoDoi': 'blue', 'DaDuyet': 'success', 'TuChoi': 'error', 'Thua': 'default'
+                        };
+                        const trangThaiLabel = {
+                          'ChoDuyet': '⏳ Chờ Duyệt', 'ChoTest': '📝 Chờ Test', 'DangLamTest': '✍️ Đang Làm',
+                          'DaSubmit': '📤 Đã Submit', 'ChoDoi': '⏳ Chờ Kết Quả', 'DaDuyet': '✅ Đã Duyệt (Thắng)',
+                          'TuChoi': '❌ Từ Chối', 'Thua': '😞 Thua'
+                        };
+                        const nhomName = reg.Nhom?.TenNhom || `Nhóm của ${reg.TruongNhom?.HoTen || reg.SinhVien?.HoTen || 'N/A'}`;
+                        const gvId = record.GiangVienHuongDan ? (record.GiangVienHuongDan._id || record.GiangVienHuongDan).toString() : '';
+                        const isOwner = gvId === user.id;
+
+                        return (
+                          <List.Item
+                            actions={
+                              reg.TrangThai === 'ChoDuyet' ? [
+                                <Button type="primary" size="small" icon={<CheckCircle size={14} />}
+                                  loading={approvingId === reg._id}
+                                  disabled={!isOwner}
+                                  onClick={() => handleApprove(reg._id, 'DaDuyet')}
+                                  style={{ background: '#52c41a', borderColor: '#52c41a' }}>Duyệt</Button>,
+                                <Button danger size="small" icon={<XCircle size={14} />}
+                                  loading={approvingId === reg._id}
+                                  disabled={!isOwner}
+                                  onClick={() => handleApprove(reg._id, 'TuChoi')}>Từ Chối</Button>
+                              ] : [
+                                <Tag color={trangThaiColor[reg.TrangThai] || 'default'}>
+                                  {trangThaiLabel[reg.TrangThai] || reg.TrangThai}
+                                </Tag>
+                              ]
+                            }
+                          >
+                            <List.Item.Meta
+                              avatar={<div style={{ fontSize: 24 }}>{reg.TrangThai === 'DaDuyet' ? '🏆' : '👥'}</div>}
+                              title={
+                                <Space>
+                                  <Text strong>{nhomName}</Text>
+                                  {reg.TrangThai === 'DaDuyet' && <Tag color="gold">WINNER</Tag>}
+                                </Space>
+                              }
+                              description={
+                                <div style={{ marginTop: 4 }}>
+                                  {/* Thành viên nhóm */}
+                                  <List
+                                    size="small"
+                                    dataSource={reg.ThanhVien || []}
+                                    renderItem={tv => (
+                                      <List.Item style={{ padding: '2px 0', borderBottom: 'none' }}>
+                                        <Space>
+                                          <Tag color={tv.VaiTro === 'TruongNhom' ? 'gold' : 'blue'} style={{ fontSize: 10, lineHeight: '14px', padding: '0 4px' }}>
+                                            {tv.VaiTro === 'TruongNhom' ? '👑' : '👤'}
+                                          </Tag>
+                                          <Text style={{ fontSize: 13 }}>{tv.SinhVien?.HoTen || 'N/A'} ({tv.SinhVien?.MaSV || ''})</Text>
+                                        </Space>
+                                      </List.Item>
+                                    )}
+                                  />
+                                  {reg.ThoiGianSubmit && (
+                                    <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 4 }}>
+                                      <Clock size={10} style={{ marginRight: 4 }} />
+                                      Submit: {new Date(reg.ThoiGianSubmit).toLocaleString('vi-VN')}
+                                    </Text>
+                                  )}
+                                  <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
+                                    Đăng ký: {new Date(reg.createdAt).toLocaleString('vi-VN')}
+                                  </Text>
+                                </div>
+                              }
+                            />
+                          </List.Item>
+                        );
+                      }}
+                      locale={{ emptyText: 'Chưa có nhóm nào đăng ký đề tài này.' }}
+                    />
+                  </Col>
+                </Row>
+              </div>
+            );
+          },
           rowExpandable: record => true,
         }}
       />
@@ -505,6 +717,22 @@ const TopicManagement = () => {
               <Option value="Blockchain">Blockchain</Option>
               <Option value="Machine Learning">Machine Learning</Option>
             </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="lopHoc"
+            label="Lớp học áp dụng"
+            tooltip="Chọn các lớp học mà đề tài này thuộc về. Chỉ SV trong lớp mới thấy đề tài."
+          >
+            <Select
+              mode="multiple"
+              placeholder="Chọn lớp học..."
+              options={lopHocList.map(lh => ({
+                value: lh._id,
+                label: `${lh.MaLopHoc} - ${lh.TenLopHoc}${lh.MonHoc?.TenMonHoc ? ` (${lh.MonHoc.TenMonHoc})` : ''} - GV: ${lh.GiangVien?.HoTen || 'N/A'}`
+              }))}
+              size="large"
+            />
           </Form.Item>
 
           <div style={{ display: 'flex', gap: 16 }}>
@@ -681,109 +909,6 @@ const TopicManagement = () => {
         </Form>
       </Modal>
 
-      {/* Drawer Xem Chi Tiết Đăng Ký */}
-      <Drawer
-        title={
-          <Space>
-            <Users size={20} color="#1677ff" />
-            <span>Danh sách Sinh viên Đăng ký</span>
-          </Space>
-        }
-        width={isMobile ? '100vw' : 500}
-        placement="right"
-        onClose={() => setDrawerVisible(false)}
-        open={drawerVisible}
-        extra={selectedTopic && <Tag color="blue">{selectedTopic.TenDeTai}</Tag>}
-      >
-        {selectedTopic && (
-          <>
-            {selectedTopic.SoLuongSinhVien > 1 && (
-              <Tag color="blue" style={{ marginBottom: 8 }}>
-                Đề tài nhóm: Tối đa {selectedTopic.SoLuongSinhVien} SV
-              </Tag>
-            )}
-            {selectedTopic.CoBaiTest && (
-              <Tag color="volcano" style={{ marginBottom: 16, marginLeft: 4 }}>
-                🏆 Có bài test cạnh tranh
-              </Tag>
-            )}
-            <List
-              dataSource={getRegistrationsForTopic(selectedTopic._id)}
-              renderItem={(reg) => {
-                const trangThaiColor = {
-                  'ChoDuyet': 'orange', 'ChoTest': 'gold', 'DangLamTest': 'processing',
-                  'DaSubmit': 'cyan', 'ChoDoi': 'blue', 'DaDuyet': 'success', 'TuChoi': 'error', 'Thua': 'default'
-                };
-                const trangThaiLabel = {
-                  'ChoDuyet': '⏳ Chờ Duyệt', 'ChoTest': '📝 Chờ Test', 'DangLamTest': '✍️ Đang Làm',
-                  'DaSubmit': '📤 Đã Submit', 'ChoDoi': '⏳ Chờ Kết Quả', 'DaDuyet': '✅ Đã Duyệt (Thắng)',
-                  'TuChoi': '❌ Từ Chối', 'Thua': '😞 Thua'
-                };
-                const nhomName = reg.Nhom?.TenNhom || `Nhóm của ${reg.TruongNhom?.HoTen || reg.SinhVien?.HoTen || 'N/A'}`;
-
-                return (
-                  <List.Item
-                    actions={
-                      reg.TrangThai === 'ChoDuyet' ? [
-                        <Button type="primary" size="small" icon={<CheckCircle size={14} />}
-                          loading={approvingId === reg._id}
-                          onClick={() => handleApprove(reg._id, 'DaDuyet')}
-                          style={{ background: '#52c41a', borderColor: '#52c41a' }}>Duyệt</Button>,
-                        <Button danger size="small" icon={<XCircle size={14} />}
-                          loading={approvingId === reg._id}
-                          onClick={() => handleApprove(reg._id, 'TuChoi')}>Từ Chối</Button>
-                      ] : [
-                        <Tag color={trangThaiColor[reg.TrangThai] || 'default'}>
-                          {trangThaiLabel[reg.TrangThai] || reg.TrangThai}
-                        </Tag>
-                      ]
-                    }
-                  >
-                    <List.Item.Meta
-                      avatar={<div style={{ fontSize: 24 }}>{reg.TrangThai === 'DaDuyet' ? '🏆' : '👥'}</div>}
-                      title={
-                        <Space>
-                          <Text strong>{nhomName}</Text>
-                          {reg.TrangThai === 'DaDuyet' && <Tag color="gold">WINNER</Tag>}
-                        </Space>
-                      }
-                      description={
-                        <div style={{ marginTop: 4 }}>
-                          {/* Thành viên nhóm */}
-                          <List
-                            size="small"
-                            dataSource={reg.ThanhVien || []}
-                            renderItem={tv => (
-                              <List.Item style={{ padding: '2px 0', borderBottom: 'none' }}>
-                                <Space>
-                                  <Tag color={tv.VaiTro === 'TruongNhom' ? 'gold' : 'blue'} style={{ fontSize: 10, lineHeight: '14px', padding: '0 4px' }}>
-                                    {tv.VaiTro === 'TruongNhom' ? '👑' : '👤'}
-                                  </Tag>
-                                  <Text style={{ fontSize: 13 }}>{tv.SinhVien?.HoTen || 'N/A'} ({tv.SinhVien?.MaSV || ''})</Text>
-                                </Space>
-                              </List.Item>
-                            )}
-                          />
-                          {reg.ThoiGianSubmit && (
-                            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginTop: 4 }}>
-                              <Clock size={10} style={{ marginRight: 4 }} />
-                              Submit: {new Date(reg.ThoiGianSubmit).toLocaleString('vi-VN')}
-                            </Text>
-                          )}
-                          <Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
-                            Đăng ký: {new Date(reg.createdAt).toLocaleString('vi-VN')}
-                          </Text>
-                        </div>
-                      }
-                    />
-                  </List.Item>
-                );
-              }}
-              locale={{ emptyText: 'Chưa có nhóm nào đăng ký đề tài này.' }}
-            />
-          </>
-        )}
-      </Drawer>
     </div>
   );
 };

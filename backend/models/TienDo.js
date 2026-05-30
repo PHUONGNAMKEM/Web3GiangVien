@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const tienDoSchema = new mongoose.Schema({
     DeTai: { type: mongoose.Schema.Types.ObjectId, ref: 'DeTai', required: true },
     SinhVien: { type: mongoose.Schema.Types.ObjectId, ref: 'SinhVien', required: true },
+    Nhom: { type: mongoose.Schema.Types.ObjectId, ref: 'Nhom' },
     NoiDung: { type: String, required: true },
     PhanTramHoanThanh: { type: Number, default: 0, min: 0, max: 100 },
     LoaiCapNhat: {
@@ -56,5 +57,6 @@ tienDoSchema.index(
     { unique: true, partialFilterExpression: { TuanSo: { $type: 'number' } } }
 );
 tienDoSchema.index({ DeTai: 1, SinhVien: 1, createdAt: -1 });
+tienDoSchema.index({ DeTai: 1, Nhom: 1, TuanSo: 1 }, { sparse: true });
 
 module.exports = mongoose.model('TienDo', tienDoSchema);

@@ -159,6 +159,7 @@ const monHocController = require('./controllers/monHocController');
 const lopHocController = require('./controllers/lopHocController');
 const qrController = require('./controllers/qrController');
 const adminController = require('./controllers/adminController');
+const loiMoiLopHocController = require('./controllers/loiMoiLopHocController');
 
 // Middleware xác thực & phân quyền
 const { authenticateToken } = authController;
@@ -217,6 +218,7 @@ app.delete('/api/detai/:id', ...requireLecturer, deTaiController.delete);
 app.post('/api/detai/:id/register', ...requireStudent, deTaiController.registerTopic);
 
 // 5b. Đăng Ký Đề Tài (quản lý)
+app.get('/api/dangky/sinhvien/:svId/all', ...requireAuth, deTaiController.getMyRegistrations);
 app.get('/api/dangky/sinhvien/:svId', ...requireAuth, deTaiController.getMyRegistration);
 app.get('/api/dangky/giangvien/:gvId', ...requireLecturer, deTaiController.getRegistrationsByLecturer);
 app.put('/api/dangky/:id/approve', ...requireLecturer, deTaiController.approveRegistration);
@@ -238,6 +240,7 @@ app.get('/api/baocao/:id/extracted', ...requireLecturer, baoCaoController.getExt
 // 7. Điểm Số
 app.post('/api/diemso', ...requireLecturer, aiLimiter, diemSoController.chamDiem);
 app.put('/api/diemso/:id/retry-blockchain', ...requireLecturer, aiLimiter, diemSoController.retryBlockchain);
+app.put('/api/diemso/:id/adjust', ...requireLecturer, diemSoController.adjustGrade);
 app.get('/api/diemso/sinhvien/:svId', ...requireAuth, diemSoController.getDiemBySinhVien);
 app.get('/api/diemso/comparison/:gvId', ...requireLecturer, diemSoController.getComparison);
 
@@ -285,6 +288,7 @@ app.get('/api/baitest/check/:deTaiId/:sinhVienId', ...requireAuth, baiTestContro
 
 // 12. Quản Lý Nhóm
 app.post('/api/nhom', ...requireStudent, nhomController.createNhom);
+app.get('/api/nhom/sinhvien/:svId/all', ...requireAuth, nhomController.getAllNhomBySinhVien);
 app.get('/api/nhom/sinhvien/:svId', ...requireAuth, nhomController.getNhomBySinhVien);
 app.get('/api/nhom/invites/:svId', ...requireAuth, nhomController.getPendingInvites);
 app.get('/api/nhom/:id', ...requireAuth, nhomController.getNhomById);
@@ -337,13 +341,24 @@ app.put('/api/monhoc/:id', monHocController.update);
 app.delete('/api/monhoc/:id', monHocController.delete);
 
 // 14. Quản Lý Lớp Học
-app.get('/api/lophoc/giangvien/:gvId', lopHocController.getByGiangVien);
-app.get('/api/lophoc/:id/detail', lopHocController.getDetail);
-app.post('/api/lophoc', lopHocController.create);
-app.put('/api/lophoc/:id', lopHocController.update);
-app.post('/api/lophoc/:id/sinhvien', lopHocController.addSinhVien);
-app.delete('/api/lophoc/:id/sinhvien/:svId', lopHocController.removeSinhVien);
-app.delete('/api/lophoc/:id', lopHocController.delete);
+app.get('/api/lophoc/giangvien/:gvId', ...requireLecturer, lopHocController.getByGiangVien);
+app.get('/api/lophoc/sinhvien/:svId', ...requireAuth, lopHocController.getBySinhVien);
+app.get('/api/lophoc/:id/detail', ...requireAuth, lopHocController.getDetail);
+app.post('/api/lophoc', ...requireLecturer, lopHocController.create);
+app.put('/api/lophoc/:id', ...requireLecturer, lopHocController.update);
+app.post('/api/lophoc/:id/sinhvien', ...requireLecturer, lopHocController.addSinhVien);
+app.post('/api/lophoc/:id/import-sinhvien', ...requireLecturer, lopHocController.importSinhVien);
+app.delete('/api/lophoc/:id/sinhvien/:svId', ...requireLecturer, lopHocController.removeSinhVien);
+app.delete('/api/lophoc/:id', ...requireLecturer, lopHocController.delete);
+app.get('/api/lophoc/giangvien/:gvId/sinhvien', ...requireLecturer, lopHocController.getSinhVienByGiangVien);
+
+// 15. Lời Mời Lớp Học
+app.post('/api/loimoi-lophoc/:lopId/invite', ...requireLecturer, loiMoiLopHocController.inviteSinhVien);
+app.post('/api/loimoi-lophoc/:lopId/invite-batch', ...requireLecturer, loiMoiLopHocController.inviteBatch);
+app.get('/api/loimoi-lophoc/lophoc/:lopId', ...requireLecturer, loiMoiLopHocController.getInvitesByLopHoc);
+app.get('/api/loimoi-lophoc/sinhvien/:svId', ...requireAuth, loiMoiLopHocController.getMyClassInvites);
+app.post('/api/loimoi-lophoc/:id/respond', ...requireStudent, loiMoiLopHocController.respondToInvite);
+app.delete('/api/loimoi-lophoc/:id', ...requireLecturer, loiMoiLopHocController.cancelInvite);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
