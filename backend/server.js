@@ -90,6 +90,11 @@ io.on('connection', (socket) => {
     logger.info(`[SOCKET] Left competition room: ${deTaiId}`);
   });
 
+  socket.on('qr:register', ({ sessionId }) => {
+    socket.join(`qr:${sessionId}`);
+    logger.info(`[SOCKET] Registered socket ${socket.id} to QR room: ${sessionId}`);
+  });
+
   socket.on('disconnect', () => {
     logger.info(`[SOCKET] User disconnected: ${socket.id}`);
   });
@@ -142,6 +147,7 @@ const blockchainController = require('./controllers/blockchainController');
 const nhomController = require('./controllers/nhomController');
 const monHocController = require('./controllers/monHocController');
 const lopHocController = require('./controllers/lopHocController');
+const qrController = require('./controllers/qrController');
 
 // Middleware xác thực & phân quyền
 const { authenticateToken } = authController;
@@ -160,6 +166,12 @@ app.get('/', (req, res) => {
 app.post('/api/auth/challenge', loginLimiter, authController.generateChallenge);
 app.post('/api/auth/verify', loginLimiter, authController.verifySignature);
 app.post('/api/auth/logout', authController.authenticateToken, authController.logout);
+app.get('/api/auth/qr-session', loginLimiter, authController.generateQrSession);
+app.post('/api/auth/qr-submit', loginLimiter, authController.verifyQrSignature);
+
+// 2b. QR Routes
+app.get('/api/qr/me', ...requireAuth, qrController.getQrCode);
+app.post('/api/qr/generate', ...requireAuth, qrController.generateQrCode);
 
 // 3. Sinh Viên
 app.get('/api/sinhvien', sinhVienController.getAll);
