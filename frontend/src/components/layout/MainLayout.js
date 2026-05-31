@@ -101,12 +101,13 @@ const MainLayout = () => {
     { key: '/admin', icon: <Monitor size={18} />, label: 'Dashboard Admin' },
     { 
       key: '/admin/requests', 
-      icon: (
-        <Badge count={pendingRequestsCount} size="small" offset={[5, 0]}>
-          <Bell size={18} />
-        </Badge>
-      ), 
-      label: 'Yêu cầu' 
+      icon: <Bell size={18} />, 
+      label: (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Yêu cầu</span>
+          <Badge count={pendingRequestsCount} size="small" />
+        </div>
+      ) 
     }
   ];
 
