@@ -70,6 +70,17 @@ const verifySignature = async (req, res) => {
       } else {
         userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
         if (!userRecord) {
+          const pendingReq = await RoleRequest.findOne({ walletAddress: walletAddress.toLowerCase(), status: 'pending' });
+          if (pendingReq) {
+            challenges.delete(challengeId);
+            return res.json({
+              success: true,
+              isPending: true,
+              walletAddress: walletAddress.toLowerCase(),
+              message: 'Bạn đang có yêu cầu chờ duyệt.'
+            });
+          }
+
           const startOfDay = new Date();
           startOfDay.setHours(0, 0, 0, 0);
           const endOfDay = new Date();
@@ -202,6 +213,17 @@ const verifyQrSignature = async (req, res) => {
       } else {
         userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
         if (!userRecord) {
+          const pendingReq = await RoleRequest.findOne({ walletAddress: walletAddress.toLowerCase(), status: 'pending' });
+          if (pendingReq) {
+            qrSessions.delete(sessionId);
+            return res.json({
+              success: true,
+              isPending: true,
+              walletAddress: walletAddress.toLowerCase(),
+              message: 'Bạn đang có yêu cầu chờ duyệt.'
+            });
+          }
+
           const startOfDay = new Date();
           startOfDay.setHours(0, 0, 0, 0);
           const endOfDay = new Date();

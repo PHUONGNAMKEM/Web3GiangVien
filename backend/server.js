@@ -9,7 +9,7 @@ const logger = require('./config/logger');
 require('dotenv').config();
 
 const app = express();
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+const allowedOrigins = (process.env.FRONTEND_URL || 'https://web3.giangvien.ifanit.io.vn/')
   .split(',')
   .map(origin => origin.trim())
   .filter(Boolean);
@@ -47,29 +47,29 @@ const rateLimit = require('express-rate-limit');
 
 // Rate limiter cho upload báo cáo (ngăn spam file)
 const uploadLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 phút
-    max: 3,              // tối đa 3 lần upload/phút/IP
-    message: { error: 'Quá nhiều lần upload. Vui lòng thử lại sau 1 phút.' },
-    standardHeaders: true,
-    legacyHeaders: false,
+  windowMs: 60 * 1000, // 1 phút
+  max: 3,              // tối đa 3 lần upload/phút/IP
+  message: { error: 'Quá nhiều lần upload. Vui lòng thử lại sau 1 phút.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Rate limiter cho AI scoring
 const aiLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 10,
-    message: { error: 'Quá nhiều yêu cầu chấm điểm. Vui lòng thử lại sau.' },
-    standardHeaders: true,
-    legacyHeaders: false,
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: 'Quá nhiều yêu cầu chấm điểm. Vui lòng thử lại sau.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Rate limiter cho login (chống brute force)
 const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 phút
-    max: 20,
-    message: { error: 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau 15 phút.' },
-    standardHeaders: true,
-    legacyHeaders: false,
+  windowMs: 15 * 60 * 1000, // 15 phút
+  max: 20,
+  message: { error: 'Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau 15 phút.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Socket.IO
@@ -304,36 +304,36 @@ app.delete('/api/nhom/:id', ...requireStudent, nhomController.deleteNhom);
 
 // Multer error handler
 app.use((err, req, res, next) => {
-    if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({
-            error: 'File qua lon. Toi da 20MB.',
-            code: 'FILE_TOO_LARGE'
-        });
-    }
-    if (err.message && err.message.includes('PDF')) {
-        return res.status(400).json({
-            error: err.message,
-            code: 'INVALID_FILE_TYPE'
-        });
-    }
-    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-        return res.status(400).json({
-            error: 'File khong hop le.',
-            code: 'UNEXPECTED_FILE'
-        });
-    }
-    if (err.message === 'Not allowed by CORS') {
-        return res.status(403).json({
-            error: 'Origin khong duoc phep',
-            code: 'CORS_BLOCKED'
-        });
-    }
-    logger.error(`[SERVER] Unhandled error: ${err.message}`);
-    res.status(500).json({
-        error: process.env.NODE_ENV === 'production'
-            ? 'Co loi xay ra tren server.'
-            : err.message
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      error: 'File qua lon. Toi da 20MB.',
+      code: 'FILE_TOO_LARGE'
     });
+  }
+  if (err.message && err.message.includes('PDF')) {
+    return res.status(400).json({
+      error: err.message,
+      code: 'INVALID_FILE_TYPE'
+    });
+  }
+  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    return res.status(400).json({
+      error: 'File khong hop le.',
+      code: 'UNEXPECTED_FILE'
+    });
+  }
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      error: 'Origin khong duoc phep',
+      code: 'CORS_BLOCKED'
+    });
+  }
+  logger.error(`[SERVER] Unhandled error: ${err.message}`);
+  res.status(500).json({
+    error: process.env.NODE_ENV === 'production'
+      ? 'Co loi xay ra tren server.'
+      : err.message
+  });
 });
 
 // 13. Quản Lý Môn Học
