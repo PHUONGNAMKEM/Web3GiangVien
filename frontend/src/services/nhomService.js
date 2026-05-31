@@ -11,13 +11,22 @@ const getAuthHeaders = () => {
 const nhomService = {
   // Tạo nhóm mới
   createNhom: async (sinhVienId, tenNhom, soLuong, lopHocId) => {
-    const response = await axios.post(`${API_URL}/nhom`, { sinhVienId, tenNhom, soLuong, lopHocId }, { headers: getAuthHeaders() });
+    const data = { sinhVienId, tenNhom, soLuong, lopHocId };
+    if (lopHocId === 'KHOA_LUAN') {
+      data.loaiDeTai = 'KhoaLuan';
+    }
+    const response = await axios.post(`${API_URL}/nhom`, data, { headers: getAuthHeaders() });
     return response.data;
   },
 
   // Lấy nhóm của SV
   getNhomBySinhVien: async (svId, lopHocId) => {
-    const query = lopHocId ? `?lopHocId=${lopHocId}` : '';
+    let query = '';
+    if (lopHocId === 'KHOA_LUAN') {
+      query = '?loaiDeTai=KhoaLuan';
+    } else if (lopHocId) {
+      query = `?lopHocId=${lopHocId}`;
+    }
     const response = await axios.get(`${API_URL}/nhom/sinhvien/${svId}${query}`, { headers: getAuthHeaders() });
     return response.data;
   },

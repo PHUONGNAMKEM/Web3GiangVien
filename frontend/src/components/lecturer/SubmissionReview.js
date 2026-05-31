@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Table, Button, Badge, Drawer, Alert, Typography, InputNumber, Space, message, Tag, Steps, Spin, Skeleton, Empty, Tooltip, Descriptions, List, Divider, Input, Modal, Select } from 'antd';
-import { CheckSquare, ShieldCheck, BrainCircuit, ScanSearch, Fingerprint, ExternalLink, Download, Clock, RefreshCw } from 'lucide-react';
+import { Table, Button, Badge, Drawer, Alert, Typography, InputNumber, Space, message, Tag, Steps, Spin, Skeleton, Empty, Tooltip, Descriptions, List, Divider, Input, Modal, Select, Card } from 'antd';
+import { CheckSquare, ShieldCheck, BrainCircuit, ScanSearch, Fingerprint, ExternalLink, Download, Clock, RefreshCw, Users, TrendingUp, ListChecks } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
@@ -112,12 +112,12 @@ const SubmissionReview = () => {
   const groupMembers = useMemo(() => {
     if (!selectedSubmission) return [];
     if (selectedSubmission.members) return selectedSubmission.members;
-    if (!selectedSubmission.submission?.Nhom) return [];
-    const nhomId = selectedSubmission.submission.Nhom._id || selectedSubmission.submission.Nhom;
     
+    // Fallback: filter by registration ID instead of Nhom ID from submission
+    const regId = selectedSubmission.registration?._id;
+    if (!regId) return [];
     return submissions.filter(sub => {
-      const subNhomId = sub.submission?.Nhom?._id || sub.submission?.Nhom;
-      return subNhomId && subNhomId.toString() === nhomId.toString();
+      return sub.registration?._id?.toString() === regId.toString();
     });
   }, [selectedSubmission, submissions]);
 
@@ -611,14 +611,15 @@ const SubmissionReview = () => {
       key: 'context',
       width: 280,
       render: (_, record) => {
+        const isKL = record.topic?.LoaiDeTai === 'KhoaLuan';
         const classes = record.topic?.LopHoc || [];
-        const classNameStr = classes.map(c => c.TenLopHoc || c.MaLopHoc).join(', ') || 'N/A';
-        const subjectName = record.topic?.MonHoc?.TenMonHoc || 'N/A';
+        const classNameStr = isKL ? '📝 Khóa Luận' : (classes.map(c => c.TenLopHoc || c.MaLopHoc).join(', ') || 'N/A');
+        const subjectName = isKL ? '—' : (record.topic?.MonHoc?.TenMonHoc || 'N/A');
         const lecturerName = record.topic?.GiangVienHuongDan?.HoTen || 'N/A';
         
         return (
           <Space direction="vertical" size={2} style={{ fontSize: 13 }}>
-            <div><Text type="secondary">Lớp:</Text> <Text strong>{classNameStr}</Text></div>
+            <div><Text type="secondary">Lớp:</Text> <Text strong style={{ color: isKL ? '#d4b106' : 'inherit' }}>{classNameStr}</Text></div>
             <div><Text type="secondary">Môn:</Text> <Text>{subjectName}</Text></div>
             <div><Text type="secondary">GVHD:</Text> <Text italic style={{ color: '#555' }}>{lecturerName}</Text></div>
           </Space>
@@ -787,6 +788,10 @@ const SubmissionReview = () => {
   ];
 
   const filteredSubmissions = submissions.filter(record => {
+    if (selectedClassId === 'KHOA_LUAN') {
+      return record.topic?.LoaiDeTai === 'KhoaLuan';
+    }
+    if (record.topic?.LoaiDeTai === 'KhoaLuan') return false;
     if (!selectedClassId || selectedClassId === 'ALL') return true;
     const topicLopHocs = record.topic?.LopHoc || [];
     return topicLopHocs.some(lh => (lh._id || lh).toString() === selectedClassId.toString());
@@ -916,7 +921,7 @@ const SubmissionReview = () => {
 
             {/* Nút Download / Xem file IPFS */}
             {selectedSubmission.submission?.IPFS_CID && (
-              <div style={{ marginBottom: 16, padding: 12, background: '#e6f7ff', borderRadius: 8, border: '1px solid #91d5ff' }}>
+              <div style={{ marginBottom: 16, padding: 12, background: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
                 <Space>
                   <Button
                     type="primary"
@@ -976,12 +981,17 @@ const SubmissionReview = () => {
               })()
             )}
 
-            <div style={{ padding: 16, background: '#f8f9fa', borderRadius: 8, marginBottom: 24, borderLeft: '4px solid #1677ff' }}>
-              <Space style={{ marginBottom: 8 }}>
-                <BrainCircuit color="#1677ff" />
-                <Text strong>Trí Tuệ Nhân Tạo (PhoBERT) Phân Tích</Text>
-              </Space>
-
+            {/* === PHOBERT AI ANALYTICS === */}
+            <Card
+              size="small"
+              title={
+                <Space>
+                  <BrainCircuit size={16} color="#1677ff" />
+                  <Text strong>PhoBERT AI Phân Tích</Text>
+                </Space>
+              }
+              style={{ marginBottom: 20, borderLeft: '3px solid #1677ff' }}
+            >
               {analyzing ? (
                 <div style={{ padding: 16, textAlign: 'center' }}>
                   <Spin size="large" />
@@ -1004,66 +1014,95 @@ const SubmissionReview = () => {
                     </ul>
                   }
                   type={aiAnalysis.score >= 7 ? "success" : "warning"}
-                  style={{ marginTop: 8 }}
                 />
-              ) : null}
-            </div>
+              ) : (
+                <Text type="secondary" italic>Chưa có dữ liệu phân tích AI.</Text>
+              )}
+            </Card>
 
+            {/* === WEEKLY PROGRESS SUMMARY === */}
             {progressSummary && (
-              <div style={{ padding: 16, background: '#fff7e6', borderRadius: 8, marginBottom: 24, borderLeft: '4px solid #fa8c16' }}>
-                <Space style={{ marginBottom: 8 }}>
-                  <Text strong style={{ color: '#ad4e00', fontSize: 15 }}>Tóm tắt tiến độ tuần</Text>
-                </Space>
-                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+              <Card
+                size="small"
+                title={
+                  <Space>
+                    <TrendingUp size={16} color="#fa8c16" />
+                    <Text strong>Tóm Tắt Tiến Độ Tuần</Text>
+                  </Space>
+                }
+                style={{ marginBottom: 20, borderLeft: '3px solid #fa8c16' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, background: '#fafafa', padding: 12, borderRadius: 6, marginBottom: 12 }}>
                   <div>
-                    <Text type="secondary">Tổng số tuần có nhật ký</Text>
-                    <div><Text strong>{progressSummary.totalWeeks}</Text></div>
+                    <Text type="secondary">Tổng số tuần</Text>
+                    <div><Text strong style={{ fontSize: 16 }}>{progressSummary.totalWeeks}</Text></div>
                   </div>
                   <div>
                     <Text type="secondary">Tuần đạt yêu cầu</Text>
-                    <div><Text strong>{progressSummary.gradedWeeks}</Text></div>
+                    <div><Text strong style={{ fontSize: 16, color: '#52c41a' }}>{progressSummary.gradedWeeks}</Text></div>
                   </div>
                   <div>
-                    <Text type="secondary">Điểm trung bình (tuần đạt)</Text>
-                    <div><Text strong>{progressSummary.averageScore != null ? progressSummary.averageScore : '—'}</Text></div>
+                    <Text type="secondary">Điểm trung bình tuần</Text>
+                    <div><Text strong style={{ fontSize: 16, color: '#1677ff' }}>{progressSummary.averageScore != null ? progressSummary.averageScore : '—'}</Text></div>
                   </div>
                 </div>
-                <Text type="secondary" italic style={{ display: 'block', marginTop: 12 }}>
-                  Điểm quá trình chỉ mang tính tham khảo - KHÔNG tự cộng vào điểm cuối kỳ.
-                </Text>
-                {progressSummary.warnings?.length > 0 && (
-                  <div style={{ marginTop: 12, padding: 10, background: '#fff1f0', borderRadius: 6, border: '1px solid #ffccc7' }}>
-                    <Text strong style={{ color: '#a8071a' }}>Cảnh báo tiến độ:</Text>
-                    <ul style={{ margin: '6px 0 0 18px' }}>
-                      {progressSummary.warnings.map((warn, idx) => (
-                        <li key={idx}><Text>{formatWarningLabel(warn)}</Text></li>
-                      ))}
-                    </ul>
+                
+                {progressSummary.warnings?.length > 0 ? (
+                  <div style={{ marginBottom: 12 }}>
+                    <Alert
+                      type="error"
+                      showIcon
+                      message="Cảnh báo tiến độ"
+                      description={
+                        <ul style={{ margin: 0, paddingLeft: 16 }}>
+                          {progressSummary.warnings.map((warn, idx) => (
+                            <li key={idx}><Text>{formatWarningLabel(warn)}</Text></li>
+                          ))}
+                        </ul>
+                      }
+                    />
                   </div>
+                ) : (
+                  <Alert
+                    type="success"
+                    showIcon
+                    message="Tiến độ ổn định"
+                    description="Không phát hiện bất thường trong quá trình thực hiện."
+                    style={{ marginBottom: 12 }}
+                  />
                 )}
-              </div>
+                
+                <Text type="secondary" italic style={{ display: 'block', fontSize: 12 }}>
+                  * Điểm quá trình chỉ mang tính tham khảo - KHÔNG tự cộng vào điểm cuối kỳ.
+                </Text>
+              </Card>
             )}
 
-            {/* === RUBRICS CHI TIẾT (nếu đề tài có Rubrics) === */}
+            {/* === RUBRICS DETAIL EVALUATION === */}
             {rubricsResult.length > 0 && (
-              <div style={{ padding: 16, background: '#faf0ff', borderRadius: 8, marginBottom: 24, borderLeft: '4px solid #722ed1' }}>
-                <Space style={{ marginBottom: 12 }}>
-                  <Text strong style={{ color: '#722ed1', fontSize: 15 }}>📋 Chấm Điểm Theo Rubrics ({rubricsResult.length} tiêu chí)</Text>
-                </Space>
-
+              <Card
+                size="small"
+                title={
+                  <Space>
+                    <ListChecks size={16} color="#722ed1" />
+                    <Text strong>Chấm Điểm Theo Rubrics ({rubricsResult.length} tiêu chí)</Text>
+                  </Space>
+                }
+                style={{ marginBottom: 20, borderLeft: '3px solid #722ed1' }}
+              >
                 {gvRubricsScores.map((criteria, idx) => (
                   <div key={idx} style={{
-                    padding: 12, marginBottom: 8, background: '#fff', borderRadius: 6,
-                    border: '1px solid #d3adf7'
+                    padding: 12, marginBottom: 8, background: '#fafafa', borderRadius: 6,
+                    border: '1px solid #f0f0f0'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                       <Space>
                         <Text strong>{criteria.TenTieuChi}</Text>
-                        <Tag color="blue">{criteria.TrongSo}%</Tag>
+                        <Tag color="purple">{criteria.TrongSo}%</Tag>
                       </Space>
                       <Space>
-                        <Text type="secondary" style={{ fontSize: 12 }}>AI: {criteria.AI_DiemTieuChi}</Text>
-                        <Text strong>/</Text>
+                        <Text type="secondary" style={{ fontSize: 12 }}>AI gợi ý: {criteria.AI_DiemTieuChi}</Text>
+                        <Text strong>|</Text>
                         <InputNumber
                           min={0}
                           max={criteria.DiemToiDa || 10}
@@ -1095,12 +1134,12 @@ const SubmissionReview = () => {
                   </div>
                 ))}
 
-                <div style={{ textAlign: 'right', marginTop: 8, padding: 8, background: '#f0e6ff', borderRadius: 6 }}>
+                <div style={{ textAlign: 'right', marginTop: 12, padding: 12, background: '#fafafa', borderRadius: 6, border: '1px solid #f0f0f0' }}>
                   <Text strong style={{ color: '#722ed1', fontSize: 14 }}>
-                    Tổng điểm (trọng số): {score} / 10
+                    Tổng điểm (trọng số): <span style={{ fontSize: 16 }}>{score}</span> / 10
                   </Text>
                 </div>
-              </div>
+              </Card>
             )}
 
             <Steps
@@ -1163,12 +1202,17 @@ const SubmissionReview = () => {
 
                             {/* MỚI: Section danh sách thành viên nhóm */}
                             {isGroupTopic && groupMembers.length > 0 && (
-                              <div style={{ padding: 16, background: '#f6ffed', borderRadius: 8, marginBottom: 16, border: '1px solid #b7eb8f' }}>
-                                <Text strong>👥 Điểm các thành viên trong nhóm</Text>
-                                <Text type="secondary"> (Điểm gốc: {selectedSubmission.grade?.DiemGoc ?? selectedSubmission.grade?.Diem})</Text>
+                              <div style={{ padding: 12, background: '#fafafa', borderRadius: 8, marginBottom: 16, border: '1px solid #f0f0f0' }}>
+                                <Space style={{ marginBottom: 4 }}>
+                                  <Users size={14} color="#52c41a" />
+                                  <Text strong>Điểm các thành viên trong nhóm</Text>
+                                </Space>
+                                <span style={{ color: '#8c8c8c', fontSize: 12, display: 'block', marginBottom: 8 }}>
+                                  (Điểm gốc: {selectedSubmission.grade?.DiemGoc ?? selectedSubmission.grade?.Diem})
+                                </span>
                                 <List
                                   size="small"
-                                  style={{ marginTop: 8 }}
+                                  style={{ marginTop: 4 }}
                                   dataSource={groupMembers}
                                   renderItem={member => (
                                     <List.Item actions={[
@@ -1190,7 +1234,7 @@ const SubmissionReview = () => {
                               </div>
                             )}
 
-                            <Descriptions column={1} size="small" bordered style={{ background: '#f6ffed', borderRadius: 8 }}>
+                            <Descriptions column={1} size="small" bordered style={{ background: '#fafafa', borderRadius: 8 }}>
                               <Descriptions.Item label="Điểm GV chấm">
                                 <Text strong style={{ color: '#eb2f96', fontSize: 16 }}>{selectedSubmission.grade?.Diem || score}</Text>
                               </Descriptions.Item>

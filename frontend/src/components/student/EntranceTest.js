@@ -31,6 +31,11 @@ const EntranceTest = () => {
   const [competitionResult, setCompetitionResult] = useState(null); // 'winner' | 'waiting' | 'lost' | 'rejected'
   const [competitionStopped, setCompetitionStopped] = useState(false); // Bị dừng do nhóm khác thắng
   const socketRef = useRef(null);
+  const submittedRef = useRef(false);
+
+  useEffect(() => {
+    submittedRef.current = submitted;
+  }, [submitted]);
 
   useEffect(() => { fetchTest(); }, [deTaiId]);
 
@@ -54,7 +59,9 @@ const EntranceTest = () => {
       if (myNhom && winnerNhomId === myNhom._id) {
         // Nhóm mình thắng!
         setCompetitionResult('winner');
-        message.success({ content: '🏆 Chúc mừng! Nhóm bạn giành được đề tài!', duration: 10 });
+        if (!submittedRef.current) {
+          message.success({ content: '🏆 Chúc mừng! Nhóm bạn giành được đề tài!', duration: 10 });
+        }
       } else {
         // Nhóm khác thắng → dừng
         setCompetitionStopped(true);
@@ -106,8 +113,7 @@ const EntranceTest = () => {
       const test = await aiApiService.getBaiTestForStudent(deTaiId);
       setBaiTest(test);
     } catch (e) {
-      console.error(e);
-      message.error(e.response?.data?.error || 'Không thể tải bài test');
+      console.error('Lỗi tải bài test:', e);
     } finally {
       setLoading(false);
     }

@@ -26,6 +26,9 @@ export const LecturerClassProvider = ({ children }) => {
       if (savedId === 'ALL') {
         setSelectedClassId('ALL');
         setSelectedClass(null);
+      } else if (savedId === 'KHOA_LUAN') {
+        setSelectedClassId('KHOA_LUAN');
+        setSelectedClass(null);
       } else if (savedId) {
         const found = classes.find(c => c._id === savedId);
         if (found) {
@@ -52,7 +55,7 @@ export const LecturerClassProvider = ({ children }) => {
 
   const handleSelectClassId = (id) => {
     setSelectedClassId(id);
-    if (id === 'ALL') {
+    if (id === 'ALL' || id === 'KHOA_LUAN') {
       setSelectedClass(null);
     } else {
       const found = myClasses.find(c => c._id === id);
@@ -63,11 +66,14 @@ export const LecturerClassProvider = ({ children }) => {
     }
   };
 
+  const isKhoaLuanMode = selectedClassId === 'KHOA_LUAN';
+
   return (
     <LecturerClassContext.Provider value={{
       myClasses,
       selectedClassId,
       selectedClass,
+      isKhoaLuanMode,
       loading,
       setSelectedClassId: handleSelectClassId,
       refreshClasses: fetchClasses

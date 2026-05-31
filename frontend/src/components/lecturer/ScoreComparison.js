@@ -1,21 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Card, Tag, Typography, Space, Statistic, Row, Col, Select, Empty, Spin, Tooltip, Drawer, Descriptions, Badge } from 'antd';
-import { BarChart2, TrendingUp, TrendingDown, Equal, ShieldCheck, BrainCircuit } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Table, Card, Tag, Typography, Space, Statistic, Row, Col, Select, Empty, Spin, Tooltip, Drawer, Descriptions, Badge, Tabs } from 'antd';
+import { 
+  BarChart2, TrendingUp, TrendingDown, ShieldCheck, BrainCircuit, 
+  Users, Award, BookOpen, LayoutDashboard, Layers 
+} from 'lucide-react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell,
+  PieChart, Pie, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+} from 'recharts';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
+import { useLecturerClassContext } from '../../contexts/LecturerClassContext';
 
 const { Title, Text, Paragraph } = Typography;
 
+const CLASS_COLORS = ['#1677ff', '#eb2f96', '#722ed1', '#fa8c16', '#13c2c2', '#52c41a', '#faad14'];
+
 const ScoreComparison = () => {
   const isMobile = useIsMobile();
+  const { selectedClassId, setSelectedClassId } = useLecturerClassContext();
   const [loading, setLoading] = useState(true);
   const [comparisons, setComparisons] = useState([]);
-  const [stats, setStats] = useState({});
   const [topicFilter, setTopicFilter] = useState('all');
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
+  const [activeTab, setActiveTab] = useState('1');
 
   const user = authService.getCurrentUser();
 
@@ -25,7 +35,6 @@ const ScoreComparison = () => {
       setLoading(true);
       const data = await aiApiService.getScoreComparison(user.id);
       setComparisons(data.comparisons || []);
-      setStats(data.stats || {});
     } catch (e) {
       console.error('Lỗi lấy dữ liệu so sánh:', e);
     } finally {
@@ -35,25 +44,264 @@ const ScoreComparison = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Reset topic filter when class changes
+  useEffect(() => {
+    setTopicFilter('all');
+  }, [selectedClassId]);
+
+  // Lọc theo lớp học trước (Fix bug "Tất cả các lớp" không hiện dữ liệu)
+  const classFilteredComparisons = useMemo(() => {
+    return comparisons.filter(c => {
+      if (!selectedClassId || selectedClassId === 'ALL') return true;
+      if (!c.topic?.LopHoc || c.topic.LopHoc.length === 0) return true;
+      return c.topic.LopHoc.some(lh => (lh._id || lh).toString() === selectedClassId.toString());
+    });
+  }, [comparisons, selectedClassId]);
+
   // Lọc theo đề tài
-  const filteredData = topicFilter === 'all'
-    ? comparisons
-    : comparisons.filter(c => c.topic?._id === topicFilter);
+  const filteredData = useMemo(() => {
+    return topicFilter === 'all'
+      ? classFilteredComparisons
+      : classFilteredComparisons.filter(c => c.topic?._id === topicFilter);
+  }, [classFilteredComparisons, topicFilter]);
+
+  // Thống kê động theo dữ liệu đã lọc
+  const displayStats = useMemo(() => {
+    const count = filteredData.length;
+    if (count === 0) {
+      return {
+        totalGraded: 0,
+        avgGV: 0,
+        avgAI: 0,
+        avgAbsDiff: 0,
+        matchCount: 0,
+        gvHigherCount: 0,
+        aiHigherCount: 0
+      };
+    }
+    const totalGV = filteredData.reduce((s, c) => s + (c.gvScore || 0), 0);
+    const totalAI = filteredData.reduce((s, c) => s + (c.aiScore || 0), 0);
+    const totalAbsDiff = filteredData.reduce((s, c) => s + (c.absDiff || 0), 0);
+    const matchCount = filteredData.filter(c => Math.abs(c.diff) < 0.5).length;
+    const gvHigherCount = filteredData.filter(c => c.diff > 0).length;
+    const aiHigherCount = filteredData.filter(c => c.diff < 0).length;
+
+    return {
+      totalGraded: count,
+      avgGV: Math.round((totalGV / count) * 100) / 100,
+      avgAI: Math.round((totalAI / count) * 100) / 100,
+      avgAbsDiff: Math.round((totalAbsDiff / count) * 100) / 100,
+      matchCount,
+      gvHigherCount,
+      aiHigherCount
+    };
+  }, [filteredData]);
 
   // Danh sách đề tài unique cho filter
-  const topicOptions = [...new Map(comparisons.map(c => [c.topic?._id, c.topic])).values()];
+  const topicOptions = useMemo(() => {
+    return [...new Map(classFilteredComparisons.map(c => [c.topic?._id, c.topic])).values()];
+  }, [classFilteredComparisons]);
 
-  // Data cho biểu đồ
-  const chartData = filteredData.map((c, idx) => ({
-    name: c.student?.MaSV || `SV${idx + 1}`,
-    'Điểm GV': c.gvScore,
-    'Điểm AI': c.aiScore,
-  }));
+  // Data cho biểu đồ cột SV
+  const studentChartData = useMemo(() => {
+    return filteredData.map((c, idx) => ({
+      name: c.student?.HoTen?.split(' ').pop() || `SV${idx + 1}`,
+      fullName: c.student?.HoTen || 'N/A',
+      maSV: c.student?.MaSV || 'N/A',
+      topicName: c.topic?.TenDeTai || 'N/A',
+      'Điểm GV': c.gvScore,
+      'Điểm AI': c.aiScore,
+      diff: c.diff
+    }));
+  }, [filteredData]);
+
+  // Data cho biểu đồ tròn theo Lớp
+  const classChartData = useMemo(() => {
+    const classMap = {};
+    filteredData.forEach(c => {
+      const lopHocs = c.topic?.LopHoc || [];
+      if (lopHocs.length === 0) {
+        const key = 'unassigned';
+        if (!classMap[key]) {
+          classMap[key] = { id: 'unassigned', code: 'Không rõ lớp', name: 'Không rõ lớp học', total: 0, count: 0 };
+        }
+        classMap[key].total += (c.gvScore || 0);
+        classMap[key].count++;
+      } else {
+        lopHocs.forEach(lh => {
+          const id = lh._id || lh;
+          const code = lh.MaLopHoc || 'N/A';
+          const name = lh.TenLopHoc || lh.MaLopHoc || 'Lớp học';
+          if (!classMap[id]) {
+            classMap[id] = { id, code, name, total: 0, count: 0 };
+          }
+          classMap[id].total += (c.gvScore || 0);
+          classMap[id].count++;
+        });
+      }
+    });
+
+    return Object.values(classMap).map(item => ({
+      id: item.id,
+      name: item.code,
+      fullName: item.name,
+      value: Math.round((item.total / item.count) * 100) / 100,
+      count: item.count
+    }));
+  }, [filteredData]);
+
+  // Data cho biểu đồ tròn Phân Bố Chênh Lệch
+  const diffChartData = useMemo(() => {
+    return [
+      { name: 'Khớp (chênh lệch < 0.5)', value: displayStats.matchCount, color: '#52c41a' },
+      { name: 'GV chấm cao hơn', value: displayStats.gvHigherCount, color: '#eb2f96' },
+      { name: 'AI đề xuất cao hơn', value: displayStats.aiHigherCount, color: '#1677ff' },
+    ].filter(d => d.value > 0);
+  }, [displayStats]);
+
+  // Data cho biểu đồ cột Đề Tài
+  const topicChartData = useMemo(() => {
+    const topicMap = {};
+    filteredData.forEach(c => {
+      const tId = c.topic?._id || 'unassigned';
+      const tName = c.topic?.TenDeTai || 'N/A';
+      if (!topicMap[tId]) {
+        topicMap[tId] = { id: tId, name: tName, totalGV: 0, totalAI: 0, count: 0 };
+      }
+      topicMap[tId].totalGV += (c.gvScore || 0);
+      topicMap[tId].totalAI += (c.aiScore || 0);
+      topicMap[tId].count++;
+    });
+
+    return Object.values(topicMap).map(item => ({
+      name: item.name.length > 25 ? item.name.substring(0, 25) + '...' : item.name,
+      fullName: item.name,
+      'Điểm GV': Math.round((item.totalGV / item.count) * 100) / 100,
+      'Điểm AI': Math.round((item.totalAI / item.count) * 100) / 100,
+      count: item.count
+    }));
+  }, [filteredData]);
+
+  // Data cho biểu đồ phân bố điểm theo khoảng
+  const scoreDistributionData = useMemo(() => {
+    const ranges = [
+      { name: 'Xuất sắc (9.0-10)', gvCount: 0, aiCount: 0 },
+      { name: 'Giỏi (8.0-8.9)', gvCount: 0, aiCount: 0 },
+      { name: 'Khá (6.5-7.9)', gvCount: 0, aiCount: 0 },
+      { name: 'Trung bình (5.0-6.4)', gvCount: 0, aiCount: 0 },
+      { name: 'Yếu/Kém (< 5.0)', gvCount: 0, aiCount: 0 },
+    ];
+
+    filteredData.forEach(c => {
+      const gv = c.gvScore || 0;
+      const ai = c.aiScore || 0;
+
+      // GV
+      if (gv >= 9) ranges[0].gvCount++;
+      else if (gv >= 8) ranges[1].gvCount++;
+      else if (gv >= 6.5) ranges[2].gvCount++;
+      else if (gv >= 5) ranges[3].gvCount++;
+      else ranges[4].gvCount++;
+
+      // AI
+      if (ai >= 9) ranges[0].aiCount++;
+      else if (ai >= 8) ranges[1].aiCount++;
+      else if (ai >= 6.5) ranges[2].aiCount++;
+      else if (ai >= 5) ranges[3].aiCount++;
+      else ranges[4].aiCount++;
+    });
+
+    return ranges;
+  }, [filteredData]);
+
+  // Data cho biểu đồ radar Rubrics
+  const rubricsRadarData = useMemo(() => {
+    const criteriaMap = {};
+    filteredData.forEach(c => {
+      if (c.rubricsDetail && c.rubricsDetail.length > 0) {
+        c.rubricsDetail.forEach(r => {
+          const name = r.criteria || 'N/A';
+          if (!criteriaMap[name]) {
+            criteriaMap[name] = { name, totalGV: 0, totalAI: 0, count: 0 };
+          }
+          criteriaMap[name].totalGV += (r.gvScore || 0);
+          criteriaMap[name].totalAI += (r.aiScore || 0);
+          criteriaMap[name].count++;
+        });
+      }
+    });
+
+    return Object.values(criteriaMap).map(item => ({
+      subject: item.name,
+      'Điểm GV': Math.round((item.totalGV / item.count) * 100) / 100,
+      'Điểm AI': Math.round((item.totalAI / item.count) * 100) / 100,
+      count: item.count
+    }));
+  }, [filteredData]);
+
+  const onPieSliceClick = (data) => {
+    if (data && data.id && data.id !== 'unassigned') {
+      setSelectedClassId(data.id);
+    }
+  };
 
   const getDiffTag = (diff) => {
     if (Math.abs(diff) < 0.5) return <Tag color="green">Khớp</Tag>;
     if (diff > 0) return <Tag color="blue">GV +{diff}</Tag>;
     return <Tag color="orange">AI +{Math.abs(diff)}</Tag>;
+  };
+
+  // Custom tooltips cho recharts
+  const StudentTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <Card size="small" style={{ border: '1px solid #d9d9d9', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+          <div style={{ fontWeight: 'bold', marginBottom: 4 }}>{data.fullName}</div>
+          <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>MSSV: {data.maSV}</div>
+          <div style={{ fontSize: 12, marginBottom: 4 }}>
+            Đề tài: <span style={{ color: '#555' }}>{data.topicName}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
+            <span style={{ color: '#eb2f96', fontWeight: 'bold' }}>GV: {data['Điểm GV']}</span>
+            <span style={{ color: '#1677ff', fontWeight: 'bold' }}>AI: {data['Điểm AI']}</span>
+          </div>
+          <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>
+            Chênh lệch: <Tag color={Math.abs(data.diff) < 0.5 ? 'green' : data.diff > 0 ? 'blue' : 'orange'} style={{ marginRight: 0, fontSize: 10 }}>{data.diff > 0 ? `GV +${data.diff}` : `AI +${Math.abs(data.diff)}`}</Tag>
+          </div>
+        </Card>
+      );
+    }
+    return null;
+  };
+
+  const ClassTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <Card size="small" style={{ border: '1px solid #e8e8e8', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <div style={{ fontWeight: 'bold' }}>{data.fullName}</div>
+          <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>Sản lượng: {data.count} sinh viên</div>
+          <div style={{ fontSize: 13, color: '#eb2f96', fontWeight: 'bold', marginTop: 4 }}>TB Điểm GV: {data.value}</div>
+          <div style={{ fontSize: 11, color: '#1890ff', marginTop: 4 }}>Nhấp để lọc nhanh lớp này</div>
+        </Card>
+      );
+    }
+    return null;
+  };
+
+  const DiffTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <Card size="small" style={{ border: '1px solid #e8e8e8', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <div style={{ fontWeight: 'bold', color: data.color }}>{data.name}</div>
+          <div style={{ fontSize: 13, fontWeight: 'bold', marginTop: 4 }}>Số lượng: {data.value} SV</div>
+          <div style={{ fontSize: 12, color: '#666' }}>Tỷ lệ: {Math.round((data.value / (displayStats.totalGraded || 1)) * 100)}%</div>
+        </Card>
+      );
+    }
+    return null;
   };
 
   const columns = [
@@ -75,6 +323,34 @@ const ScoreComparison = () => {
           <Text type="secondary" style={{ fontSize: 11 }}>{r.student?.MaSV || ''}</Text>
         </Space>
       ),
+    },
+    {
+      title: 'Lớp Học',
+      key: 'class',
+      width: 120,
+      responsive: ['md'],
+      render: (_, r) => {
+        const lopHocs = r.topic?.LopHoc || [];
+        if (lopHocs.length === 0) return <Tag>Tất cả lớp</Tag>;
+        return (
+          <Space size={2} wrap>
+            {lopHocs.map(lh => (
+              <Tag key={lh._id || lh} color="cyan">{lh.MaLopHoc || lh.TenLopHoc || lh}</Tag>
+            ))}
+          </Space>
+        );
+      }
+    },
+    {
+      title: 'Môn Học',
+      key: 'subject',
+      width: 150,
+      responsive: ['md'],
+      render: (_, r) => {
+        const monHoc = r.topic?.MonHoc;
+        if (!monHoc) return <Text type="secondary">—</Text>;
+        return <Tag color="geekblue">{monHoc.TenMonHoc || monHoc.MaMonHoc || monHoc}</Tag>;
+      }
     },
     {
       title: 'Đề Tài',
@@ -136,101 +412,357 @@ const ScoreComparison = () => {
     return <div style={{ textAlign: 'center', padding: 80 }}><Spin size="large" /><br /><Text type="secondary">Đang tải dữ liệu...</Text></div>;
   }
 
+  const tabItems = [
+    {
+      key: '1',
+      label: (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <LayoutDashboard size={16} />
+          Tổng Quan
+        </span>
+      ),
+      children: (
+        <div>
+          {/* Thống kê cards */}
+          <Row gutter={[12, 12]} style={{ marginBottom: 24 }}>
+            <Col xs={12} sm={8} md={6} lg={3}>
+              <Card 
+                size="small" 
+                style={{ 
+                  background: 'linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)', 
+                  border: 'none', 
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Users size={20} color="#1677ff" />
+                  <Statistic title="Sinh viên" value={displayStats.totalGraded || 0} valueStyle={{ fontSize: 20 }} />
+                </div>
+              </Card>
+            </Col>
+            <Col xs={12} sm={8} md={6} lg={3}>
+              <Card 
+                size="small" 
+                style={{ 
+                  background: 'linear-gradient(135deg, #fff0f6 0%, #ffd6e7 100%)', 
+                  border: 'none', 
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Award size={20} color="#eb2f96" />
+                  <Statistic title="TB Điểm GV" value={displayStats.avgGV || 0} precision={2} valueStyle={{ color: '#eb2f96', fontSize: 20 }} />
+                </div>
+              </Card>
+            </Col>
+            <Col xs={12} sm={8} md={6} lg={3}>
+              <Card 
+                size="small" 
+                style={{ 
+                  background: 'linear-gradient(135deg, #f9f0ff 0%, #e8d0ff 100%)', 
+                  border: 'none', 
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <BrainCircuit size={20} color="#722ed1" />
+                  <Statistic title="TB Điểm AI" value={displayStats.avgAI || 0} precision={2} valueStyle={{ color: '#722ed1', fontSize: 20 }} />
+                </div>
+              </Card>
+            </Col>
+            <Col xs={12} sm={8} md={6} lg={3}>
+              <Card 
+                size="small" 
+                style={{ 
+                  background: 'linear-gradient(135deg, #fffbe6 0%, #ffe58f 100%)', 
+                  border: 'none', 
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TrendingUp size={20} color="#faad14" />
+                  <Statistic title="TB Chênh Lệch" value={displayStats.avgAbsDiff || 0} precision={2} valueStyle={{ color: '#d48806', fontSize: 20 }} />
+                </div>
+              </Card>
+            </Col>
+            <Col xs={12} sm={8} md={6} lg={4}>
+              <Card 
+                size="small" 
+                style={{ 
+                  background: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)', 
+                  border: 'none', 
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ShieldCheck size={20} color="#52c41a" />
+                  <Statistic title="Khớp (±0.5)" value={displayStats.matchCount || 0} suffix={`/ ${displayStats.totalGraded || 0}`} valueStyle={{ color: '#52c41a', fontSize: 18 }} />
+                </div>
+              </Card>
+            </Col>
+            <Col xs={12} sm={8} md={6} lg={4}>
+              <Card 
+                size="small" 
+                style={{ 
+                  background: 'linear-gradient(135deg, #fff2e8 0%, #ffbb96 100%)', 
+                  border: 'none', 
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TrendingUp size={20} color="#fa541c" />
+                  <Statistic title="GV cao hơn" value={displayStats.gvHigherCount || 0} valueStyle={{ color: '#fa541c', fontSize: 18 }} />
+                </div>
+              </Card>
+            </Col>
+            <Col xs={24} sm={8} md={6} lg={4}>
+              <Card 
+                size="small" 
+                style={{ 
+                  background: 'linear-gradient(135deg, #f0f5ff 0%, #adc6ff 100%)', 
+                  border: 'none', 
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TrendingDown size={20} color="#2f54eb" />
+                  <Statistic title="AI cao hơn" value={displayStats.aiHigherCount || 0} valueStyle={{ color: '#2f54eb', fontSize: 18 }} />
+                </div>
+              </Card>
+            </Col>
+          </Row>
+
+          {/* Biểu đồ tròn */}
+          <Row gutter={[16, 16]}>
+            <Col xs={24} lg={12}>
+              <Card title="TB Điểm GV Theo Lớp Học" size="small" style={{ borderRadius: '12px' }}>
+                {classChartData.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <PieChart>
+                        <RechartsTooltip content={<ClassTooltip />} />
+                        <Pie
+                          data={classChartData}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                          onClick={onPieSliceClick}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {classChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={CLASS_COLORS[index % CLASS_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Legend verticalAlign="bottom" height={36} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <Text type="secondary" style={{ fontSize: 12, marginTop: 8 }}>
+                      *Nhấp chọn 1 slice để lọc nhanh chi tiết theo lớp tương ứng
+                    </Text>
+                  </div>
+                ) : (
+                  <Empty description="Chưa có dữ liệu lớp học" style={{ padding: 40 }} />
+                )}
+              </Card>
+            </Col>
+            <Col xs={24} lg={12}>
+              <Card title="Phân Bố Mức Độ Chênh Lệch AI vs GV" size="small" style={{ borderRadius: '12px' }}>
+                {diffChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                      <RechartsTooltip content={<DiffTooltip />} />
+                      <Pie
+                        data={diffChartData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {diffChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Legend verticalAlign="bottom" height={36} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Empty description="Chưa có dữ liệu chênh lệch" style={{ padding: 40 }} />
+                )}
+              </Card>
+            </Col>
+          </Row>
+        </div>
+      )
+    },
+    {
+      key: '2',
+      label: (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Users size={16} />
+          Chi Tiết Sinh Viên
+        </span>
+      ),
+      children: (
+        <div>
+          {/* Biểu đồ so sánh chi tiết sinh viên */}
+          {studentChartData.length > 0 ? (
+            <Card title="Biểu Đồ So Sánh Chi Tiết Từng Sinh Viên" style={{ marginBottom: 24, borderRadius: '12px' }} size="small">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={studentChartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" fontSize={11} />
+                  <YAxis domain={[0, 10]} fontSize={12} />
+                  <RechartsTooltip content={<StudentTooltip />} />
+                  <Legend />
+                  <Bar dataKey="Điểm GV" fill="#eb2f96" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Điểm AI" fill="#1677ff" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          ) : null}
+
+          {/* Filter + Bảng */}
+          <Card size="small" style={{ borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+              <Space>
+                <Text strong>Lọc theo đề tài:</Text>
+                <Select
+                  value={topicFilter}
+                  onChange={setTopicFilter}
+                  style={{ width: 280 }}
+                  options={[
+                    { value: 'all', label: 'Tất cả đề tài' },
+                    ...topicOptions.map(t => ({ value: t?._id, label: t?.TenDeTai || 'N/A' }))
+                  ]}
+                />
+              </Space>
+              {selectedClassId !== 'ALL' && (
+                <Tag color="blue" closable onClose={() => setSelectedClassId('ALL')}>
+                  Đang lọc lớp học
+                </Tag>
+              )}
+            </div>
+
+            <Table
+              columns={columns}
+              dataSource={filteredData}
+              rowKey="_id"
+              pagination={{ pageSize: 10 }}
+              size="small"
+              scroll={{ x: 'max-content' }}
+              locale={{ emptyText: <Empty description="Chưa có dữ liệu chấm điểm nào có điểm AI." /> }}
+            />
+          </Card>
+        </div>
+      )
+    },
+    {
+      key: '3',
+      label: (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Layers size={16} />
+          Thống Kê Nâng Cao
+        </span>
+      ),
+      children: (
+        <div>
+          <Row gutter={[16, 16]}>
+            {/* Điểm TB theo đề tài */}
+            <Col xs={24} lg={12}>
+              <Card title="So Sánh Điểm TB Theo Đề Tài / Bài Toán" size="small" style={{ borderRadius: '12px' }}>
+                {topicChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={topicChartData} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" fontSize={10} />
+                      <YAxis domain={[0, 10]} fontSize={11} />
+                      <RechartsTooltip 
+                        formatter={(value, name, props) => [`${value} (TB)`, name]} 
+                        labelFormatter={(label, items) => items[0]?.payload?.fullName || label}
+                      />
+                      <Legend />
+                      <Bar dataKey="Điểm GV" fill="#eb2f96" radius={[3, 3, 0, 0]} />
+                      <Bar dataKey="Điểm AI" fill="#1677ff" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Empty description="Không có dữ liệu đề tài" style={{ padding: 40 }} />
+                )}
+              </Card>
+            </Col>
+
+            {/* Phân bố khoảng điểm */}
+            <Col xs={24} lg={12}>
+              <Card title="Phân Bố Số Lượng Theo Khoảng Điểm" size="small" style={{ borderRadius: '12px' }}>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={scoreDistributionData} layout="y" margin={{ top: 10, right: 30, left: 40, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="name" type="category" fontSize={11} width={130} />
+                    <RechartsTooltip />
+                    <Legend />
+                    <Bar dataKey="gvCount" name="Số SV (GV chấm)" fill="#eb2f96" radius={[0, 3, 3, 0]} />
+                    <Bar dataKey="aiCount" name="Số SV (AI gợi ý)" fill="#1677ff" radius={[0, 3, 3, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            </Col>
+          </Row>
+
+          {/* Phân tích Rubrics (Radar Chart) */}
+          {rubricsRadarData.length > 0 && (
+            <Card title="Phân Tích So Sánh Chi Tiết Tiêu Chí Rubrics (TB Điểm)" size="small" style={{ marginTop: 24, borderRadius: '12px' }}>
+              <ResponsiveContainer width="100%" height={360}>
+                <RadarChart cx="50%" cy="50%" outerRadius="75%" data={rubricsRadarData}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="subject" fontSize={11} />
+                  <PolarRadiusAxis angle={30} domain={[0, 10]} />
+                  <Radar name="Điểm GV" dataKey="Điểm GV" stroke="#eb2f96" fill="#eb2f96" fillOpacity={0.25} />
+                  <Radar name="Điểm AI" dataKey="Điểm AI" stroke="#1677ff" fill="#1677ff" fillOpacity={0.25} />
+                  <Legend />
+                  <RechartsTooltip />
+                </RadarChart>
+              </ResponsiveContainer>
+            </Card>
+          )}
+        </div>
+      )
+    }
+  ];
+
   return (
     <div>
-      <Title level={3} style={{ marginBottom: 8 }}>
-        <Space><BarChart2 size={24} /> So Sánh Điểm AI vs Giảng Viên</Space>
+      <Title level={3} style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <BarChart2 size={24} /> Dashboard So Sánh Điểm AI vs Giảng Viên
       </Title>
-      <Paragraph type="secondary" style={{ marginBottom: 24 }}>
-        Bảng tổng hợp so sánh điểm AI (PhoBERT) gợi ý với điểm Giảng viên chấm thực tế cho tất cả sinh viên đã được chấm điểm.
+      <Paragraph type="secondary" style={{ marginBottom: 20 }}>
+        Dashboard phân tích và so sánh các đánh giá từ mô hình AI PhoBERT hỗ trợ giảng viên với điểm đánh giá thực tế của giảng viên.
       </Paragraph>
 
-      {/* Thống kê tổng quan */}
-      <Row gutter={[12, 12]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
-          <Card size="small" style={{ borderTop: '3px solid #1677ff' }}>
-            <Statistic title="Số SV đã chấm" value={stats.totalGraded || 0} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
-          <Card size="small" style={{ borderTop: '3px solid #eb2f96' }}>
-            <Statistic title="TB Điểm GV" value={stats.avgGV || 0} precision={2} valueStyle={{ color: '#eb2f96' }} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
-          <Card size="small" style={{ borderTop: '3px solid #1677ff' }}>
-            <Statistic title="TB Điểm AI" value={stats.avgAI || 0} precision={2} valueStyle={{ color: '#1677ff' }} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
-          <Card size="small" style={{ borderTop: '3px solid #faad14' }}>
-            <Statistic title="TB Chênh Lệch" value={stats.avgAbsDiff || 0} precision={2} prefix={<TrendingUp size={14} />} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
-          <Card size="small" style={{ borderTop: '3px solid #52c41a' }}>
-            <Statistic title="Khớp (±0.5)" value={stats.matchCount || 0} suffix={`/ ${stats.totalGraded || 0}`} valueStyle={{ color: '#52c41a' }} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
-          <Card size="small" style={{ borderTop: '3px solid #722ed1' }}>
-            <Statistic title="GV cao hơn" value={stats.gvHigherCount || 0} valueStyle={{ color: '#722ed1' }} prefix={<TrendingUp size={14} />} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={8} lg={6} xl={4}>
-          <Card size="small" style={{ borderTop: '3px solid #fa8c16' }}>
-            <Statistic title="AI cao hơn" value={stats.aiHigherCount || 0} valueStyle={{ color: '#fa8c16' }} prefix={<TrendingDown size={14} />} />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Biểu đồ */}
-      {chartData.length > 0 && (
-        <Card title="Biểu Đồ So Sánh" style={{ marginBottom: 24 }} size="small">
-          <ResponsiveContainer width="100%" height={isMobile ? 200 : 300}>
-            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" fontSize={12} />
-              <YAxis domain={[0, 10]} fontSize={12} />
-              <RechartsTooltip />
-              <Legend />
-              <Bar dataKey="Điểm AI" fill="#1677ff" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Điểm GV" fill="#eb2f96" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-      )}
-
-      {/* Filter + Bảng */}
-      <Card size="small">
-        <Space style={{ marginBottom: 16 }}>
-          <Text strong>Lọc theo đề tài:</Text>
-          <Select
-            value={topicFilter}
-            onChange={setTopicFilter}
-            style={{ width: 300 }}
-            options={[
-              { value: 'all', label: 'Tất cả đề tài' },
-              ...topicOptions.map(t => ({ value: t?._id, label: t?.TenDeTai || 'N/A' }))
-            ]}
-          />
-        </Space>
-
-        <Table
-          columns={columns}
-          dataSource={filteredData}
-          rowKey="_id"
-          pagination={{ pageSize: 10 }}
-          size="small"
-          scroll={{ x: 'max-content' }}
-          locale={{ emptyText: <Empty description="Chưa có dữ liệu chấm điểm nào có điểm AI." /> }}
-        />
-      </Card>
+      <Tabs 
+        activeKey={activeTab} 
+        onChange={setActiveTab} 
+        items={tabItems} 
+        style={{ marginBottom: 24 }}
+        type="card"
+      />
 
       {/* Drawer chi tiết */}
       <Drawer
-        title="Chi Tiết So Sánh"
-        width={isMobile ? '100vw' : 500}
+        title="Chi Tiết So Sánh Kết Quả Đánh Giá"
+        width={isMobile ? '100vw' : 520}
         open={drawerVisible}
         onClose={() => setDrawerVisible(false)}
       >
@@ -262,19 +794,19 @@ const ScoreComparison = () => {
             </Descriptions>
 
             {selectedRecord.feedback && (
-              <Card size="small" title="Nhận xét GV" style={{ marginBottom: 12 }}>
-                <Paragraph>{selectedRecord.feedback}</Paragraph>
+              <Card size="small" title="Nhận xét GV" style={{ marginBottom: 12, borderRadius: '8px' }}>
+                <Paragraph style={{ margin: 0 }}>{selectedRecord.feedback}</Paragraph>
               </Card>
             )}
 
             {selectedRecord.aiFeedback && (
-              <Card size="small" title="Phản hồi AI" style={{ marginBottom: 12 }}>
-                <Paragraph>{selectedRecord.aiFeedback}</Paragraph>
+              <Card size="small" title="Phản hồi AI" style={{ marginBottom: 12, borderRadius: '8px' }}>
+                <Paragraph style={{ margin: 0 }}>{selectedRecord.aiFeedback}</Paragraph>
               </Card>
             )}
 
             {selectedRecord.rubricsDetail?.length > 0 && (
-              <Card size="small" title={`Rubrics Chi Tiết (${selectedRecord.rubricsDetail.length} tiêu chí)`}>
+              <Card size="small" title={`Rubrics Chi Tiết (${selectedRecord.rubricsDetail.length} tiêu chí)`} style={{ borderRadius: '8px' }}>
                 {selectedRecord.rubricsDetail.map((r, idx) => (
                   <div key={idx} style={{ padding: '8px 0', borderBottom: idx < selectedRecord.rubricsDetail.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>

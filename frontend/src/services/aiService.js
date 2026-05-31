@@ -11,7 +11,12 @@ const getAuthHeaders = () => {
 const aiApiService = {
     // Lấy danh sách đề tài từ MongoDB
     getTopics: async (lopHocId) => {
-        const query = lopHocId ? `?lopHocId=${lopHocId}` : '';
+        let query = '';
+        if (lopHocId === 'KHOA_LUAN') {
+            query = '?loaiDeTai=KhoaLuan';
+        } else if (lopHocId && lopHocId !== 'ALL') {
+            query = `?lopHocId=${lopHocId}`;
+        }
         const response = await axios.get(`${API_URL}/detai${query}`, { headers: getAuthHeaders() });
         return response.data;
     },
@@ -42,7 +47,12 @@ const aiApiService = {
 
     // Kiểm tra SV đã đăng ký đề tài nào chưa
     getMyRegistration: async (svId, lopHocId) => {
-        const query = lopHocId ? `?lopHocId=${lopHocId}` : '';
+        let query = '';
+        if (lopHocId === 'KHOA_LUAN') {
+            query = '?loaiDeTai=KhoaLuan';
+        } else if (lopHocId) {
+            query = `?lopHocId=${lopHocId}`;
+        }
         const response = await axios.get(`${API_URL}/dangky/sinhvien/${svId}${query}`, { headers: getAuthHeaders() });
         return response.data;
     },
@@ -68,8 +78,14 @@ const aiApiService = {
     },
 
     // GV lấy danh sách đăng ký
-    getRegistrationsByLecturer: async (gvId) => {
-        const response = await axios.get(`${API_URL}/dangky/giangvien/${gvId}`, { headers: getAuthHeaders() });
+    getRegistrationsByLecturer: async (gvId, lopHocId) => {
+        let query = '';
+        if (lopHocId === 'KHOA_LUAN') {
+            query = '?loaiDeTai=KhoaLuan';
+        } else if (lopHocId && lopHocId !== 'ALL') {
+            query = `?lopHocId=${lopHocId}`;
+        }
+        const response = await axios.get(`${API_URL}/dangky/giangvien/${gvId}${query}`, { headers: getAuthHeaders() });
         return response.data;
     },
 

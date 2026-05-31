@@ -55,8 +55,7 @@ const ProgressLog = () => {
                 setLogs([]);
             }
         } catch (e) {
-            console.error(e);
-            message.error('Không thể lấy dữ liệu tiến độ');
+            console.error('Không thể lấy dữ liệu tiến độ', e);
         } finally {
             setLoading(false);
         }

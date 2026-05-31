@@ -17,6 +17,7 @@ const TopicRegistration = () => {
   const [loading, setLoading] = useState(true);
   const [registeredTopicId, setRegisteredTopicId] = useState(null); // ID đề tài đã đăng ký
   const [registrationStatus, setRegistrationStatus] = useState(null); // 'ChoDuyet' | 'DaDuyet' | 'TuChoi'
+  const [activeRegistrations, setActiveRegistrations] = useState([]); // Đăng ký khóa luận active
   const [registrationId, setRegistrationId] = useState(null);
   const [fullRegistration, setFullRegistration] = useState(null);
   const [inviteMaSV, setInviteMaSV] = useState('');
@@ -46,6 +47,7 @@ const TopicRegistration = () => {
       setRegistrationId(null);
       setFullRegistration(null);
       setTestSubmitted(false);
+      setActiveRegistrations([]);
 
       // 0. Lấy nhóm của SV
       try {
@@ -56,23 +58,38 @@ const TopicRegistration = () => {
       }
 
       // 1. Kiểm tra SV đã đăng ký đề tài nào chưa
-      const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
-      if (regRes.registration) {
-        setRegisteredTopicId(regRes.registration.DeTai?._id || regRes.registration.DeTai);
-        setRegistrationStatus(regRes.registration.TrangThai);
-        setRegistrationId(regRes.registration._id);
-        setFullRegistration(regRes.registration);
+      if (selectedClassId === 'KHOA_LUAN') {
+        const regsRes = await aiApiService.getMyRegistrations(user.id);
+        const klRegs = (regsRes.registrations || []).filter(r => r.DeTai?.LoaiDeTai === 'KhoaLuan');
+        setActiveRegistrations(klRegs);
+        
+        // Kiểm tra xem có cái nào đã DaDuyet (thắng) không
+        const won = klRegs.find(r => r.TrangThai === 'DaDuyet');
+        if (won) {
+          setRegisteredTopicId(won.DeTai?._id || won.DeTai);
+          setRegistrationStatus(won.TrangThai);
+          setRegistrationId(won._id);
+          setFullRegistration(won);
+        }
+      } else {
+        const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
+        if (regRes.registration) {
+          setRegisteredTopicId(regRes.registration.DeTai?._id || regRes.registration.DeTai);
+          setRegistrationStatus(regRes.registration.TrangThai);
+          setRegistrationId(regRes.registration._id);
+          setFullRegistration(regRes.registration);
 
-        // Kiểm tra đã nộp bài test chưa
-        if (regRes.registration.TrangThai === 'ChoTest') {
-          const deTaiIdForTest = regRes.registration.DeTai?._id || regRes.registration.DeTai;
-          try {
-            const checkTest = await aiApiService.checkTestSubmitted(deTaiIdForTest, user.id);
-            if (checkTest.submitted) {
-              setTestSubmitted(true);
+          // Kiểm tra đã nộp bài test chưa
+          if (regRes.registration.TrangThai === 'ChoTest') {
+            const deTaiIdForTest = regRes.registration.DeTai?._id || regRes.registration.DeTai;
+            try {
+              const checkTest = await aiApiService.checkTestSubmitted(deTaiIdForTest, user.id);
+              if (checkTest.submitted) {
+                setTestSubmitted(true);
+              }
+            } catch (e) {
+              console.warn('Không kiểm tra được trạng thái test');
             }
-          } catch (e) {
-            console.warn('Không kiểm tra được trạng thái test');
           }
         }
       }
@@ -124,7 +141,7 @@ const TopicRegistration = () => {
       setTopics(enriched.sort((a, b) => parseFloat(b.ai_score) - parseFloat(a.ai_score)));
     } catch (error) {
       console.error("Lỗi lấy đề tài:", error);
-      message.warning("Có lỗi khi tải dữ liệu đề tài.");
+      console.warn("Có lỗi khi tải dữ liệu đề tài.");
     } finally {
       setLoading(false);
     }
@@ -306,10 +323,15 @@ const TopicRegistration = () => {
   };
 
   const isRegistered = (topicId) => {
+    if (selectedClassId === 'KHOA_LUAN') {
+      return activeRegistrations.some(r => (r.DeTai?._id || r.DeTai || '').toString() === topicId.toString());
+    }
     return registeredTopicId && registeredTopicId.toString() === topicId.toString();
   };
 
-  const hasAnyRegistration = !!registeredTopicId;
+  const hasAnyRegistration = selectedClassId === 'KHOA_LUAN'
+    ? activeRegistrations.some(r => r.TrangThai === 'DaDuyet')
+    : !!registeredTopicId;
 
   return (
     <div>
@@ -360,6 +382,63 @@ const TopicRegistration = () => {
           showIcon
           style={{ marginBottom: 24 }}
         />
+      )}
+
+      {selectedClassId === 'KHOA_LUAN' && activeRegistrations.length > 0 && !registeredTopicId && (
+        <Card title="🏆 Các đề tài khóa luận bạn đang cạnh tranh" style={{ marginBottom: 24, border: '1px solid #1677ff', background: '#f0f5ff' }}>
+          <List
+            dataSource={activeRegistrations}
+            renderItem={reg => (
+              <List.Item
+                actions={[
+                  reg.TrangThai === 'ChoTest' && (
+                    <Button type="primary" size="small" style={{ background: '#722ed1', borderColor: '#722ed1' }}
+                      onClick={() => navigate(`/student/entrance-test/${reg.DeTai?._id || reg.DeTai}`)}>
+                      Làm bài test
+                    </Button>
+                  ),
+                  ['ChoDuyet', 'ChoTest', 'DangLamTest'].includes(reg.TrangThai) && (
+                    <Button size="small" type="primary" danger onClick={() => {
+                      Modal.confirm({
+                        title: 'Hủy Đăng Ký Đề Tài',
+                        content: `Bạn có chắc muốn hủy đăng ký đề tài "${reg.DeTai?.TenDeTai}" không?`,
+                        okText: 'Xác Nhận Hủy',
+                        okButtonProps: { danger: true },
+                        cancelText: 'Quay lại',
+                        onOk: async () => {
+                          try {
+                            await aiApiService.cancelRegistration(reg._id);
+                            message.success('Đã hủy đăng ký thành công!');
+                            await fetchData();
+                          } catch (err) {
+                            message.error(err.response?.data?.error || 'Hủy thất bại');
+                          }
+                        }
+                      });
+                    }}>
+                      Hủy Đăng Ký
+                    </Button>
+                  )
+                ].filter(Boolean)}
+              >
+                <List.Item.Meta
+                  title={<Text strong style={{ fontSize: 15 }}>{reg.DeTai?.TenDeTai}</Text>}
+                  description={
+                    <div style={{ marginTop: 4 }}>
+                      <span>GV: {reg.DeTai?.GiangVienHuongDan?.HoTen || 'N/A'} • </span>
+                      <span>Trạng thái: </span>
+                      {reg.TrangThai === 'ChoTest' && <Tag color="volcano">Cần làm test</Tag>}
+                      {reg.TrangThai === 'DangLamTest' && <Tag color="purple">Đang làm test</Tag>}
+                      {reg.TrangThai === 'DaSubmit' && <Tag color="blue">Đã submit test</Tag>}
+                      {reg.TrangThai === 'ChoDuyet' && <Tag color="orange">Chờ duyệt</Tag>}
+                      {reg.TrangThai === 'ChoDoi' && <Tag color="geekblue">Chờ đối thủ</Tag>}
+                    </div>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        </Card>
       )}
 
       {hasAnyRegistration && fullRegistration && (
@@ -468,12 +547,21 @@ const TopicRegistration = () => {
           <Row gutter={[24, 24]} className="topic-row">
             {topics.filter(topic => {
               if (!selectedClassId) return false;
+              if (selectedClassId === 'KHOA_LUAN') {
+                return topic.LoaiDeTai === 'KhoaLuan';
+              }
+              if (topic.LoaiDeTai === 'KhoaLuan') return false; // Không hiện đề tài KL ở luồng lớp học
               if (!topic.LopHoc || topic.LopHoc.length === 0) return true;
               return topic.LopHoc.some(lh => (lh._id || lh).toString() === selectedClassId.toString());
             }).map(topic => {
               const thisRegistered = isRegistered(topic._id);
               const disabled = hasAnyRegistration || !myNhom || !myNhom.DaChot || topic.DaChotNhom;
               const sizeMismatch = myNhom && myNhom.DaChot && (topic.SoLuongSinhVien || 1) !== (myNhom.ThanhVien?.filter(tv => tv.TrangThai === 'DaChapNhan').length || 0);
+
+              const thisRegRecord = selectedClassId === 'KHOA_LUAN'
+                ? activeRegistrations.find(r => (r.DeTai?._id || r.DeTai || '').toString() === topic._id.toString())
+                : null;
+              const thisRegStatus = thisRegRecord ? thisRegRecord.TrangThai : registrationStatus;
 
             const cardContent = (
               <Card
@@ -486,11 +574,11 @@ const TopicRegistration = () => {
                         type="primary"
                         icon={<Lock size={16} />}
                         disabled
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', background: registrationStatus === 'DaDuyet' ? '#52c41a' : '#1677ff', borderColor: registrationStatus === 'DaDuyet' ? '#52c41a' : '#1677ff', color: '#fff', opacity: 0.8 }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', background: thisRegStatus === 'DaDuyet' ? '#52c41a' : '#1677ff', borderColor: thisRegStatus === 'DaDuyet' ? '#52c41a' : '#1677ff', color: '#fff', opacity: 0.8 }}
                       >
-                        {registrationStatus === 'DaDuyet' ? 'Đã Được Duyệt' : 'Đã Đăng Ký'}
+                        {thisRegStatus === 'DaDuyet' ? 'Đã Được Duyệt' : 'Đã Đăng Ký'}
                       </Button>
-                    ) : topic.DaChotNhom ? (
+                    ) : (topic.DaChotNhom && !thisRegistered) ? (
                       <Button disabled style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}>
                         Đã chốt cho nhóm khác
                       </Button>
@@ -528,35 +616,44 @@ const TopicRegistration = () => {
                   <Text type="secondary">Sinh viên tối đa:</Text>
                   <Tag color="geekblue" style={{ marginLeft: 8, marginTop: 4 }}>{topic.SoLuongSinhVien || 1} SV</Tag>
                   <br />
-                  <Text type="secondary">Lớp học áp dụng:</Text>
-                  <Space size={2} wrap style={{ marginLeft: 8, marginTop: 4 }}>
-                    {(topic.LopHoc || []).length > 0 ? (
-                      topic.LopHoc.map(lh => (
-                        <Tag key={lh._id || lh} color="cyan">{lh.MaLopHoc || lh.TenLopHoc || lh}</Tag>
-                      ))
-                    ) : (
-                      <Tag color="default">Tất cả lớp</Tag>
-                    )}
-                  </Space>
-                  <br />
-                  <Text type="secondary">Môn học:</Text>
-                  <Space size={2} wrap style={{ marginLeft: 8, marginTop: 4 }}>
-                    {(() => {
-                      const monHocSet = new Map();
-                      (topic.LopHoc || []).forEach(lh => {
-                        if (lh.MonHoc && lh.MonHoc._id) {
-                          monHocSet.set(lh.MonHoc._id, lh.MonHoc);
-                        }
-                      });
-                      if (monHocSet.size === 0 && topic.MonHoc) {
-                        const mh = topic.MonHoc;
-                        return <Tag color="geekblue">{mh.TenMonHoc || mh.MaMonHoc || '—'}</Tag>;
-                      }
-                      return Array.from(monHocSet.values()).map(mh => (
-                        <Tag key={mh._id} color="geekblue">{mh.TenMonHoc || mh.MaMonHoc}</Tag>
-                      ));
-                    })()}
-                  </Space>
+                  {topic.LoaiDeTai === 'KhoaLuan' ? (
+                    <>
+                      <Text type="secondary">Loại đề tài:</Text>
+                      <Tag color="gold" style={{ marginLeft: 8, marginTop: 4 }}>📝 Khóa Luận</Tag>
+                    </>
+                  ) : (
+                    <>
+                      <Text type="secondary">Lớp học áp dụng:</Text>
+                      <Space size={2} wrap style={{ marginLeft: 8, marginTop: 4 }}>
+                        {(topic.LopHoc || []).length > 0 ? (
+                          topic.LopHoc.map(lh => (
+                            <Tag key={lh._id || lh} color="cyan">{lh.MaLopHoc || lh.TenLopHoc || lh}</Tag>
+                          ))
+                        ) : (
+                          <Tag color="default">Tất cả lớp</Tag>
+                        )}
+                      </Space>
+                      <br />
+                      <Text type="secondary">Môn học:</Text>
+                      <Space size={2} wrap style={{ marginLeft: 8, marginTop: 4 }}>
+                        {(() => {
+                          const monHocSet = new Map();
+                          (topic.LopHoc || []).forEach(lh => {
+                            if (lh.MonHoc && lh.MonHoc._id) {
+                              monHocSet.set(lh.MonHoc._id, lh.MonHoc);
+                            }
+                          });
+                          if (monHocSet.size === 0 && topic.MonHoc) {
+                            const mh = topic.MonHoc;
+                            return <Tag color="geekblue">{mh.TenMonHoc || mh.MaMonHoc || '—'}</Tag>;
+                          }
+                          return Array.from(monHocSet.values()).map(mh => (
+                            <Tag key={mh._id} color="geekblue">{mh.TenMonHoc || mh.MaMonHoc}</Tag>
+                          ));
+                        })()}
+                      </Space>
+                    </>
+                  )}
                   {topic.CoBaiTest && <br />}
                   {topic.CoBaiTest && <Tag color="volcano" style={{ marginTop: 4 }}>🏆 Có bài test</Tag>}
                   {topic.SoDangKy > 0 && (

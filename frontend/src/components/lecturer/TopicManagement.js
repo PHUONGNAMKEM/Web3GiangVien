@@ -53,7 +53,7 @@ const TopicManagement = () => {
         setLopHocList([]);
       }
 
-      const allTopics = await aiApiService.getTopics();
+      const allTopics = await aiApiService.getTopics(selectedClassId);
       const topicList = Array.isArray(allTopics) ? allTopics : [];
 
       const myClassIds = new Set(myClasses.map(lh => (lh._id || lh).toString()));
@@ -61,6 +61,13 @@ const TopicManagement = () => {
         const gvHD = t.GiangVienHuongDan;
         if (!gvHD) return false;
         const gvId = typeof gvHD === 'object' ? (gvHD._id || gvHD).toString() : gvHD.toString();
+        
+        if (selectedClassId === 'KHOA_LUAN') {
+          return t.LoaiDeTai === 'KhoaLuan' && gvId === user.id;
+        }
+        
+        if (t.LoaiDeTai === 'KhoaLuan') return false; // Không hiện đề tài KL ở các lớp môn học
+
         // Keep if advised by this lecturer OR belongs to classes taught by this lecturer
         if (gvId === user.id) return true;
         return (t.LopHoc || []).some(lh => myClassIds.has((lh._id || lh).toString()));
@@ -68,7 +75,7 @@ const TopicManagement = () => {
       setTopics(filteredList);
 
       try {
-        const regs = await aiApiService.getRegistrationsByLecturer(user.id);
+        const regs = await aiApiService.getRegistrationsByLecturer(user.id, selectedClassId);
         setRegistrations(Array.isArray(regs) ? regs : []);
       } catch (e) {
         setRegistrations([]);
@@ -88,7 +95,7 @@ const TopicManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, selectedClassId]);
 
   useEffect(() => {
     fetchData();
@@ -191,8 +198,9 @@ const TopicManagement = () => {
         HanNopBaoCao: values.hanNopBaoCao ? values.hanNopBaoCao.toDate() : undefined,
         GiangVienHuongDan: user.id,
         TrangThai: editingTopic ? editingTopic.TrangThai : 'MoDangKy',
+        LoaiDeTai: selectedClassId === 'KHOA_LUAN' ? 'KhoaLuan' : 'MonHoc',
         // LopHoc
-        LopHoc: values.lopHoc || [],
+        LopHoc: selectedClassId === 'KHOA_LUAN' ? [] : (values.lopHoc || []),
         // Rubrics
         SuDungRubrics: suDungRubrics,
         HienThiChiTietChoSV: hienThiChiTietChoSV,
@@ -312,19 +320,27 @@ const TopicManagement = () => {
       title: 'Lớp',
       key: 'lopHoc',
       width: 120,
-      render: (_, record) => (
-        <Space size={2} wrap>
-          {(record.LopHoc || []).map(lh => (
-            <Tag key={lh._id || lh} color="cyan">{lh.MaLopHoc || lh.TenLopHoc || lh}</Tag>
-          ))}
-        </Space>
-      ),
+      render: (_, record) => {
+        if (record.LoaiDeTai === 'KhoaLuan') {
+          return <Tag color="default">—</Tag>;
+        }
+        return (
+          <Space size={2} wrap>
+            {(record.LopHoc || []).map(lh => (
+              <Tag key={lh._id || lh} color="cyan">{lh.MaLopHoc || lh.TenLopHoc || lh}</Tag>
+            ))}
+          </Space>
+        );
+      },
     },
     {
       title: 'Môn Học',
       key: 'monHoc',
       width: 140,
       render: (_, record) => {
+        if (record.LoaiDeTai === 'KhoaLuan') {
+          return <Tag color="default">—</Tag>;
+        }
         // Lấy MonHoc từ LopHoc (đã populate) hoặc từ DeTai.MonHoc
         const monHocSet = new Map();
         (record.LopHoc || []).forEach(lh => {
@@ -447,7 +463,7 @@ const TopicManagement = () => {
   ];
 
       const filteredTopics = topics.filter(topic => {
-        if (!selectedClassId || selectedClassId === 'ALL') return true;
+        if (!selectedClassId || selectedClassId === 'ALL' || selectedClassId === 'KHOA_LUAN') return true;
         return (topic.LopHoc || []).some(lh => (lh._id || lh).toString() === selectedClassId.toString());
       });
 
@@ -719,21 +735,23 @@ const TopicManagement = () => {
             </Select>
           </Form.Item>
 
-          <Form.Item
-            name="lopHoc"
-            label="Lớp học áp dụng"
-            tooltip="Chọn các lớp học mà đề tài này thuộc về. Chỉ SV trong lớp mới thấy đề tài."
-          >
-            <Select
-              mode="multiple"
-              placeholder="Chọn lớp học..."
-              options={lopHocList.map(lh => ({
-                value: lh._id,
-                label: `${lh.MaLopHoc} - ${lh.TenLopHoc}${lh.MonHoc?.TenMonHoc ? ` (${lh.MonHoc.TenMonHoc})` : ''} - GV: ${lh.GiangVien?.HoTen || 'N/A'}`
-              }))}
-              size="large"
-            />
-          </Form.Item>
+          {selectedClassId !== 'KHOA_LUAN' && (
+            <Form.Item
+              name="lopHoc"
+              label="Lớp học áp dụng"
+              tooltip="Chọn các lớp học mà đề tài này thuộc về. Chỉ SV trong lớp mới thấy đề tài."
+            >
+              <Select
+                mode="multiple"
+                placeholder="Chọn lớp học..."
+                options={lopHocList.map(lh => ({
+                  value: lh._id,
+                  label: `${lh.MaLopHoc} - ${lh.TenLopHoc}${lh.MonHoc?.TenMonHoc ? ` (${lh.MonHoc.TenMonHoc})` : ''} - GV: ${lh.GiangVien?.HoTen || 'N/A'}`
+                }))}
+                size="large"
+              />
+            </Form.Item>
+          )}
 
           <div style={{ display: 'flex', gap: 16 }}>
             <Form.Item name="soLuongSV" label="Số lượng Sinh viên" style={{ flex: 1 }}

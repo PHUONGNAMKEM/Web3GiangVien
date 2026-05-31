@@ -408,7 +408,14 @@ exports.getComparison = async (req, res) => {
         // Lấy tất cả điểm số cho các đề tài đó
         const allGrades = await DiemSo.find({ DeTai: { $in: topicIds } })
             .populate('SinhVien', 'HoTen MaSV')
-            .populate('DeTai', 'TenDeTai MaDeTai SuDungRubrics')
+            .populate({
+                path: 'DeTai',
+                select: 'TenDeTai MaDeTai SuDungRubrics LopHoc MonHoc',
+                populate: [
+                    { path: 'LopHoc', select: 'MaLopHoc TenLopHoc' },
+                    { path: 'MonHoc', select: 'MaMonHoc TenMonHoc' }
+                ]
+            })
             .populate('Nhom');
 
         // Tạo danh sách so sánh

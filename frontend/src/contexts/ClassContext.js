@@ -29,13 +29,21 @@ export const ClassProvider = ({ children }) => {
         if (found) {
           setSelectedClassId(found._id);
           setSelectedClass(found);
+        } else if (savedId === 'KHOA_LUAN') {
+          setSelectedClassId('KHOA_LUAN');
+          setSelectedClass(null);
         } else {
           setSelectedClassId(classes[0]._id);
           setSelectedClass(classes[0]);
           localStorage.setItem(`selectedClassId_${user.id}`, classes[0]._id);
         }
       } else {
-        setSelectedClassId(null);
+        const savedId = localStorage.getItem(`selectedClassId_${user.id}`);
+        if (savedId === 'KHOA_LUAN') {
+          setSelectedClassId('KHOA_LUAN');
+        } else {
+          setSelectedClassId(null);
+        }
         setSelectedClass(null);
       }
     } catch (error) {
@@ -51,18 +59,25 @@ export const ClassProvider = ({ children }) => {
 
   const handleSelectClassId = (id) => {
     setSelectedClassId(id);
-    const found = myClasses.find(c => c._id === id);
-    setSelectedClass(found || null);
+    if (id === 'KHOA_LUAN') {
+      setSelectedClass(null);
+    } else {
+      const found = myClasses.find(c => c._id === id);
+      setSelectedClass(found || null);
+    }
     if (user && user.id) {
       localStorage.setItem(`selectedClassId_${user.id}`, id);
     }
   };
+
+  const isKhoaLuanMode = selectedClassId === 'KHOA_LUAN';
 
   return (
     <ClassContext.Provider value={{
       myClasses,
       selectedClassId,
       selectedClass,
+      isKhoaLuanMode,
       loading,
       setSelectedClassId: handleSelectClassId,
       refreshClasses: fetchClasses

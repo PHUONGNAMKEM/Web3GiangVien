@@ -28,7 +28,8 @@ const deTaiSchema = new mongoose.Schema({
   MonHoc: { type: mongoose.Schema.Types.ObjectId, ref: 'MonHoc' },
   LopHoc: [{ type: mongoose.Schema.Types.ObjectId, ref: 'LopHoc' }],
   CoBaiTest: { type: Boolean, default: false },       // Có yêu cầu bài test cạnh tranh không
-  TrangThai: { type: String, enum: ['MoDangKy', 'DaChot', 'HoanThanh'], default: 'MoDangKy' }
+  TrangThai: { type: String, enum: ['MoDangKy', 'DaChot', 'HoanThanh'], default: 'MoDangKy' },
+  LoaiDeTai: { type: String, enum: ['MonHoc', 'KhoaLuan'], default: 'MonHoc' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('DeTai', deTaiSchema);

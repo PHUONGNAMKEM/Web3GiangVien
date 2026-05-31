@@ -14,15 +14,20 @@ function invalidateDeTaiCache() {
 
 exports.getAll = async (req, res) => {
     try {
-        const { lopHocId } = req.query;
-        const cacheKey = lopHocId || '__all__';
+        const { lopHocId, loaiDeTai } = req.query;
+        const cacheKey = loaiDeTai === 'KhoaLuan' ? 'khoaluan' : (lopHocId || '__all__');
         if (_deTaiCache[cacheKey] && Date.now() - _deTaiCache[cacheKey].ts < DETAI_CACHE_TTL) {
             return res.json(_deTaiCache[cacheKey].data);
         }
 
         const filter = {};
-        if (lopHocId) {
-            filter.LopHoc = lopHocId;
+        if (loaiDeTai === 'KhoaLuan') {
+            filter.LoaiDeTai = 'KhoaLuan';
+        } else {
+            filter.LoaiDeTai = { $ne: 'KhoaLuan' };
+            if (lopHocId && lopHocId !== 'ALL') {
+                filter.LopHoc = lopHocId;
+            }
         }
         const list = await DeTai.find(filter)
             .populate('GiangVienHuongDan', 'HoTen MaGV')
@@ -120,8 +125,10 @@ exports.create = async (req, res) => {
             delete body._templateId; // Không lưu vào DeTai
         }
 
-        // Auto-derive MonHoc from LopHoc if not provided
-        if (!body.MonHoc && body.LopHoc && body.LopHoc.length > 0) {
+        if (body.LoaiDeTai === 'KhoaLuan') {
+            body.MonHoc = null;
+            body.LopHoc = [];
+        } else if (!body.MonHoc && body.LopHoc && body.LopHoc.length > 0) {
             const LopHoc = require('../models/LopHoc');
             const firstLop = await LopHoc.findById(body.LopHoc[0]);
             if (firstLop && firstLop.MonHoc) {
@@ -235,12 +242,31 @@ exports.registerTopic = async (req, res) => {
         }
 
         // 4. Kiểm tra nhóm đã đăng ký đề tài khác chưa
-        const existingReg = await DangKyDeTai.findOne({ 
-            Nhom: nhomId, 
-            TrangThai: { $nin: ['TuChoi', 'Thua'] } 
-        });
-        if (existingReg) {
-            return res.status(400).json({ error: 'Nhóm đã đăng ký một đề tài khác. Hãy hủy đăng ký cũ trước.' });
+        if (deTai.LoaiDeTai === 'KhoaLuan') {
+            const khoaLuanTopics = await DeTai.find({ LoaiDeTai: 'KhoaLuan' }).select('_id');
+            const khoaLuanTopicIds = khoaLuanTopics.map(dt => dt._id);
+            const memberIds = [nhom.TruongNhom, ...nhom.ThanhVien.filter(tv => tv.TrangThai === 'DaChapNhan').map(tv => tv.SinhVien)].filter(Boolean);
+
+            const wonReg = await DangKyDeTai.findOne({
+                DeTai: { $in: khoaLuanTopicIds },
+                TrangThai: 'DaDuyet',
+                $or: [
+                    { SinhVien: { $in: memberIds } },
+                    { TruongNhom: { $in: memberIds } },
+                    { 'ThanhVien.SinhVien': { $in: memberIds }, 'ThanhVien.TrangThaiTV': 'DaChapNhan' }
+                ]
+            });
+            if (wonReg) {
+                return res.status(400).json({ error: 'Một hoặc nhiều thành viên trong nhóm đã sở hữu (được duyệt) một đề tài khóa luận.' });
+            }
+        } else {
+            const existingReg = await DangKyDeTai.findOne({ 
+                Nhom: nhomId, 
+                TrangThai: { $nin: ['TuChoi', 'Thua'] } 
+            });
+            if (existingReg) {
+                return res.status(400).json({ error: 'Nhóm đã đăng ký một đề tài khác. Hãy hủy đăng ký cũ trước.' });
+            }
         }
 
         // 5. CHO PHÉP nhiều nhóm đăng ký cùng 1 đề tài (cạnh tranh Kaggle-style)
@@ -249,8 +275,8 @@ exports.registerTopic = async (req, res) => {
         const dangKy = new DangKyDeTai({ 
             DeTai: deTaiId, 
             Nhom: nhomId,
-            TruongNhom: sinhVienId,
-            SinhVien: sinhVienId,  // backward compat
+            TruongNhom: nhomId ? nhom.TruongNhom : sinhVienId,
+            SinhVien: nhomId ? nhom.TruongNhom : sinhVienId,  // backward compat
             ThanhVien: nhom.ThanhVien
                 .filter(tv => tv.TrangThai === 'DaChapNhan')
                 .map(tv => ({
@@ -280,25 +306,45 @@ exports.getMyRegistration = async (req, res) => {
         const svId = req.params.svId;
         const { lopHocId } = req.query;
 
+        const mongoose = require('mongoose');
+        let svObjectId;
+        try {
+            svObjectId = new mongoose.Types.ObjectId(svId);
+        } catch (e) {
+            svObjectId = svId;
+        }
+
         const query = {
             TrangThai: { $nin: ['TuChoi', 'Thua'] },
             $or: [
-                { SinhVien: svId },
-                { TruongNhom: svId },
-                { 'ThanhVien.SinhVien': svId, 'ThanhVien.TrangThaiTV': 'DaChapNhan' }
+                { SinhVien: svObjectId },
+                { TruongNhom: svObjectId },
+                { 'ThanhVien.SinhVien': svObjectId, 'ThanhVien.TrangThaiTV': 'DaChapNhan' }
             ]
         };
 
-        if (lopHocId) {
-            const deTais = await DeTai.find({ LopHoc: lopHocId }).select('_id');
+        let registration = null;
+        if (lopHocId === 'KHOA_LUAN' || req.query.loaiDeTai === 'KhoaLuan') {
+            const deTais = await DeTai.find({ LoaiDeTai: 'KhoaLuan' }).select('_id');
             const deTaiIds = deTais.map(dt => dt._id);
             query.DeTai = { $in: deTaiIds };
-        }
 
-        const registration = await DangKyDeTai.findOne(query)
-            .populate('DeTai')
-            .populate('Nhom')
-            .populate('ThanhVien.SinhVien');
+            const regs = await DangKyDeTai.find(query)
+                .populate('DeTai')
+                .populate('Nhom')
+                .populate('ThanhVien.SinhVien');
+            registration = regs.find(r => r.TrangThai === 'DaDuyet') || regs[0] || null;
+        } else {
+            if (lopHocId) {
+                const deTais = await DeTai.find({ LopHoc: lopHocId }).select('_id');
+                const deTaiIds = deTais.map(dt => dt._id);
+                query.DeTai = { $in: deTaiIds };
+            }
+            registration = await DangKyDeTai.findOne(query)
+                .populate('DeTai')
+                .populate('Nhom')
+                .populate('ThanhVien.SinhVien');
+        }
 
         res.json({ registration: registration || null });
     } catch (err) {
@@ -310,12 +356,20 @@ exports.getMyRegistration = async (req, res) => {
 exports.getMyRegistrations = async (req, res) => {
     try {
         const svId = req.params.svId;
+        const mongoose = require('mongoose');
+        let svObjectId;
+        try {
+            svObjectId = new mongoose.Types.ObjectId(svId);
+        } catch (e) {
+            svObjectId = svId;
+        }
+
         const registrations = await DangKyDeTai.find({
             TrangThai: { $nin: ['TuChoi', 'Thua'] },
             $or: [
-                { SinhVien: svId },
-                { TruongNhom: svId },
-                { 'ThanhVien.SinhVien': svId, 'ThanhVien.TrangThaiTV': 'DaChapNhan' }
+                { SinhVien: svObjectId },
+                { TruongNhom: svObjectId },
+                { 'ThanhVien.SinhVien': svObjectId, 'ThanhVien.TrangThaiTV': 'DaChapNhan' }
             ]
         }).populate('DeTai').populate('Nhom').populate('ThanhVien.SinhVien');
 
@@ -331,6 +385,8 @@ exports.getRegistrationsByLecturer = async (req, res) => {
         const gvId = req.params.gvId;
         const mongoose = require('mongoose');
         const LopHoc = require('../models/LopHoc');
+
+        const { loaiDeTai, lopHocId } = req.query;
 
         // Tìm các lớp học GV này dạy
         let myClassIds = [];
@@ -357,7 +413,33 @@ exports.getRegistrationsByLecturer = async (req, res) => {
             ];
         } catch (e) {}
 
-        const myTopics = await DeTai.find({ $or: filterOr });
+        let filterQuery = {};
+        if (loaiDeTai === 'KhoaLuan') {
+            try {
+                const objectId = new mongoose.Types.ObjectId(gvId);
+                filterQuery = {
+                    LoaiDeTai: 'KhoaLuan',
+                    $or: [
+                        { GiangVienHuongDan: objectId },
+                        { GiangVienHuongDan: gvId }
+                    ]
+                };
+            } catch (e) {
+                filterQuery = {
+                    LoaiDeTai: 'KhoaLuan',
+                    GiangVienHuongDan: gvId
+                };
+            }
+        } else if (lopHocId) {
+            filterQuery = {
+                LopHoc: lopHocId,
+                LoaiDeTai: { $ne: 'KhoaLuan' }
+            };
+        } else {
+            filterQuery = { $or: filterOr };
+        }
+
+        const myTopics = await DeTai.find(filterQuery);
         const topicIds = myTopics.map(t => t._id);
 
         // Tìm tất cả đăng ký cho các đề tài đó

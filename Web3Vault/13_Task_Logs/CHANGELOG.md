@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## [2026-05-31] — Score Comparison Dashboard Upgrade + UI/UX & Backend Fixes
+
+### Thay đổi trong code (tóm tắt cho dev)
+
+#### Backend
+
+| File | Thay đổi |
+|------|----------|
+| `controllers/deTaiController.js` | Ép kiểu `mongoose.Types.ObjectId` cho `svId` trong `getMyRegistration` và `getMyRegistrations` để hỗ trợ thành viên nhóm. |
+| `controllers/diemSoController.js` | Thêm populate lồng `LopHoc` và `MonHoc` cho đề tài ở `getComparison`. |
+
+#### Frontend
+
+| File | Thay đổi |
+|------|----------|
+| `components/lecturer/ScoreComparison.js` | Viết lại thành Dashboard 3 Tab đa biểu đồ Recharts (Pie Chart, Bar Chart, Radar Chart) cùng tính năng drill-down click. Sửa lỗi bộ lọc "Tất cả các lớp" (ALL). |
+| `components/student/TopicRegistration.js` | Đổi `message.warning` sang `console.warn` để chặn duplicate toast; cập nhật logic loại trừ trạng thái `!thisRegistered`. |
+| `components/student/ProgressLog.js` | Đổi `message.error` sang `console.error` để chặn duplicate toast. |
+| `components/lecturer/SubmissionReview.js` | Đổi logic `groupMembers` dùng `registration._id` thay vì `submission.Nhom._id`. Làm sạch UI Drawer xem điểm/preview. |
+
+---
+
 ## [2026-05-23] — Business Logic Fixes + Contract Redeploy
 
 ### Yêu cầu bắt buộc với mọi thành viên

@@ -464,11 +464,25 @@ exports.checkSubmitted = async (req, res) => {
         const baiTest = await BaiTest.findOne({ DeTai: deTaiId });
         if (!baiTest) return res.json({ hasTest: false });
 
-        const result = await KetQuaTest.findOne({ BaiTest: baiTest._id, SinhVien: sinhVienId });
+        const result = await KetQuaTest.findOne({ BaiTest: baiTest._id, SinhVien: sinhVienId })
+            .populate('DangKyDeTai');
+
+        let competitionResult = undefined;
+        if (result && result.DangKyDeTai) {
+            const status = result.DangKyDeTai.TrangThai;
+            if (status === 'DaDuyet') competitionResult = 'winner';
+            else if (status === 'ChoDoi') competitionResult = 'waiting';
+            else if (status === 'Thua') competitionResult = 'lost';
+            else if (status === 'TuChoi') competitionResult = 'rejected';
+        }
+
         res.json({
             hasTest: true,
             submitted: !!result,
-            result: result || null,
+            result: result ? {
+                ...result.toObject(),
+                competitionResult: competitionResult
+            } : null,
             testId: baiTest._id
         });
     } catch (err) {
