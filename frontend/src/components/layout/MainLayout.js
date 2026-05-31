@@ -61,7 +61,7 @@ const MainLayout = () => {
     if (isAdmin) {
       fetchPendingRequestsCount();
 
-      const socket = io(process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://localhost:5000');
+      const socket = io(process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace(/\/api\/?$/, '') : 'http://localhost:5000');
       socket.on('connect', () => socket.emit('admin:join'));
       socket.on('admin:newRequest', () => {
         setPendingRequestsCount(prev => prev + 1);

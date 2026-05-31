@@ -12,7 +12,7 @@ import { useIsMobile } from '../../hooks/useResponsive';
 const { Title, Text, Paragraph } = Typography;
 const { Countdown } = Statistic;
 
-const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000';
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || (process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace(/\/api\/?$/, '') : 'http://localhost:5000');
 
 const EntranceTest = () => {
   const isMobile = useIsMobile();

@@ -9,7 +9,7 @@ import authService from '../../services/authService';
 
 const { Title, Text } = Typography;
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-const SOCKET_URL = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace('/api', '') : 'http://localhost:5000';
+const SOCKET_URL = process.env.REACT_APP_API_URL ? process.env.REACT_APP_API_URL.replace(/\/api\/?$/, '') : 'http://localhost:5000';
 
 const AdminRequests = () => {
   // ===== PENDING REQUESTS STATE =====

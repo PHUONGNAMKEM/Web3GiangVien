@@ -90,7 +90,7 @@ class ApiService {
       this.socket.disconnect();
     }
 
-    this.socket = io(API_BASE_URL.replace('/api', ''), {
+    this.socket = io(API_BASE_URL.replace(/\/api\/?$/, ''), {
       transports: ['websocket', 'polling'],
       timeout: 20000,
       forceNew: true
