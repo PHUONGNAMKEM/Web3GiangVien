@@ -117,7 +117,7 @@ class AuthService {
         throw new Error(verifyResponse.data.message || 'Authentication failed');
       }
 
-      if (verifyResponse.data.needsRoleSelection) {
+      if (verifyResponse.data.needsRoleSelection || verifyResponse.data.isPending) {
         return verifyResponse.data;
       }
 

@@ -148,6 +148,14 @@ function LoginPage() {
       console.log('Authenticating...');
       const result = await authService.authenticate();
       
+      if (result.isPending) {
+        setSuccess('Bạn đang có yêu cầu chờ duyệt. Đang chuyển hướng...');
+        setTimeout(() => {
+          window.location.href = '/pending-approval';
+        }, 1500);
+        return;
+      }
+
       if (result.needsRoleSelection) {
         setNeedsRoleSelection(true);
         setTempWallet(result.walletAddress);
@@ -192,6 +200,15 @@ function LoginPage() {
       setConnectedWallet(walletAddress);
 
       const result = await authService.authenticate();
+      
+      if (result.isPending) {
+        setSuccess('Bạn đang có yêu cầu chờ duyệt. Đang chuyển hướng...');
+        setTimeout(() => {
+          window.location.href = '/pending-approval';
+        }, 1500);
+        return;
+      }
+
       if (result.needsRoleSelection) {
         setNeedsRoleSelection(true);
         setTempWallet(result.walletAddress);
