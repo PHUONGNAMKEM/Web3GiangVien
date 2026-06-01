@@ -2,18 +2,19 @@ const axios = require('axios');
 const logger = require('../config/logger');
 require('dotenv').config();
 
-const FASTAPI_ENDPOINT = 'http://127.0.0.1:8001/match-student';
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8001';
+const FASTAPI_ENDPOINT = `${ML_SERVICE_URL}/match-student`;
 
 // Sử dụng Sentence Transformers trên FastAPI (SBERT) để tính vector similarity
 exports.matchStudentToTopics = async (studentProfile, topics) => {
     try {
         logger.info(`[AI] Calling FastAPI /match-student | topics=${topics.length}`);
-        
+
         // FastAPI expects: { student: { gpa, major_scores }, topics: [{ topic_id, requirements: [] }] }
         // Build major_scores từ BangDiemKyNang (nếu có), fallback qua KyNang cũ (mặc định 8.0)
         const majorScores = {};
         const bangDiem = studentProfile.BangDiemKyNang || studentProfile.bang_diem_ky_nang || [];
-        
+
         if (bangDiem && bangDiem.length > 0) {
             bangDiem.forEach(item => {
                 if (item.TenKyNang && item.Diem) {
@@ -24,7 +25,7 @@ exports.matchStudentToTopics = async (studentProfile, topics) => {
             const kyNang = studentProfile.ky_nang || studentProfile.KyNang || [];
             kyNang.forEach(skill => { majorScores[skill] = 8.0; });
         }
-        
+
         // Nếu có chuyên ngành, thêm vào major_scores
         const chuyenNganh = studentProfile.chuyen_nganh || studentProfile.ChuyenNganh || '';
         if (chuyenNganh) { majorScores[chuyenNganh] = 9.0; }
@@ -34,7 +35,7 @@ exports.matchStudentToTopics = async (studentProfile, topics) => {
             major_scores: Object.keys(majorScores).length > 0 ? majorScores : { "Lập trình": 7.0 }
         };
 
-        const topicPayloads = topics.map(t => { 
+        const topicPayloads = topics.map(t => {
             let reqs = [];
             if (t.YeuCau && Array.isArray(t.YeuCau) && t.YeuCau.length > 0) {
                 reqs = t.YeuCau;
@@ -46,7 +47,7 @@ exports.matchStudentToTopics = async (studentProfile, topics) => {
             return {
                 topic_id: t._id.toString(),
                 requirements: reqs
-            } 
+            }
         });
 
         const response = await axios.post(
@@ -65,7 +66,7 @@ exports.matchStudentToTopics = async (studentProfile, topics) => {
 
         // Kết quả từ FastAPI
         const recommendations = response.data.recommendations || [];
-        
+
         // Map ngược kết quả FastAPI (chứa topic_id và match_score) gắn vào topics ban đầu
         const finalRecommendations = recommendations.map(rec => {
             const originalTopic = topics.find(t => t._id.toString() === rec.topic_id);
