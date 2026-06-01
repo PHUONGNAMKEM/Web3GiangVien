@@ -52,6 +52,34 @@ const SubmissionReview = () => {
   const isMobile = useIsMobile();
   const { selectedClassId } = useLecturerClassContext();
   const user = authService.getCurrentUser();
+  const queryClient = useQueryClient();
+
+  const { data: { submissions = [], progressPendingMap = {} } = {}, isLoading: loading } = useQuery({
+    queryKey: ['submissions', user?.id],
+    queryFn: async () => {
+      if (!user) return { submissions: [], progressPendingMap: {} };
+      const data = await aiApiService.getSubmissionsByLecturer(user.id);
+      const nextSubmissions = Array.isArray(data) ? data : [];
+
+      const pendingEntries = await Promise.all(
+        nextSubmissions.map(async (record) => {
+          try {
+            const res = await aiApiService.getProgressBySinhVien(record.student?._id, record.topic?._id);
+            return [getSubmissionKey(record), countPendingProgress(res.data || [])];
+          } catch (err) {
+            console.warn('Không lấy được trạng thái tiến độ:', err);
+            return [getSubmissionKey(record), 0];
+          }
+        })
+      );
+      return {
+        submissions: nextSubmissions,
+        progressPendingMap: Object.fromEntries(pendingEntries)
+      };
+    },
+    enabled: !!user?.id,
+  });
+
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [progressDrawerVisible, setProgressDrawerVisible] = useState(false);
   const [progressLogs, setProgressLogs] = useState([]);
@@ -198,34 +226,6 @@ const SubmissionReview = () => {
   // === RUBRICS STATE ===
   const [rubricsResult, setRubricsResult] = useState([]);  // Array: per-criteria results
   const [gvRubricsScores, setGvRubricsScores] = useState([]); // GV overrides for each criteria
-
-  const queryClient = useQueryClient();
-
-  const { data: { submissions = [], progressPendingMap = {} } = {}, isLoading: loading } = useQuery({
-    queryKey: ['submissions', user?.id],
-    queryFn: async () => {
-      if (!user) return { submissions: [], progressPendingMap: {} };
-      const data = await aiApiService.getSubmissionsByLecturer(user.id);
-      const nextSubmissions = Array.isArray(data) ? data : [];
-
-      const pendingEntries = await Promise.all(
-        nextSubmissions.map(async (record) => {
-          try {
-            const res = await aiApiService.getProgressBySinhVien(record.student?._id, record.topic?._id);
-            return [getSubmissionKey(record), countPendingProgress(res.data || [])];
-          } catch (err) {
-            console.warn('Không lấy được trạng thái tiến độ:', err);
-            return [getSubmissionKey(record), 0];
-          }
-        })
-      );
-      return {
-        submissions: nextSubmissions,
-        progressPendingMap: Object.fromEntries(pendingEntries)
-      };
-    },
-    enabled: !!user?.id,
-  });
 
   // Tính tổng điểm từ GV scores theo trọng số
   const calcWeightedScore = (scores) => {

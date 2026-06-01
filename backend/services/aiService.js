@@ -2,8 +2,9 @@ const axios = require('axios');
 const logger = require('../config/logger');
 require('dotenv').config();
 
-const FASTAPI_ENDPOINT = 'http://127.0.0.1:8001/analyze-report';
-const RUBRICS_ENDPOINT = 'http://127.0.0.1:8001/analyze-with-rubrics';
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8001';
+const FASTAPI_ENDPOINT = `${ML_SERVICE_URL}/analyze-report`;
+const RUBRICS_ENDPOINT = `${ML_SERVICE_URL}/analyze-with-rubrics`;
 
 // Gọi sang local FastAPI ML Service (chạy PhoBERT)
 exports.analyzeReport = async (text, topicRequirements) => {
@@ -75,9 +76,7 @@ exports.analyzeWithRubrics = async (text, rubrics) => {
 const FormData = require('form-data');
 const fs = require('fs');
 
-const EXTRACT_PDF_ENDPOINT = process.env.ML_SERVICE_URL 
-    ? `${process.env.ML_SERVICE_URL}/extract-pdf` 
-    : 'http://127.0.0.1:8001/extract-pdf';
+const EXTRACT_PDF_ENDPOINT = `${ML_SERVICE_URL}/extract-pdf`;
 
 exports.extractPdf = async (filePath) => {
     try {
