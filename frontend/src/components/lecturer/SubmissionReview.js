@@ -51,6 +51,7 @@ const getBlockchainStatusMeta = (status) => {
 const SubmissionReview = () => {
   const isMobile = useIsMobile();
   const { selectedClassId } = useLecturerClassContext();
+  const user = authService.getCurrentUser();
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [progressDrawerVisible, setProgressDrawerVisible] = useState(false);
   const [progressLogs, setProgressLogs] = useState([]);
@@ -60,6 +61,7 @@ const SubmissionReview = () => {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [weeklyModalVisible, setWeeklyModalVisible] = useState(false);
   const [activeProgressStudentId, setActiveProgressStudentId] = useState(null);
+  const [progressLoading, setProgressLoading] = useState(false);
 
   // MỚI: Trạng thái điều chỉnh điểm cá nhân
   const [adjustModalVisible, setAdjustModalVisible] = useState(false);
@@ -131,7 +133,7 @@ const SubmissionReview = () => {
   const [weeklyAiScore, setWeeklyAiScore] = useState(null);
 
   const fetchStudentProgress = async (svId, topicId, record) => {
-    setLoading(true);
+    setProgressLoading(true);
     try {
       const res = await aiApiService.getProgressBySinhVien(svId, topicId);
       const logs = res.data || [];
@@ -153,7 +155,7 @@ const SubmissionReview = () => {
       console.error(e);
       message.error("Lỗi lấy nhật ký tiến độ");
     } finally {
-      setLoading(false);
+      setProgressLoading(false);
     }
   };
 
@@ -1369,7 +1371,7 @@ const SubmissionReview = () => {
         onClose={() => setProgressDrawerVisible(false)}
         open={progressDrawerVisible}
       >
-        {loading ? (
+        {progressLoading ? (
           <List loading itemLayout="vertical" dataSource={[]} />
         ) : (
           <div>
