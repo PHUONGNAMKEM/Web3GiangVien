@@ -2,7 +2,7 @@ const axios = require('axios');
 const logger = require('../config/logger');
 require('dotenv').config();
 
-const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8001';
+const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:5000';
 const FASTAPI_ENDPOINT = `${ML_SERVICE_URL}/analyze-report`;
 const RUBRICS_ENDPOINT = `${ML_SERVICE_URL}/analyze-with-rubrics`;
 
@@ -11,10 +11,10 @@ exports.analyzeReport = async (text, topicRequirements) => {
     try {
         logger.info(`[AI] Calling FastAPI /analyze-report | textLength=${text.length}`);
         const startTime = Date.now();
-        
+
         const response = await axios.post(
             FASTAPI_ENDPOINT,
-            { 
+            {
                 text: text,
                 topic_requirements: topicRequirements || []
             },
@@ -85,7 +85,7 @@ exports.extractPdf = async (filePath) => {
             filename: 'report.pdf',
             contentType: 'application/pdf'
         });
-        
+
         const response = await axios.post(EXTRACT_PDF_ENDPOINT, form, {
             headers: {
                 ...form.getHeaders(),
@@ -93,7 +93,7 @@ exports.extractPdf = async (filePath) => {
             },
             timeout: 120000 // 2 phút cho OCR
         });
-        
+
         return response.data; // { text, page_count, method, warnings }
     } catch (error) {
         logger.warn(`[AI] PDF extraction failed: ${error.message}`);
