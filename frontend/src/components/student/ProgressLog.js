@@ -5,6 +5,7 @@ import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import { useClassContext } from '../../contexts/ClassContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -25,45 +26,37 @@ const formatWarningLabel = (warning) => WARNING_LABELS[warning] || warning;
 const ProgressLog = () => {
     const isMobile = useIsMobile();
     const { selectedClassId } = useClassContext();
-    const [logs, setLogs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [registration, setRegistration] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [editingLog, setEditingLog] = useState(null);
     const [form] = Form.useForm();
 
     const user = authService.getCurrentUser();
+    const queryClient = useQueryClient();
 
-    const fetchData = async () => {
-        if (!user) return;
-        try {
-            setLoading(true);
-            if (!selectedClassId) {
-                setRegistration(null);
-                setLogs([]);
-                return;
+    const { data: progressData = {}, isLoading: loading } = useQuery({
+        queryKey: ['progress-log', user?.id, selectedClassId],
+        queryFn: async () => {
+            let result = { registration: null, logs: [] };
+            if (!user || !selectedClassId) return result;
+            try {
+                const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
+                result.registration = regRes.registration;
+                
+                if (regRes.registration) {
+                    const deTaiId = regRes.registration.DeTai?._id || regRes.registration.DeTai;
+                    const logsRes = await aiApiService.getProgressBySinhVien(user.id, deTaiId);
+                    result.logs = logsRes.data || [];
+                }
+            } catch (e) {
+                console.error('Không thể lấy dữ liệu tiến độ', e);
             }
-            const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
-            setRegistration(regRes.registration);
-            
-            if (regRes.registration) {
-                const deTaiId = regRes.registration.DeTai?._id || regRes.registration.DeTai;
-                const logsRes = await aiApiService.getProgressBySinhVien(user.id, deTaiId);
-                setLogs(logsRes.data || []);
-            } else {
-                setLogs([]);
-            }
-        } catch (e) {
-            console.error('Không thể lấy dữ liệu tiến độ', e);
-        } finally {
-            setLoading(false);
-        }
-    };
+            return result;
+        },
+        enabled: !!(user?.id && selectedClassId),
+    });
 
-    useEffect(() => {
-        fetchData();
-    }, [selectedClassId]);
+    const { registration, logs = [] } = progressData;
 
     const handleCreateLog = async (values) => {
         if (!registration || registration.TrangThai !== 'DaDuyet') {
@@ -109,7 +102,7 @@ const ProgressLog = () => {
                 setIsModalVisible(false);
                 form.resetFields();
                 setEditingLog(null);
-                fetchData();
+                queryClient.invalidateQueries({ queryKey: ['progress-log'] });
             };
 
             if (isLowerPercent) {

@@ -12,6 +12,7 @@ import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import { useLecturerClassContext } from '../../contexts/LecturerClassContext';
+import { useQuery } from '@tanstack/react-query';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -20,8 +21,6 @@ const CLASS_COLORS = ['#1677ff', '#eb2f96', '#722ed1', '#fa8c16', '#13c2c2', '#5
 const ScoreComparison = () => {
   const isMobile = useIsMobile();
   const { selectedClassId, setSelectedClassId } = useLecturerClassContext();
-  const [loading, setLoading] = useState(true);
-  const [comparisons, setComparisons] = useState([]);
   const [topicFilter, setTopicFilter] = useState('all');
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -29,20 +28,15 @@ const ScoreComparison = () => {
 
   const user = authService.getCurrentUser();
 
-  const fetchData = useCallback(async () => {
-    if (!user) return;
-    try {
-      setLoading(true);
+  const { data: comparisons = [], isLoading: loading } = useQuery({
+    queryKey: ['score-comparison', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
       const data = await aiApiService.getScoreComparison(user.id);
-      setComparisons(data.comparisons || []);
-    } catch (e) {
-      console.error('Lỗi lấy dữ liệu so sánh:', e);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+      return data.comparisons || [];
+    },
+    enabled: !!user?.id,
+  });
 
   // Reset topic filter when class changes
   useEffect(() => {

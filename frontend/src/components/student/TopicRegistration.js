@@ -6,6 +6,7 @@ import aiApiService from '../../services/aiService';
 import nhomService from '../../services/nhomService';
 import authService from '../../services/authService';
 import { useClassContext } from '../../contexts/ClassContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -13,46 +14,32 @@ const TopicRegistration = () => {
   const navigate = useNavigate();
   const { selectedClassId, selectedClass } = useClassContext();
   const [loadingId, setLoadingId] = useState(null);
-  const [topics, setTopics] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [registeredTopicId, setRegisteredTopicId] = useState(null); // ID đề tài đã đăng ký
-  const [registrationStatus, setRegistrationStatus] = useState(null); // 'ChoDuyet' | 'DaDuyet' | 'TuChoi'
-  const [activeRegistrations, setActiveRegistrations] = useState([]); // Đăng ký khóa luận active
-  const [registrationId, setRegistrationId] = useState(null);
-  const [fullRegistration, setFullRegistration] = useState(null);
   const [inviteMaSV, setInviteMaSV] = useState('');
   const [inviting, setInviting] = useState(false);
-  const [testSubmitted, setTestSubmitted] = useState(false);
-  const [myNhom, setMyNhom] = useState(null); // Nhóm của SV
 
-  const fetchData = useCallback(async () => {
-    const user = authService.getCurrentUser();
-    if (!user) return;
+  const user = authService.getCurrentUser();
+  const queryClient = useQueryClient();
 
-    if (!selectedClassId) {
-      setMyNhom(null);
-      setRegisteredTopicId(null);
-      setRegistrationStatus(null);
-      setRegistrationId(null);
-      setFullRegistration(null);
-      setTopics([]);
-      setLoading(false);
-      return;
-    }
+  const { data = {}, isLoading: loading } = useQuery({
+    queryKey: ['topic-registration', user?.id, selectedClassId],
+    queryFn: async () => {
+      let result = {
+        topics: [],
+        registeredTopicId: null,
+        registrationStatus: null,
+        activeRegistrations: [],
+        registrationId: null,
+        fullRegistration: null,
+        testSubmitted: false,
+        myNhom: null
+      };
 
-    try {
-      setLoading(true);
-      setRegisteredTopicId(null);
-      setRegistrationStatus(null);
-      setRegistrationId(null);
-      setFullRegistration(null);
-      setTestSubmitted(false);
-      setActiveRegistrations([]);
+      if (!user || !selectedClassId) return result;
 
       // 0. Lấy nhóm của SV
       try {
         const nhomRes = await nhomService.getNhomBySinhVien(user.id, selectedClassId);
-        setMyNhom(nhomRes.nhom);
+        result.myNhom = nhomRes.nhom;
       } catch (e) {
         console.warn('Không lấy được thông tin nhóm');
       }
@@ -61,23 +48,23 @@ const TopicRegistration = () => {
       if (selectedClassId === 'KHOA_LUAN') {
         const regsRes = await aiApiService.getMyRegistrations(user.id);
         const klRegs = (regsRes.registrations || []).filter(r => r.DeTai?.LoaiDeTai === 'KhoaLuan');
-        setActiveRegistrations(klRegs);
+        result.activeRegistrations = klRegs;
         
         // Kiểm tra xem có cái nào đã DaDuyet (thắng) không
         const won = klRegs.find(r => r.TrangThai === 'DaDuyet');
         if (won) {
-          setRegisteredTopicId(won.DeTai?._id || won.DeTai);
-          setRegistrationStatus(won.TrangThai);
-          setRegistrationId(won._id);
-          setFullRegistration(won);
+          result.registeredTopicId = won.DeTai?._id || won.DeTai;
+          result.registrationStatus = won.TrangThai;
+          result.registrationId = won._id;
+          result.fullRegistration = won;
         }
       } else {
         const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
         if (regRes.registration) {
-          setRegisteredTopicId(regRes.registration.DeTai?._id || regRes.registration.DeTai);
-          setRegistrationStatus(regRes.registration.TrangThai);
-          setRegistrationId(regRes.registration._id);
-          setFullRegistration(regRes.registration);
+          result.registeredTopicId = regRes.registration.DeTai?._id || regRes.registration.DeTai;
+          result.registrationStatus = regRes.registration.TrangThai;
+          result.registrationId = regRes.registration._id;
+          result.fullRegistration = regRes.registration;
 
           // Kiểm tra đã nộp bài test chưa
           if (regRes.registration.TrangThai === 'ChoTest') {
@@ -85,7 +72,7 @@ const TopicRegistration = () => {
             try {
               const checkTest = await aiApiService.checkTestSubmitted(deTaiIdForTest, user.id);
               if (checkTest.submitted) {
-                setTestSubmitted(true);
+                result.testSubmitted = true;
               }
             } catch (e) {
               console.warn('Không kiểm tra được trạng thái test');
@@ -99,9 +86,7 @@ const TopicRegistration = () => {
       const topicList = Array.isArray(dbRes) ? dbRes : (dbRes.data || []);
 
       if (topicList.length === 0) {
-        setTopics([]);
-        setLoading(false);
-        return;
+        return result;
       }
 
       // 3. Lấy profile SV thật từ DB
@@ -138,18 +123,22 @@ const TopicRegistration = () => {
         console.warn('SBERT matching failed, hiển thị không có điểm AI');
       }
 
-      setTopics(enriched.sort((a, b) => parseFloat(b.ai_score) - parseFloat(a.ai_score)));
-    } catch (error) {
-      console.error("Lỗi lấy đề tài:", error);
-      console.warn("Có lỗi khi tải dữ liệu đề tài.");
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedClassId]);
+      result.topics = enriched.sort((a, b) => parseFloat(b.ai_score) - parseFloat(a.ai_score));
+      return result;
+    },
+    enabled: !!(user?.id),
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const {
+    topics = [],
+    registeredTopicId,
+    registrationStatus,
+    activeRegistrations = [],
+    registrationId,
+    fullRegistration,
+    testSubmitted,
+    myNhom
+  } = data;
 
   const handleRegister = (topic) => {
     const user = authService.getCurrentUser();
@@ -261,7 +250,7 @@ const TopicRegistration = () => {
         setLoadingId(topic._id);
         try {
           await aiApiService.registerTopic(topic._id, user.id, myNhom._id);
-          await fetchData();
+          queryClient.invalidateQueries({ queryKey: ['topic-registration'] });
           const msg = topic.CoBaiTest
             ? 'Đăng ký thành công! Trưởng nhóm cần hoàn thành bài test đầu vào.'
             : 'Đã gửi yêu cầu đăng ký đề tài thành công! Chờ Giảng viên duyệt.';
@@ -291,11 +280,7 @@ const TopicRegistration = () => {
           if (!registrationId) return;
           await aiApiService.cancelRegistration(registrationId);
           message.success('Đã hủy đăng ký thành công!');
-          setRegisteredTopicId(null);
-          setRegistrationStatus(null);
-          setRegistrationId(null);
-          setFullRegistration(null);
-          await fetchData();
+          queryClient.invalidateQueries({ queryKey: ['topic-registration'] });
         } catch (err) {
           message.error(err.response?.data?.error || 'Hủy đăng ký thất bại');
         }
@@ -314,7 +299,7 @@ const TopicRegistration = () => {
       await aiApiService.inviteMember(deTaiId, inviteMaSV);
       message.success(`Đã gửi lời mời đến sinh viên có mã ${inviteMaSV}`);
       setInviteMaSV('');
-      await fetchData();
+      queryClient.invalidateQueries({ queryKey: ['topic-registration'] });
     } catch (err) {
       message.error(err.response?.data?.error || 'Gửi lời mời thất bại');
     } finally {
@@ -409,7 +394,7 @@ const TopicRegistration = () => {
                           try {
                             await aiApiService.cancelRegistration(reg._id);
                             message.success('Đã hủy đăng ký thành công!');
-                            await fetchData();
+                            queryClient.invalidateQueries({ queryKey: ['topic-registration'] });
                           } catch (err) {
                             message.error(err.response?.data?.error || 'Hủy thất bại');
                           }

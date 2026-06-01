@@ -5,6 +5,7 @@ import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import { useClassContext } from '../../contexts/ClassContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Paragraph, Text } = Typography;
 const { Dragger } = Upload;
@@ -15,62 +16,50 @@ const ReportUpload = () => {
   const [fileList, setFileList] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [registration, setRegistration] = useState(null);
-  const [existingBaoCao, setExistingBaoCao] = useState(null);
-  const [loadingData, setLoadingData] = useState(true);
   const [deleting, setDeleting] = useState(false);
-  const [isGraded, setIsGraded] = useState(false);
 
   const user = authService.getCurrentUser();
+  const queryClient = useQueryClient();
 
-  const fetchData = async () => {
-    if (!user) return;
-    try {
-      setLoadingData(true);
-      if (!selectedClassId) {
-        setRegistration(null);
-        setExistingBaoCao(null);
-        setIsGraded(false);
-        return;
-      }
+  const { data = {}, isLoading: loadingData } = useQuery({
+    queryKey: ['report-upload', user?.id, selectedClassId],
+    queryFn: async () => {
+      let result = {
+        registration: null,
+        existingBaoCao: null,
+        isGraded: false
+      };
+      if (!user || !selectedClassId) return result;
       
-      const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
-      setRegistration(regRes.registration);
+      try {
+        const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
+        result.registration = regRes.registration;
 
-      let reportData = null;
-      if (regRes.registration) {
-        const deTaiId = regRes.registration.DeTai?._id || regRes.registration.DeTai;
-        const bcRes = await aiApiService.getMyBaoCao(user.id, deTaiId);
-        reportData = bcRes.baocao;
-        setExistingBaoCao(reportData);
-      } else {
-        setExistingBaoCao(null);
-      }
-
-      // Kiểm tra đã chấm điểm chưa
-      if (reportData) {
-        try {
-          const diemRes = await aiApiService.getDiemBySinhVien(user.id);
-          const graded = Array.isArray(diemRes) && diemRes.some(d =>
-            d.BaoCao && (d.BaoCao._id || d.BaoCao).toString() === reportData._id.toString()
-          );
-          setIsGraded(graded);
-        } catch (e) {
-          setIsGraded(false);
+        if (regRes.registration) {
+          const deTaiId = regRes.registration.DeTai?._id || regRes.registration.DeTai;
+          const bcRes = await aiApiService.getMyBaoCao(user.id, deTaiId);
+          result.existingBaoCao = bcRes.baocao;
+          
+          if (result.existingBaoCao) {
+            try {
+              const diemRes = await aiApiService.getDiemBySinhVien(user.id);
+              result.isGraded = Array.isArray(diemRes) && diemRes.some(d =>
+                d.BaoCao && (d.BaoCao._id || d.BaoCao).toString() === result.existingBaoCao._id.toString()
+              );
+            } catch (e) {
+              result.isGraded = false;
+            }
+          }
         }
-      } else {
-        setIsGraded(false);
+      } catch (e) {
+        console.error('Lỗi tải dữ liệu báo cáo:', e);
       }
-    } catch (e) {
-      console.error('Lỗi:', e);
-    } finally {
-      setLoadingData(false);
-    }
-  };
+      return result;
+    },
+    enabled: !!(user?.id && selectedClassId),
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [selectedClassId]);
+  const { registration, existingBaoCao, isGraded } = data;
 
   const topicName = registration?.DeTai?.TenDeTai || 'Chưa xác định';
   const topicRequires = registration?.DeTai?.YeuCau || [];
@@ -129,9 +118,9 @@ const ReportUpload = () => {
       const result = await aiApiService.uploadBaoCao(formData);
       clearInterval(interval);
       setProgress(100);
-      setExistingBaoCao(result.data);
       setFileList([]);
-
+      queryClient.invalidateQueries({ queryKey: ['report-upload'] });
+      
       // Thông báo tùy theo trạng thái blockchain
       if (result.blockchainStatus === 'success') {
         message.success('Nộp báo cáo thành công! Đã ghi lên IPFS & Blockchain ✅');
@@ -159,8 +148,8 @@ const ReportUpload = () => {
         setDeleting(true);
         try {
           await aiApiService.deleteBaoCao(existingBaoCao._id);
-          setExistingBaoCao(null);
           setProgress(0);
+          queryClient.invalidateQueries({ queryKey: ['report-upload'] });
           message.success('Đã hủy nộp. Bạn có thể nộp file mới.');
         } catch (e) {
           const errMsg = e.response?.data?.error || 'Hủy nộp thất bại';

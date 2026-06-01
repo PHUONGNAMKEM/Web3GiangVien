@@ -5,14 +5,12 @@ import authService from '../../services/authService';
 import nhomService from '../../services/nhomService';
 import managementService from '../../services/managementService';
 import { useClassContext } from '../../contexts/ClassContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text, Paragraph } = Typography;
 
 const GroupManagement = () => {
   const { selectedClassId, selectedClass } = useClassContext();
-  const [loading, setLoading] = useState(true);
-  const [nhom, setNhom] = useState(null);
-  const [pendingInvites, setPendingInvites] = useState([]);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [tenNhom, setTenNhom] = useState('');
   const [soLuong, setSoLuong] = useState(2);
@@ -23,32 +21,29 @@ const GroupManagement = () => {
   const [selectedNewLeader, setSelectedNewLeader] = useState(null);
 
   const user = authService.getCurrentUser();
+  const queryClient = useQueryClient();
 
-  const fetchData = useCallback(async () => {
-    if (!user) return;
-    if (!selectedClassId) {
-      setNhom(null);
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      const [nhomRes, invitesRes] = await Promise.all([
-        nhomService.getNhomBySinhVien(user.id, selectedClassId),
-        nhomService.getPendingInvites(user.id)
-      ]);
-      setNhom(nhomRes.nhom);
-      setPendingInvites(invitesRes || []);
-    } catch (err) {
-      console.error('Lỗi tải dữ liệu nhóm:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, selectedClassId]);
+  const { data = {}, isLoading: loading } = useQuery({
+    queryKey: ['group-management', user?.id, selectedClassId],
+    queryFn: async () => {
+      let result = { nhom: null, pendingInvites: [] };
+      if (!user || !selectedClassId) return result;
+      try {
+        const [nhomRes, invitesRes] = await Promise.all([
+          nhomService.getNhomBySinhVien(user.id, selectedClassId),
+          nhomService.getPendingInvites(user.id)
+        ]);
+        result.nhom = nhomRes.nhom;
+        result.pendingInvites = invitesRes || [];
+      } catch (err) {
+        console.error('Lỗi tải dữ liệu nhóm:', err);
+      }
+      return result;
+    },
+    enabled: !!user?.id,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { nhom, pendingInvites = [] } = data;
 
   // === Tạo nhóm ===
   const handleCreateNhom = async () => {
@@ -67,7 +62,7 @@ const GroupManagement = () => {
       setCreateModalVisible(false);
       setTenNhom('');
       setSoLuong(2);
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['group-management'] });
     } catch (err) {
       message.error(err.response?.data?.error || 'Tạo nhóm thất bại');
     } finally {
@@ -86,7 +81,7 @@ const GroupManagement = () => {
       await nhomService.inviteMember(nhom._id, inviteMaSV.trim());
       message.success('Đã gửi lời mời!');
       setInviteMaSV('');
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['group-management'] });
     } catch (err) {
       message.error(err.response?.data?.error || 'Gửi lời mời thất bại');
     } finally {
@@ -99,7 +94,7 @@ const GroupManagement = () => {
     try {
       await nhomService.respondToInvite(nhomId, user.id, accept);
       message.success(accept ? 'Đã gia nhập nhóm!' : 'Đã từ chối lời mời.');
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['group-management'] });
     } catch (err) {
       message.error(err.response?.data?.error || 'Thao tác thất bại');
     }
@@ -117,7 +112,7 @@ const GroupManagement = () => {
         try {
           await nhomService.kickMember(nhom._id, svId);
           message.success('Đã xóa thành viên.');
-          fetchData();
+          queryClient.invalidateQueries({ queryKey: ['group-management'] });
         } catch (err) {
           message.error(err.response?.data?.error || 'Xóa thất bại');
         }
@@ -137,7 +132,7 @@ const GroupManagement = () => {
         try {
           await nhomService.leaveNhom(nhom._id, user.id);
           message.success('Đã rời nhóm.');
-          fetchData();
+          queryClient.invalidateQueries({ queryKey: ['group-management'] });
         } catch (err) {
           message.error(err.response?.data?.error || 'Rời nhóm thất bại');
         }
@@ -156,7 +151,7 @@ const GroupManagement = () => {
       message.success('Đã chuyển quyền trưởng nhóm!');
       setTransferModalVisible(false);
       setSelectedNewLeader(null);
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['group-management'] });
     } catch (err) {
       message.error(err.response?.data?.error || 'Chuyển quyền thất bại');
     }
@@ -173,7 +168,7 @@ const GroupManagement = () => {
         try {
           await nhomService.chotNhom(nhom._id);
           message.success('Đã chốt nhóm thành công!');
-          fetchData();
+          queryClient.invalidateQueries({ queryKey: ['group-management'] });
         } catch (err) {
           message.error(err.response?.data?.error || 'Chốt nhóm thất bại');
         }
@@ -193,7 +188,7 @@ const GroupManagement = () => {
         try {
           await nhomService.deleteNhom(nhom._id);
           message.success('Đã xóa nhóm.');
-          fetchData();
+          queryClient.invalidateQueries({ queryKey: ['group-management'] });
         } catch (err) {
           message.error(err.response?.data?.error || 'Xóa nhóm thất bại');
         }

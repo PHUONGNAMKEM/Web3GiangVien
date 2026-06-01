@@ -5,97 +5,63 @@ import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import { useClassContext } from '../../contexts/ClassContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Paragraph, Text } = Typography;
 
 const ProgressTracking = () => {
   const isMobile = useIsMobile();
   const { selectedClassId } = useClassContext();
-  const [loading, setLoading] = useState(true);
-  const [registration, setRegistration] = useState(null);
-  const [aiResult, setAiResult] = useState(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [finalGrade, setFinalGrade] = useState(null);
-  const [latestProgress, setLatestProgress] = useState(null);
-  const [progressLoading, setProgressLoading] = useState(false);
+  const user = authService.getCurrentUser();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const user = authService.getCurrentUser();
-      if (!user) return;
+  const { data = {}, isLoading: loading } = useQuery({
+    queryKey: ['progress-tracking', user?.id, selectedClassId],
+    queryFn: async () => {
+      let result = {
+        registration: null,
+        finalGrade: null,
+        latestProgress: null,
+        aiResult: null
+      };
+      if (!user || !selectedClassId) return result;
 
       try {
-        setLoading(true);
-        setRegistration(null);
-        setFinalGrade(null);
-        setLatestProgress(null);
-        setAiResult(null);
-
-        if (!selectedClassId) {
-          setLoading(false);
-          return;
-        }
-
-        // Lấy thông tin đăng ký đề tài
         const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
         const activeReg = regRes.registration;
-        setRegistration(activeReg);
+        result.registration = activeReg;
 
         if (activeReg) {
           const deTaiId = activeReg.DeTai?._id || activeReg.DeTai;
 
-          // Lấy điểm nhận xét cuối cùng từ GV
-          try {
-            if (activeReg.TrangThai === 'DaDuyet') {
-              const diemRes = await aiApiService.getDiemBySinhVien(user.id);
-              if (diemRes && diemRes.length > 0) {
-                // Tìm điểm của đề tài đang đăng ký
-                const topicGrade = diemRes.find(g => (g.DeTai?._id || g.DeTai).toString() === deTaiId.toString());
-                if (topicGrade) {
-                  setFinalGrade(topicGrade);
-                }
-              }
-            }
-          } catch (e) {
-            console.warn('Lỗi lấy điểm sinh viên:', e);
-          }
-
-          // Lấy tiến độ tuần gần nhất
           if (activeReg.TrangThai === 'DaDuyet') {
             try {
-              setProgressLoading(true);
+              const diemRes = await aiApiService.getDiemBySinhVien(user.id);
+              if (diemRes && diemRes.length > 0) {
+                const topicGrade = diemRes.find(g => (g.DeTai?._id || g.DeTai).toString() === deTaiId.toString());
+                if (topicGrade) {
+                  result.finalGrade = topicGrade;
+                }
+              }
+            } catch (e) {
+              console.warn('Lỗi lấy điểm sinh viên:', e);
+            }
+
+            try {
               const progressRes = await aiApiService.getProgressBySinhVien(user.id, deTaiId);
               const logs = progressRes?.data || [];
               const latest = [...logs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-              setLatestProgress(latest || null);
+              result.latestProgress = latest || null;
             } catch (err) {
               console.warn('Lỗi lấy tiến độ gần nhất:', err);
-              setLatestProgress(null);
-            } finally {
-              setProgressLoading(false);
             }
-          }
 
-          // Nếu đề tài đã duyệt, KHÔNG gọi AI ngay mà phải chờ có bài nộp
-          if (activeReg.TrangThai === 'DaDuyet') {
             try {
-              // Kiểm tra xem sinh viên đã nộp báo cáo chưa
               const bcRes = await aiApiService.getMyBaoCao(user.id, deTaiId);
               if (bcRes && bcRes.baocao) {
-                setAiLoading(true);
-                try {
-                  const topic = activeReg.DeTai;
-                  // Nếu đã nộp, tạo text phân tích nội dung
-                  const demoText = `Báo cáo: ${bcRes.baocao.TieuDe}. Đề tài đồ án: ${topic?.TenDeTai || ''}. Báo cáo hoàn chỉnh.`;
-
-                  const aiRes = await aiApiService.analyzeReportAI(demoText, topic?.YeuCau || []);
-                  setAiResult(aiRes);
-                } catch (e) {
-                  console.warn('PhoBERT analysis failed:', e);
-                  setAiResult(null);
-                } finally {
-                  setAiLoading(false);
-                }
+                const topic = activeReg.DeTai;
+                const demoText = `Báo cáo: ${bcRes.baocao.TieuDe}. Đề tài đồ án: ${topic?.TenDeTai || ''}. Báo cáo hoàn chỉnh.`;
+                const aiRes = await aiApiService.analyzeReportAI(demoText, topic?.YeuCau || []);
+                result.aiResult = aiRes;
               }
             } catch (err) {
               console.warn('Lỗi kiểm tra báo cáo:', err);
@@ -103,13 +69,16 @@ const ProgressTracking = () => {
           }
         }
       } catch (e) {
-        console.error('Error:', e);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching progress tracking:', e);
       }
-    };
-    fetchData();
-  }, [selectedClassId]);
+      return result;
+    },
+    enabled: !!(user?.id && selectedClassId),
+  });
+
+  const { registration, finalGrade, latestProgress, aiResult } = data;
+  const progressLoading = loading;
+  const aiLoading = loading;
 
   // Tính step hiện tại dựa trên trạng thái thực
   const getCurrentStep = () => {

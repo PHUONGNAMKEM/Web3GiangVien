@@ -8,6 +8,7 @@ import aiApiService from '../../services/aiService';
 import nhomService from '../../services/nhomService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text, Paragraph } = Typography;
 const { Countdown } = Statistic;
@@ -20,7 +21,7 @@ const EntranceTest = () => {
   const navigate = useNavigate();
   const user = authService.getCurrentUser();
   const [baiTest, setBaiTest] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState(null);
@@ -37,7 +38,46 @@ const EntranceTest = () => {
     submittedRef.current = submitted;
   }, [submitted]);
 
-  useEffect(() => { fetchTest(); }, [deTaiId]);
+  const { data: testData, isLoading: loading } = useQuery({
+    queryKey: ['entrance-test', deTaiId, user?.id],
+    queryFn: async () => {
+      let data = {
+        myNhom: null,
+        submitted: false,
+        result: null,
+        baiTest: null
+      };
+      try {
+        const nhomRes = await nhomService.getNhomBySinhVien(user.id);
+        data.myNhom = nhomRes.nhom;
+      } catch (e) { /* ignore */ }
+
+      const check = await aiApiService.checkTestSubmitted(deTaiId, user.id);
+      if (check.submitted) {
+        data.submitted = true;
+        data.result = check.result;
+        return data;
+      }
+      
+      const test = await aiApiService.getBaiTestForStudent(deTaiId);
+      data.baiTest = test;
+      return data;
+    },
+    enabled: !!deTaiId && !!user?.id,
+  });
+
+  useEffect(() => {
+    if (testData) {
+      if (testData.myNhom) setMyNhom(testData.myNhom);
+      if (testData.submitted) {
+        setSubmitted(true);
+        setResult(testData.result);
+      }
+      if (testData.baiTest) {
+        setBaiTest(testData.baiTest);
+      }
+    }
+  }, [testData]);
 
   // Socket.IO connection
   useEffect(() => {
@@ -93,31 +133,6 @@ const EntranceTest = () => {
     }
   }, [myNhom?._id]);
 
-  const fetchTest = async () => {
-    try {
-      setLoading(true);
-      // Lấy nhóm
-      try {
-        const nhomRes = await nhomService.getNhomBySinhVien(user.id);
-        setMyNhom(nhomRes.nhom);
-      } catch (e) { /* ignore */ }
-
-      // Kiểm tra đã nộp chưa
-      const check = await aiApiService.checkTestSubmitted(deTaiId, user.id);
-      if (check.submitted) {
-        setSubmitted(true);
-        setResult(check.result);
-        return;
-      }
-      // Lấy bài test (ẩn đáp án)
-      const test = await aiApiService.getBaiTestForStudent(deTaiId);
-      setBaiTest(test);
-    } catch (e) {
-      console.error('Lỗi tải bài test:', e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const isLeader = !myNhom || String(myNhom.TruongNhom?._id || myNhom.TruongNhom) === String(user.id);
 
@@ -180,6 +195,7 @@ const EntranceTest = () => {
       } else if (!res.isDat) {
         message.warning('Bạn chưa đạt ngưỡng yêu cầu bài test.');
       }
+      queryClient.invalidateQueries({ queryKey: ['entrance-test'] });
     } catch (e) {
       message.error(e.response?.data?.error || 'Lỗi nộp bài');
     } finally {

@@ -4,45 +4,30 @@ import { Plus, Edit2, Trash2, Star, Lock, Eye, Copy } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text } = Typography;
 
 const RubricsManagement = () => {
   const isMobile = useIsMobile();
-  const [templates, setTemplates] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [tieuChiList, setTieuChiList] = useState([{ TenTieuChi: '', MoTa: '', TrongSo: 0, DiemToiDa: 10, GoiYChoAI: [] }]);
   const [form] = Form.useForm();
 
   const user = authService.getCurrentUser();
-  // Stabilize user.id so useCallback/useEffect don't re-trigger on every render
   const userId = useMemo(() => user?.id, [user?.id]);
+  const queryClient = useQueryClient();
 
-
-  const fetchTemplates = useCallback(async () => {
-    if (!userId) return;
-    try {
-      setLoading(true);
+  const { data: templates = [], isLoading: loading } = useQuery({
+    queryKey: ['rubrics-templates', userId],
+    queryFn: async () => {
+      if (!userId) return [];
       const data = await aiApiService.getRubricsTemplates(userId);
-      setTemplates(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error('Lỗi tải Rubrics Templates:', err);
-      setTemplates([]);
-      // Chỉ hiện toast khi backend thật sự lỗi (500 / mất kết nối)
-      const status = err.response?.status;
-      if (!status || status >= 500) {
-        message.error('Không thể kết nối server. Vui lòng thử lại sau.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!userId,
+  });
 
   const tongTrongSo = tieuChiList.reduce((sum, tc) => sum + (tc.TrongSo || 0), 0);
 
@@ -105,7 +90,7 @@ const RubricsManagement = () => {
 
       setIsModalVisible(false);
       form.resetFields();
-      fetchTemplates();
+      queryClient.invalidateQueries({ queryKey: ['rubrics-templates', userId] });
     } catch (err) {
       message.error(err.response?.data?.error || 'Lỗi lưu template');
     }
@@ -115,7 +100,7 @@ const RubricsManagement = () => {
     try {
       await aiApiService.deleteRubricsTemplate(template._id);
       message.success('Đã xóa template.');
-      fetchTemplates();
+      queryClient.invalidateQueries({ queryKey: ['rubrics-templates', userId] });
     } catch (err) {
       message.error(err.response?.data?.error || 'Lỗi xóa template');
     }
@@ -125,7 +110,7 @@ const RubricsManagement = () => {
     try {
       await aiApiService.setDefaultRubricsTemplate(template._id);
       message.success('Đã đặt làm mẫu mặc định!');
-      fetchTemplates();
+      queryClient.invalidateQueries({ queryKey: ['rubrics-templates', userId] });
     } catch (err) {
       message.error('Lỗi đặt mẫu mặc định');
     }

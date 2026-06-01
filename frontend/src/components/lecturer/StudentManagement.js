@@ -3,33 +3,28 @@ import { Card, Typography, Table, Input, Tag, Space, Spin, message } from 'antd'
 import { Search } from 'lucide-react';
 import authService from '../../services/authService';
 import managementService from '../../services/managementService';
+import { useQuery } from '@tanstack/react-query';
 
 const { Title, Text } = Typography;
 
 const StudentManagement = () => {
-  const [loading, setLoading] = useState(true);
-  const [rawData, setRawData] = useState([]); // flat list from API
   const [searchText, setSearchText] = useState('');
 
   const currentUser = authService.getCurrentUser();
 
-  const fetchData = useCallback(async () => {
-    if (!currentUser?.id) return;
-    try {
-      setLoading(true);
-      const res = await managementService.getSinhVienByGV(currentUser.id);
-      const list = res?.data || [];
-      setRawData(list);
-    } catch (err) {
-      message.error('Lỗi tải danh sách sinh viên');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUser?.id]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data: rawData = [], isLoading: loading } = useQuery({
+    queryKey: ['students-by-gv', currentUser?.id],
+    queryFn: async () => {
+      try {
+        const res = await managementService.getSinhVienByGV(currentUser.id);
+        return res?.data || [];
+      } catch (err) {
+        message.error('Lỗi tải danh sách sinh viên');
+        return [];
+      }
+    },
+    enabled: !!currentUser?.id,
+  });
 
   // Gộp theo sinh viên: 1 dòng per SV, gom nhiều lớp/môn/GV thành arrays
   const groupedData = useMemo(() => {

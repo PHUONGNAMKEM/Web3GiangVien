@@ -5,6 +5,7 @@ import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import { useLecturerClassContext } from '../../contexts/LecturerClassContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -50,12 +51,9 @@ const getBlockchainStatusMeta = (status) => {
 const SubmissionReview = () => {
   const isMobile = useIsMobile();
   const { selectedClassId } = useLecturerClassContext();
-  const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [progressDrawerVisible, setProgressDrawerVisible] = useState(false);
   const [progressLogs, setProgressLogs] = useState([]);
-  const [progressPendingMap, setProgressPendingMap] = useState({});
   const [progressSummary, setProgressSummary] = useState(null);
   const [commentingId, setCommentingId] = useState(null);
   const [commentDrafts, setCommentDrafts] = useState({});
@@ -86,15 +84,15 @@ const SubmissionReview = () => {
       setAdjustModalVisible(false);
       setAdjustTarget(null);
       
-      setSubmissions(prev => prev.map(sub => {
-        if (sub.grade?._id === res.data?._id) {
-          return {
-            ...sub,
-            grade: res.data
-          };
-        }
-        return sub;
-      }));
+      queryClient.setQueryData(['submissions', user?.id], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          submissions: oldData.submissions.map(sub => 
+            sub.grade?._id === res.data?._id ? { ...sub, grade: res.data } : sub
+          )
+        };
+      });
 
       if (selectedSubmission?.grade?._id === res.data?._id) {
         setSelectedSubmission(prev => ({
@@ -140,10 +138,17 @@ const SubmissionReview = () => {
       setProgressLogs(logs);
       setProgressSummary(buildProgressSummary(logs));
       const matchedMember = record?.members?.find(m => m.student?._id === svId) || record;
-      setProgressPendingMap(prev => ({
-        ...prev,
-        [getSubmissionKey(matchedMember)]: countPendingProgress(logs)
-      }));
+      
+      queryClient.setQueryData(['submissions', user?.id], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          progressPendingMap: {
+            ...oldData.progressPendingMap,
+            [getSubmissionKey(matchedMember)]: countPendingProgress(logs)
+          }
+        };
+      });
     } catch (e) {
       console.error(e);
       message.error("Lỗi lấy nhật ký tiến độ");
@@ -192,15 +197,14 @@ const SubmissionReview = () => {
   const [rubricsResult, setRubricsResult] = useState([]);  // Array: per-criteria results
   const [gvRubricsScores, setGvRubricsScores] = useState([]); // GV overrides for each criteria
 
-  const user = authService.getCurrentUser();
+  const queryClient = useQueryClient();
 
-  const fetchData = useCallback(async () => {
-    if (!user) return;
-    try {
-      setLoading(true);
+  const { data: { submissions = [], progressPendingMap = {} } = {}, isLoading: loading } = useQuery({
+    queryKey: ['submissions', user?.id],
+    queryFn: async () => {
+      if (!user) return { submissions: [], progressPendingMap: {} };
       const data = await aiApiService.getSubmissionsByLecturer(user.id);
       const nextSubmissions = Array.isArray(data) ? data : [];
-      setSubmissions(nextSubmissions);
 
       const pendingEntries = await Promise.all(
         nextSubmissions.map(async (record) => {
@@ -213,15 +217,13 @@ const SubmissionReview = () => {
           }
         })
       );
-      setProgressPendingMap(Object.fromEntries(pendingEntries));
-    } catch (e) {
-      console.error('Lỗi lấy submissions:', e);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+      return {
+        submissions: nextSubmissions,
+        progressPendingMap: Object.fromEntries(pendingEntries)
+      };
+    },
+    enabled: !!user?.id,
+  });
 
   // Tính tổng điểm từ GV scores theo trọng số
   const calcWeightedScore = (scores) => {
@@ -257,9 +259,15 @@ const SubmissionReview = () => {
           }
         };
         setSelectedSubmission(workingRecord);
-        setSubmissions(prev => prev.map(item =>
-          item.submission?._id === record.submission._id ? workingRecord : item
-        ));
+        queryClient.setQueryData(['submissions', user?.id], (oldData) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            submissions: oldData.submissions.map(item =>
+              item.submission?._id === record.submission._id ? workingRecord : item
+            )
+          };
+        });
       } catch (err) {
         console.warn('Khong lay duoc ExtractedText:', err);
       }
@@ -396,9 +404,15 @@ const SubmissionReview = () => {
       setSelectedSubmission(updatedSubmission);
 
       // Update the main submissions array
-      setSubmissions(prev => prev.map(s =>
-        s.submission?._id === selectedSubmission.submission._id ? updatedSubmission : s
-      ));
+      queryClient.setQueryData(['submissions', user?.id], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          submissions: oldData.submissions.map(s =>
+            s.submission?._id === selectedSubmission.submission._id ? updatedSubmission : s
+          )
+        };
+      });
 
       message.success({
         content: `Đã ký Smart Contract và Ghi điểm (${score}) cho ${selectedSubmission?.student?.HoTen} thành công!`,
@@ -406,7 +420,7 @@ const SubmissionReview = () => {
         icon: <ShieldCheck color="#52c41a" />,
       });
 
-      await fetchData();
+      queryClient.invalidateQueries({ queryKey: ['submissions', user?.id] });
     } catch (error) {
       console.error('Lệnh lỗi khi chấm điểm:', error);
       message.error(error.response?.data?.error || "Có lỗi xảy ra khi gọi hàm chấm điểm.");
@@ -428,18 +442,30 @@ const SubmissionReview = () => {
       const updatedGrade = response.data || selectedSubmission.grade;
       const updatedSubmission = { ...selectedSubmission, grade: updatedGrade };
       setSelectedSubmission(updatedSubmission);
-      setSubmissions(prev => prev.map(s =>
-        s._id === selectedSubmission._id ? updatedSubmission : s
-      ));
+      queryClient.setQueryData(['submissions', user?.id], (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          submissions: oldData.submissions.map(s =>
+            s._id === selectedSubmission._id ? updatedSubmission : s
+          )
+        };
+      });
       message.success('Ghi lại Blockchain thành công');
     } catch (error) {
       const updatedGrade = error.response?.data?.data;
       if (updatedGrade) {
         const updatedSubmission = { ...selectedSubmission, grade: updatedGrade };
         setSelectedSubmission(updatedSubmission);
-        setSubmissions(prev => prev.map(s =>
-          s._id === selectedSubmission._id ? updatedSubmission : s
-        ));
+        queryClient.setQueryData(['submissions', user?.id], (oldData) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            submissions: oldData.submissions.map(s =>
+              s._id === selectedSubmission._id ? updatedSubmission : s
+            )
+          };
+        });
       }
       message.error(error.response?.data?.error || 'Ghi lại Blockchain thất bại');
     } finally {
@@ -547,10 +573,18 @@ const SubmissionReview = () => {
       setProgressLogs(prev => {
         const nextLogs = prev.map(item => item._id === weeklyTarget._id ? updated : item);
         setProgressSummary(buildProgressSummary(nextLogs));
-        setProgressPendingMap(current => ({
-          ...current,
-          [getSubmissionKey(selectedSubmission)]: countPendingProgress(nextLogs)
-        }));
+        
+        queryClient.setQueryData(['submissions', user?.id], (oldData) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            progressPendingMap: {
+              ...oldData.progressPendingMap,
+              [getSubmissionKey(selectedSubmission)]: countPendingProgress(nextLogs)
+            }
+          };
+        });
+
         return nextLogs;
       });
       setWeeklyModalVisible(false);

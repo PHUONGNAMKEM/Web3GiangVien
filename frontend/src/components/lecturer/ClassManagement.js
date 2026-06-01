@@ -6,13 +6,14 @@ import {
 import { Plus, Pencil, Trash2, School, Eye, UserPlus, UserMinus, Users, Clock, XCircle, CheckCircle } from 'lucide-react';
 import authService from '../../services/authService';
 import managementService from '../../services/managementService';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text } = Typography;
 
 const ClassManagement = () => {
-  const [loading, setLoading] = useState(true);
-  const [lopHocs, setLopHocs] = useState([]);
-  const [monHocs, setMonHocs] = useState([]);
+  const currentUser = authService.getCurrentUser();
+  const queryClient = useQueryClient();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [detailVisible, setDetailVisible] = useState(false);
@@ -30,28 +31,25 @@ const ClassManagement = () => {
   const [pendingInvites, setPendingInvites] = useState([]);
   const [invitesLoading, setInvitesLoading] = useState(false);
 
-  const currentUser = authService.getCurrentUser();
-
-  const fetchData = useCallback(async () => {
-    if (!currentUser) return;
-    try {
-      setLoading(true);
-      const [lopRes, monRes] = await Promise.all([
-        managementService.getLopHocByGV(currentUser.id),
-        managementService.getMonHocByGV(currentUser.id),
-      ]);
-      if (lopRes.success) setLopHocs(lopRes.data || []);
-      if (monRes.success) setMonHocs(monRes.data || []);
-    } catch (err) {
-      message.error('Lỗi tải dữ liệu');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUser?.id]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data: { lopHocs = [], monHocs = [] } = {}, isLoading: loading } = useQuery({
+    queryKey: ['classes', currentUser?.id],
+    queryFn: async () => {
+      let lops = [];
+      let mons = [];
+      try {
+        const [lopRes, monRes] = await Promise.all([
+          managementService.getLopHocByGV(currentUser.id),
+          managementService.getMonHocByGV(currentUser.id),
+        ]);
+        if (lopRes.success) lops = lopRes.data || [];
+        if (monRes.success) mons = monRes.data || [];
+      } catch (err) {
+        message.error('Lỗi tải dữ liệu');
+      }
+      return { lopHocs: lops, monHocs: mons };
+    },
+    enabled: !!currentUser?.id,
+  });
 
   const handleOpenModal = (record = null) => {
     setEditingItem(record);
@@ -83,7 +81,7 @@ const ClassManagement = () => {
       setModalVisible(false);
       form.resetFields();
       setEditingItem(null);
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['classes'] });
     } catch (err) {
       const errMsg = err?.response?.data?.message || 'Lỗi thao tác';
       message.error(errMsg);
@@ -95,7 +93,7 @@ const ClassManagement = () => {
       const res = await managementService.deleteLopHoc(id);
       if (res.success) {
         message.success('Đã xóa lớp học');
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ['classes'] });
       }
     } catch (err) {
       message.error(err?.response?.data?.message || 'Lỗi xóa lớp học');
@@ -227,7 +225,7 @@ const ClassManagement = () => {
       if (res.success) {
         message.success('Đã xóa sinh viên khỏi lớp');
         handleViewDetail({ _id: detailData.lopHoc._id });
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ['classes'] });
       }
     } catch (err) {
       message.error('Lỗi xóa sinh viên khỏi lớp');

@@ -1,43 +1,37 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Card, Typography, Row, Col, Statistic, Spin } from 'antd';
 import { BookOpen, Users } from 'lucide-react';
 import authService from '../../services/authService';
 import aiApiService from '../../services/aiService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import QrAuthentication from '../QrAuthentication';
+import { useQuery } from '@tanstack/react-query';
 
 const { Title } = Typography;
 
 const LecturerDashboard = () => {
   const isMobile = useIsMobile();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ topics: 0, students: 0 });
-  const fetchData = useCallback(async () => {
-    const currentUser = authService.getCurrentUser();
-    if (!currentUser) return;
-    try {
-      setLoading(true);
+  const currentUser = authService.getCurrentUser();
+
+  const { data: stats = { topics: 0, students: 0 }, isLoading } = useQuery({
+    queryKey: ['lecturer-stats', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser) return { topics: 0, students: 0 };
       const data = await aiApiService.getSubmissionsByLecturer(currentUser.id);
       if (data && Array.isArray(data)) {
         const uniqueTopics = new Set(data.map(item => item.topic?._id));
         const uniqueStudents = new Set(data.map(item => item.student?._id));
-        setStats({
+        return {
           topics: uniqueTopics.size,
           students: uniqueStudents.size
-        });
+        };
       }
-    } catch (e) {
-      console.error('Lỗi lấy thống kê giảng viên:', e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return { topics: 0, students: 0 };
+    },
+    enabled: !!currentUser?.id,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  if (loading) {
+  if (isLoading) {
     return <div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div>;
   }
 

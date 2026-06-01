@@ -7,48 +7,47 @@ import managementService from '../../services/managementService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import QrAuthentication from '../QrAuthentication';
 import { useClassContext } from '../../contexts/ClassContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Paragraph, Text } = Typography;
 
 const StudentDashboard = () => {
   const isMobile = useIsMobile();
   const { myClasses, selectedClassId } = useClassContext();
-  const [loading, setLoading] = useState(true);
-  const [registration, setRegistration] = useState(null);
-  const [grade, setGrade] = useState(null);
-  const [studentProfile, setStudentProfile] = useState(null);
   const [editingProfile, setEditingProfile] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
-  const [invitations, setInvitations] = useState([]);
-  const [classInvites, setClassInvites] = useState([]);
-  const [progressAverage, setProgressAverage] = useState(null);
-  const [progressCount, setProgressCount] = useState(0);
   const [form] = Form.useForm();
   const user = authService.getCurrentUser();
+  const queryClient = useQueryClient();
 
-  const fetchData = useCallback(async () => {
-    if (!user) return;
-    try {
-      setLoading(true);
+  const { data = {}, isLoading: loading } = useQuery({
+    queryKey: ['student-dashboard', user?.id, selectedClassId],
+    queryFn: async () => {
+      let result = {
+        studentProfile: null,
+        invitations: [],
+        classInvites: [],
+        registration: null,
+        grade: null,
+        progressAverage: null,
+        progressCount: 0
+      };
+
+      if (!user) return result;
 
       // Lấy thông tin hồ sơ sinh viên
       try {
         const profile = await aiApiService.getStudentProfile(user.id);
-        setStudentProfile(profile);
-
-        // Nếu chưa cập nhật hồ sơ lần đầu → Tự mở form
-        if (!profile.DaCapNhatHoSo) {
-          setEditingProfile(true);
-        }
+        result.studentProfile = profile;
 
         // Lấy danh sách lời mời nhóm
         const invs = await aiApiService.getMyInvitations(user.id);
-        setInvitations(Array.isArray(invs) ? invs : []);
+        result.invitations = Array.isArray(invs) ? invs : [];
 
         // Lấy danh sách lời mời lớp học
         try {
           const classInvRes = await managementService.getMyClassInvites(user.id);
-          setClassInvites(classInvRes?.data || []);
+          result.classInvites = classInvRes?.data || [];
         } catch (e2) {
           console.warn('Không lấy được lời mời lớp học:', e2);
         }
@@ -56,54 +55,55 @@ const StudentDashboard = () => {
         console.warn('Không lấy được hồ sơ SV hoặc lời mời:', e);
       }
 
-      setRegistration(null);
-      setGrade(null);
-      setProgressAverage(null);
-      setProgressCount(0);
-
       if (selectedClassId) {
-        const regData = await aiApiService.getMyRegistration(user.id, selectedClassId);
-        if (regData && regData.registration) {
-          setRegistration(regData.registration);
+        try {
+          const regData = await aiApiService.getMyRegistration(user.id, selectedClassId);
+          if (regData && regData.registration) {
+            result.registration = regData.registration;
 
-          if (regData.registration.TrangThai === 'DaDuyet') {
-            try {
-              const gradeData = await aiApiService.getDiemBySinhVien(user.id);
-              if (Array.isArray(gradeData) && gradeData.length > 0) {
-                const topicGrade = gradeData.find(g =>
-                  g.DeTai?._id === (regData.registration.DeTai?._id || regData.registration.DeTai)
-                );
-                setGrade(topicGrade);
+            if (regData.registration.TrangThai === 'DaDuyet') {
+              try {
+                const gradeData = await aiApiService.getDiemBySinhVien(user.id);
+                if (Array.isArray(gradeData) && gradeData.length > 0) {
+                  const topicGrade = gradeData.find(g =>
+                    g.DeTai?._id === (regData.registration.DeTai?._id || regData.registration.DeTai)
+                  );
+                  result.grade = topicGrade;
+                }
+              } catch (e) {
+                console.warn('Không lấy được điểm:', e);
               }
-            } catch (e) {
-              console.warn('Không lấy được điểm:', e);
-            }
 
-            try {
-              const progressRes = await aiApiService.getProgressBySinhVien(user.id, regData.registration.DeTai?._id);
-              const logs = progressRes?.data || [];
-              const graded = logs.filter(item => item.TrangThaiDanhGia === 'Dat' && item.DiemTienDo != null);
-              const avg = graded.length > 0
-                ? Math.round((graded.reduce((sum, item) => sum + (item.DiemTienDo || 0), 0) / graded.length) * 100) / 100
-                : null;
-              setProgressAverage(avg);
-              setProgressCount(graded.length);
-            } catch (e) {
-              console.warn('Không lấy được điểm tiến độ tuần:', e);
+              try {
+                const progressRes = await aiApiService.getProgressBySinhVien(user.id, regData.registration.DeTai?._id);
+                const logs = progressRes?.data || [];
+                const graded = logs.filter(item => item.TrangThaiDanhGia === 'Dat' && item.DiemTienDo != null);
+                const avg = graded.length > 0
+                  ? Math.round((graded.reduce((sum, item) => sum + (item.DiemTienDo || 0), 0) / graded.length) * 100) / 100
+                  : null;
+                result.progressAverage = avg;
+                result.progressCount = graded.length;
+              } catch (e) {
+                console.warn('Không lấy được điểm tiến độ tuần:', e);
+              }
             }
           }
+        } catch (e) {
+          console.warn('Lỗi lấy registration:', e);
         }
       }
-    } catch (e) {
-      console.error('Lỗi lấy data dashboard:', e);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, selectedClassId]);
+      return result;
+    },
+    enabled: !!user?.id,
+  });
+
+  const { studentProfile, invitations = [], classInvites = [], registration, grade, progressAverage, progressCount } = data;
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (studentProfile && !studentProfile.DaCapNhatHoSo && !editingProfile) {
+      setEditingProfile(true);
+    }
+  }, [studentProfile, editingProfile]);
 
   const handleSaveProfile = async (values) => {
     setSavingProfile(true);
@@ -121,9 +121,9 @@ const StudentDashboard = () => {
         ChuyenNganh: values.ChuyenNganh || '',
         BangDiemKyNang: bangDiem
       });
-      setStudentProfile(result.data);
       setEditingProfile(false);
       message.success('Cập nhật hồ sơ thành công!');
+      queryClient.invalidateQueries({ queryKey: ['student-dashboard'] });
     } catch (e) {
       const errMsg = e.response?.data?.error || 'Cập nhật thất bại';
       message.error(errMsg);
@@ -159,7 +159,7 @@ const StudentDashboard = () => {
     try {
       await aiApiService.respondToInvitation(invitationId, accept);
       message.success(accept ? 'Đã tham gia nhóm thành công!' : 'Đã từ chối lời mời');
-      fetchData(); // Reload all data
+      queryClient.invalidateQueries({ queryKey: ['student-dashboard'] });
     } catch (e) {
       message.error(e.response?.data?.error || 'Thao tác thất bại');
     }
@@ -169,7 +169,7 @@ const StudentDashboard = () => {
     try {
       await managementService.respondClassInvite(inviteId, accept);
       message.success(accept ? 'Đã chấp nhận lời mời. Bạn đã được thêm vào lớp!' : 'Đã từ chối lời mời lớp học.');
-      fetchData(); // Reload all data including class context
+      queryClient.invalidateQueries({ queryKey: ['student-dashboard'] });
     } catch (e) {
       message.error(e.response?.data?.message || 'Thao tác thất bại');
     }

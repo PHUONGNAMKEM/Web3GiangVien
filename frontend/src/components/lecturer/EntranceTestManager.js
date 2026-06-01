@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -13,55 +14,52 @@ const EntranceTestManager = () => {
   const { deTaiId } = useParams();
   const navigate = useNavigate();
   const user = authService.getCurrentUser();
-  const [topic, setTopic] = useState(null);
-  const [baiTest, setBaiTest] = useState(null);
-  const [results, setResults] = useState([]);
-  const [registrations, setRegistrations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
 
-  // Form state tạo bài test
+  const [saving, setSaving] = useState(false);
   const [tieuDe, setTieuDe] = useState('');
   const [moTa, setMoTa] = useState('');
   const [thoiGianLam, setThoiGianLam] = useState(30);
   const [nguongDat, setNguongDat] = useState(75);
   const [cauHoi, setCauHoi] = useState([]);
 
-  useEffect(() => { fetchData(); }, [deTaiId]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      // Lấy thông tin đề tài
-      const topics = await aiApiService.getTopics();
-      const found = (Array.isArray(topics) ? topics : topics.data || []).find(t => t._id === deTaiId);
-      setTopic(found);
-
-      // Lấy bài test nếu có
+  const { data: testData = {}, isLoading: loading } = useQuery({
+    queryKey: ['entrance-test', deTaiId, user?.id],
+    queryFn: async () => {
+      const data = { topic: null, baiTest: null, results: [], registrations: [] };
       try {
-        const test = await aiApiService.getBaiTestByTopic(deTaiId);
-        setBaiTest(test);
-        // Lấy kết quả
-        const res = await aiApiService.getTestResults(test._id);
-        setResults(res || []);
-        // Lấy đăng ký cho đề tài này
+        const topics = await aiApiService.getTopics();
+        const found = (Array.isArray(topics) ? topics : topics.data || []).find(t => t._id === deTaiId);
+        data.topic = found;
+
         try {
-          const regs = await aiApiService.getRegistrationsByLecturer(user.id);
-          const topicRegs = (regs || []).filter(r => {
-            const rid = r.DeTai?._id || r.DeTai;
-            return rid && rid.toString() === deTaiId;
-          });
-          setRegistrations(topicRegs);
-        } catch (e) { setRegistrations([]); }
+          const test = await aiApiService.getBaiTestByTopic(deTaiId);
+          if (test) {
+            data.baiTest = test;
+            const res = await aiApiService.getTestResults(test._id);
+            data.results = res || [];
+            try {
+              const regs = await aiApiService.getRegistrationsByLecturer(user.id);
+              data.registrations = (regs || []).filter(r => {
+                const rid = r.DeTai?._id || r.DeTai;
+                return rid && rid.toString() === deTaiId;
+              });
+            } catch (e) {
+              // Ignore
+            }
+          }
+        } catch (e) {
+          // Ignore, no test found
+        }
       } catch (e) {
-        setBaiTest(null);
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data;
+    },
+    enabled: !!deTaiId && !!user?.id,
+  });
+
+  const { topic = null, baiTest = null, results = [], registrations = [] } = testData;
 
   // Thêm câu hỏi
   const addTracNghiem = () => {
@@ -116,7 +114,7 @@ const EntranceTestManager = () => {
         nguongDat
       });
       message.success('Tạo bài test thành công!');
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['entrance-test', deTaiId] });
     } catch (e) {
       message.error(e.response?.data?.error || 'Lỗi tạo bài test');
     } finally {
@@ -129,7 +127,7 @@ const EntranceTestManager = () => {
     try {
       await aiApiService.selectTestWinner(baiTest._id, result.DangKyDeTai || result._id);
       message.success('Đã chọn nhóm thắng!');
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['entrance-test', deTaiId] });
     } catch (e) {
       message.error(e.response?.data?.error || 'Lỗi');
     }
@@ -140,8 +138,7 @@ const EntranceTestManager = () => {
     try {
       await aiApiService.deleteBaiTest(baiTest._id);
       message.success('Đã xóa bài test');
-      setBaiTest(null);
-      setResults([]);
+      queryClient.invalidateQueries({ queryKey: ['entrance-test', deTaiId] });
     } catch (e) {
       message.error('Lỗi xóa');
     }

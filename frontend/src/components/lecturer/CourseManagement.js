@@ -5,48 +5,42 @@ import { useNavigate } from 'react-router-dom';
 import authService from '../../services/authService';
 import managementService from '../../services/managementService';
 import aiApiService from '../../services/aiService';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 const CourseManagement = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [monHocs, setMonHocs] = useState([]);
-  const [allTopics, setAllTopics] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [form] = Form.useForm();
 
   const currentUser = authService.getCurrentUser();
+  const queryClient = useQueryClient();
 
-  const fetchData = useCallback(async () => {
-    if (!currentUser) return;
-    try {
-      setLoading(true);
-      const res = await managementService.getMonHocByGV(currentUser.id);
-      if (res.success) {
-        setMonHocs(res.data || []);
-      }
-
-      // Fetch all topics to populate the expanded view
+  const { data: { monHocs = [], allTopics = [] } = {}, isLoading: loading } = useQuery({
+    queryKey: ['courses', currentUser?.id],
+    queryFn: async () => {
+      let mh = [];
+      let tp = [];
       try {
-        const topics = await aiApiService.getTopics();
-        setAllTopics(Array.isArray(topics) ? topics : []);
-      } catch (err) {
-        console.warn('Lỗi tải danh sách đề tài cho môn học:', err);
-        setAllTopics([]);
-      }
-    } catch (err) {
-      message.error('Lỗi tải danh sách môn học');
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUser?.id]);
+        const res = await managementService.getMonHocByGV(currentUser.id);
+        if (res.success) mh = res.data || [];
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+        try {
+          const topics = await aiApiService.getTopics();
+          tp = Array.isArray(topics) ? topics : [];
+        } catch (err) {
+          console.warn('Lỗi tải danh sách đề tài cho môn học:', err);
+        }
+      } catch (err) {
+        message.error('Lỗi tải danh sách môn học');
+      }
+      return { monHocs: mh, allTopics: tp };
+    },
+    enabled: !!currentUser?.id,
+  });
 
   const handleOpenModal = (record = null) => {
     setEditingItem(record);
@@ -82,7 +76,7 @@ const CourseManagement = () => {
       setModalVisible(false);
       form.resetFields();
       setEditingItem(null);
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
     } catch (err) {
       const errMsg = err?.response?.data?.message || 'Lỗi thao tác';
       message.error(errMsg);
@@ -94,7 +88,7 @@ const CourseManagement = () => {
       const res = await managementService.deleteMonHoc(id);
       if (res.success) {
         message.success('Đã xóa môn học');
-        fetchData();
+        queryClient.invalidateQueries({ queryKey: ['courses'] });
       }
     } catch (err) {
       const errMsg = err?.response?.data?.message || 'Không thể xóa môn học';

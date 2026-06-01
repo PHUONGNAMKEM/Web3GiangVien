@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import { useIsMobile } from '../../hooks/useResponsive';
 import managementService from '../../services/managementService';
 import { useLecturerClassContext } from '../../contexts/LecturerClassContext';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -17,15 +18,11 @@ const TopicManagement = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { selectedClassId, setSelectedClassId } = useLecturerClassContext();
-  const [topics, setTopics] = useState([]);
-  const [registrations, setRegistrations] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingTopic, setEditingTopic] = useState(null);
   const [approvingId, setApprovingId] = useState(null);
   const [chiTietBoSung, setChiTietBoSung] = useState([]);
   const [form] = Form.useForm();
-  const [lopHocList, setLopHocList] = useState([]);
   const [expandedRowKeys, setExpandedRowKeys] = useState([]);
 
   // === RUBRICS STATE ===
@@ -33,73 +30,69 @@ const TopicManagement = () => {
   const [hienThiChiTietChoSV, setHienThiChiTietChoSV] = useState(false);
   const [rubricsTieuChi, setRubricsTieuChi] = useState([]);
   const [rubricsSource, setRubricsSource] = useState('new'); // 'new' | 'template'
-  const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
 
   const user = authService.getCurrentUser();
+  const queryClient = useQueryClient();
 
-  const fetchData = useCallback(async () => {
-    if (!user) return;
-    try {
-      setLoading(true);
+  const { data: lopHocList = [], isLoading: isLoadingClasses } = useQuery({
+    queryKey: ['lecturer-classes', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const lhRes = await managementService.getLopHocByGV(user.id);
+      return lhRes.data || [];
+    },
+    enabled: !!user?.id,
+  });
 
-      // Fetch LopHoc first so we can filter topics in classes taught by this lecturer
-      let myClasses = [];
-      try {
-        const lhRes = await managementService.getLopHocByGV(user.id);
-        myClasses = lhRes.data || [];
-        setLopHocList(myClasses);
-      } catch (e) {
-        setLopHocList([]);
-      }
-
+  const { data: rawTopics = [], isLoading: isLoadingTopics } = useQuery({
+    queryKey: ['topics', selectedClassId],
+    queryFn: async () => {
       const allTopics = await aiApiService.getTopics(selectedClassId);
-      const topicList = Array.isArray(allTopics) ? allTopics : [];
+      return Array.isArray(allTopics) ? allTopics : [];
+    },
+    enabled: !!user?.id,
+  });
 
-      const myClassIds = new Set(myClasses.map(lh => (lh._id || lh).toString()));
-      const filteredList = topicList.filter(t => {
-        const gvHD = t.GiangVienHuongDan;
-        if (!gvHD) return false;
-        const gvId = typeof gvHD === 'object' ? (gvHD._id || gvHD).toString() : gvHD.toString();
-        
-        if (selectedClassId === 'KHOA_LUAN') {
-          return t.LoaiDeTai === 'KhoaLuan' && gvId === user.id;
-        }
-        
-        if (t.LoaiDeTai === 'KhoaLuan') return false; // Không hiện đề tài KL ở các lớp môn học
-
-        // Keep if advised by this lecturer OR belongs to classes taught by this lecturer
-        if (gvId === user.id) return true;
-        return (t.LopHoc || []).some(lh => myClassIds.has((lh._id || lh).toString()));
-      });
-      setTopics(filteredList);
-
-      try {
-        const regs = await aiApiService.getRegistrationsByLecturer(user.id, selectedClassId);
-        setRegistrations(Array.isArray(regs) ? regs : []);
-      } catch (e) {
-        setRegistrations([]);
+  const topics = React.useMemo(() => {
+    const myClassIds = new Set(lopHocList.map(lh => (lh._id || lh).toString()));
+    return rawTopics.filter(t => {
+      const gvHD = t.GiangVienHuongDan;
+      if (!gvHD) return false;
+      const gvId = typeof gvHD === 'object' ? (gvHD._id || gvHD).toString() : gvHD.toString();
+      
+      if (selectedClassId === 'KHOA_LUAN') {
+        return t.LoaiDeTai === 'KhoaLuan' && gvId === user.id;
       }
+      
+      if (t.LoaiDeTai === 'KhoaLuan') return false;
 
-      // Fetch Rubrics Templates
-      try {
-        const tpls = await aiApiService.getRubricsTemplates(user.id);
-        setTemplates(Array.isArray(tpls) ? tpls : []);
-      } catch (e) {
-        setTemplates([]);
-      }
+      if (gvId === user.id) return true;
+      return (t.LopHoc || []).some(lh => myClassIds.has((lh._id || lh).toString()));
+    });
+  }, [rawTopics, lopHocList, user?.id, selectedClassId]);
 
-    } catch (err) {
-      console.error('Lỗi tải đề tài:', err);
-      message.error('Không thể tải danh sách đề tài');
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, selectedClassId]);
+  const { data: registrations = [], isLoading: isLoadingRegs } = useQuery({
+    queryKey: ['registrations', user?.id, selectedClassId],
+    queryFn: async () => {
+      if (!user) return [];
+      const regs = await aiApiService.getRegistrationsByLecturer(user.id, selectedClassId);
+      return Array.isArray(regs) ? regs : [];
+    },
+    enabled: !!user?.id,
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data: templates = [] } = useQuery({
+    queryKey: ['rubrics-templates', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const tpls = await aiApiService.getRubricsTemplates(user.id);
+      return Array.isArray(tpls) ? tpls : [];
+    },
+    enabled: !!user?.id,
+  });
+
+  const loading = isLoadingClasses || isLoadingTopics || isLoadingRegs;
 
   useEffect(() => {
     if (location.state?.highlightTopicId && topics.length > 0) {
@@ -221,7 +214,7 @@ const TopicManagement = () => {
       setSuDungRubrics(false);
       setRubricsTieuChi([]);
       setSelectedTemplateId(null);
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['topics'] });
     } catch (err) {
       message.error((editingTopic ? 'Cập nhật' : 'Tạo') + ' đề tài thất bại: ' + (err.response?.data?.error || err.message));
     }
@@ -262,7 +255,8 @@ const TopicManagement = () => {
         try {
           await aiApiService.deleteTopic(topicId);
           message.success('Đã xóa Đề tài.');
-          fetchData();
+          queryClient.invalidateQueries({ queryKey: ['topics'] });
+          queryClient.invalidateQueries({ queryKey: ['registrations'] });
         } catch (err) {
           message.error('Xóa thất bại');
         }
@@ -275,7 +269,8 @@ const TopicManagement = () => {
     try {
       await aiApiService.approveRegistration(registrationId, trangThai);
       message.success(trangThai === 'DaDuyet' ? 'Đã duyệt sinh viên!' : 'Đã từ chối đăng ký.');
-      fetchData();
+      queryClient.invalidateQueries({ queryKey: ['topics'] });
+      queryClient.invalidateQueries({ queryKey: ['registrations'] });
     } catch (err) {
       message.error('Thao tác thất bại');
     } finally {

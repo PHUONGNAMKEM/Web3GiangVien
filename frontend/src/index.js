@@ -3,7 +3,18 @@ import ReactDOM from 'react-dom/client';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import App from './App';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false, // Không tự refetch khi chuyển tab
+      retry: 1, // Chỉ retry 1 lần nếu lỗi
+    },
+  },
+});
 // Suppress browser extension runtime errors immediately
 window.addEventListener('error', (event) => {
   if (event.message && (event.message.includes('runtime.lastError') || event.message.includes('Could not establish connection'))) {
@@ -247,10 +258,13 @@ const web3Theme = createTheme({
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={web3Theme}>
-      <CssBaseline />
-      <App />
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider theme={web3Theme}>
+        <CssBaseline />
+        <App />
+      </ThemeProvider>
+      <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
+    </QueryClientProvider>
   </React.StrictMode>
 );
 
