@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiService from '../../services/apiService';
 import {
   Alert,
   Button,
@@ -14,18 +14,71 @@ import {
   Spin,
   Table,
   Tag,
-  Typography
+  Typography,
+  message
 } from 'antd';
-import { Database, FileSearch, RefreshCw, Search } from 'lucide-react';
+import { Database, FileSearch, RefreshCw, Search, History } from 'lucide-react';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text, Paragraph, Link } = Typography;
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Mạng test Sepolia — mọi giao dịch / hợp đồng tra cứu công khai tại đây
+const etherscanTxUrl = (hash) => `https://sepolia.etherscan.io/tx/${hash}`;
+const etherscanAddressUrl = (addr) => `https://sepolia.etherscan.io/address/${addr}`;
 
 const formatTimestamp = (value) => {
   if (!value) return '-';
   return new Date(Number(value) * 1000).toLocaleString('vi-VN');
 };
+
+// Rút gọn hash/địa chỉ dài: 0x1234abcd…ef5678
+const shortenHash = (hash) => {
+  if (!hash) return '';
+  return hash.length > 16 ? `${hash.slice(0, 10)}…${hash.slice(-6)}` : hash;
+};
+
+// Tx giả do hệ thống tự đồng bộ khi điểm đã chốt từ trước (không phải giao dịch thật)
+const isMockTx = (hash) => typeof hash === 'string' && hash.startsWith('0xMock');
+
+// Bỏ tiền tố "Báo cáo" lặp trong tiêu đề báo cáo (tránh "Báo cáo: Báo cáo ...")
+const stripReportLabel = (text) => (text || '').replace(/^\s*báo\s*cáo\b\s*:?\s*/i, '');
+
+// Hiển thị địa chỉ hợp đồng: link Etherscan bấm được + copy đầy đủ
+const renderAddress = (addr) => {
+  if (!addr) return <Text type="secondary">-</Text>;
+  return (
+    <Text copyable={{ text: addr }}>
+      <Link href={etherscanAddressUrl(addr)} target="_blank" rel="noopener noreferrer">{addr}</Link>
+    </Text>
+  );
+};
+
+// Hiển thị mã tx: thật -> link Etherscan bấm được; giả -> nhãn đồng bộ; rỗng -> "-"
+const renderTx = (hash) => {
+  if (!hash) return <Text type="secondary">-</Text>;
+  if (isMockTx(hash)) return <Text type="secondary" italic>Đồng bộ từ chain (không có tx thật)</Text>;
+  return (
+    <Text type="secondary" copyable={{ text: hash }}>
+      <Link href={etherscanTxUrl(hash)} target="_blank" rel="noopener noreferrer">
+        {shortenHash(hash)}
+      </Link>
+    </Text>
+  );
+};
+
+// Nhãn trạng thái đọc on-chain
+const getChainStatusMeta = (status) => ({
+  found: { label: 'Đã có on-chain', color: 'green' },
+  empty: { label: 'Chưa có on-chain', color: 'default' },
+  error: { label: 'Lỗi đọc chain', color: 'red' }
+}[status] || { label: 'Chưa kiểm tra', color: 'default' });
+
+// Nhãn trạng thái ghi điểm lên Blockchain (enum DB -> tiếng Việt)
+const getGradeBcMeta = (status) => ({
+  ChuaGhi: { label: 'Chưa ghi', color: 'default' },
+  Pending: { label: 'Đang ghi', color: 'processing' },
+  DaGhi: { label: 'Đã ghi', color: 'green' },
+  LoiGhi: { label: 'Lỗi ghi', color: 'red' }
+}[status] || { label: 'Chưa chấm', color: 'orange' });
 
 const BlockchainDebugPage = () => {
   const [contracts, setContracts] = useState(null);
@@ -40,12 +93,13 @@ const BlockchainDebugPage = () => {
   const [dbRecords, setDbRecords] = useState(null);
   const [dbRecordsLoading, setDbRecordsLoading] = useState(false);
   const [dbRecordsError, setDbRecordsError] = useState('');
+  const [backfilling, setBackfilling] = useState(false);
 
   const fetchContracts = async () => {
     setContractsLoading(true);
     setContractsError('');
     try {
-      const response = await axios.get(`${API_URL}/blockchain/contracts`);
+      const response = await apiService.get('/blockchain/contracts');
       setContracts(response.data);
     } catch (error) {
       setContractsError(error.response?.data?.error || error.message);
@@ -60,25 +114,36 @@ const BlockchainDebugPage = () => {
     try {
       let response;
       try {
-        response = await axios.get(`${API_URL}/blockchain/db-records`, {
-          params: { limit: 50 }
-        });
+        response = await apiService.get('/blockchain/db-records', { limit: 50 });
       } catch (error) {
         if (error.response?.status !== 404) {
           throw error;
         }
-        response = await axios.get(`${API_URL}/blockchain/thesis/db-records`, {
-          params: { limit: 50 }
-        });
+        response = await apiService.get('/blockchain/thesis/db-records', { limit: 50 });
       }
       setDbRecords(response.data);
     } catch (error) {
-      const message = error.response?.status === 404
+      const errMsg = error.response?.status === 404
         ? 'Backend chua co route doc du lieu tong hop. Hay restart backend de nap route /api/blockchain/db-records.'
         : (error.response?.data?.error || error.message);
-      setDbRecordsError(message);
+      setDbRecordsError(errMsg);
     } finally {
       setDbRecordsLoading(false);
+    }
+  };
+
+  const handleBackfillTx = async () => {
+    setBackfilling(true);
+    try {
+      const response = await apiService.post('/blockchain/backfill-tx');
+      const g = response.data?.grade || {};
+      const r = response.data?.report || {};
+      message.success(`Truy hồi xong — Điểm: ${g.updated || 0}/${g.scanned || 0} có tx thật; Nộp: ${r.updated || 0}/${r.scanned || 0} có tx thật.`);
+      fetchDbRecords();
+    } catch (error) {
+      message.error(error.response?.data?.error || 'Truy hồi tx thất bại');
+    } finally {
+      setBackfilling(false);
     }
   };
 
@@ -87,7 +152,7 @@ const BlockchainDebugPage = () => {
     setTopicError('');
     setTopic(null);
     try {
-      const response = await axios.get(`${API_URL}/blockchain/thesis/topic/${topicId}`);
+      const response = await apiService.get(`/blockchain/thesis/topic/${topicId}`);
       setTopic(response.data);
     } catch (error) {
       setTopicError(error.response?.data?.error || error.message);
@@ -101,9 +166,7 @@ const BlockchainDebugPage = () => {
     setSubmissionsError('');
     setSubmissions(null);
     try {
-      const response = await axios.get(`${API_URL}/blockchain/thesis/submissions`, {
-        params: { studentId, topicId }
-      });
+      const response = await apiService.get('/blockchain/thesis/submissions', { studentId, topicId });
       setSubmissions(response.data);
     } catch (error) {
       setSubmissionsError(error.response?.data?.error || error.message);
@@ -180,8 +243,8 @@ const BlockchainDebugPage = () => {
       render: (_, record) => (
         <Space direction="vertical" size={2}>
           <Text strong>{record.topic?.title || '-'}</Text>
-          <Text type="secondary">{record.report?.title || '-'}</Text>
-          <Text copyable type="secondary">CID: {record.report?.ipfsCID}</Text>
+          <Text type="secondary"><Text strong>Báo cáo:</Text> {stripReportLabel(record.report?.title) || '-'}</Text>
+          <Text copyable={{ text: record.report?.ipfsCID }} type="secondary"><Text strong>CID:</Text> {shortenHash(record.report?.ipfsCID)}</Text>
         </Space>
       )
     },
@@ -189,34 +252,43 @@ const BlockchainDebugPage = () => {
       title: 'DB',
       key: 'database',
       width: 190,
-      render: (_, record) => (
-        <Space direction="vertical" size={4}>
-          <Tag color={record.report?.submitTxHash ? 'green' : 'default'}>
-            Nộp: {record.report?.submitTxHash ? 'Có tx' : 'Chưa có tx'}
-          </Tag>
-          <Tag color={record.grade?.blockchainStatus === 'DaGhi' ? 'green' : 'orange'}>
-            Chấm: {record.grade?.blockchainStatus || 'Chưa chấm'}
-          </Tag>
-          {record.grade?.txHash && <Text copyable type="secondary">Tx: {record.grade.txHash}</Text>}
-        </Space>
-      )
+      render: (_, record) => {
+        const gradeMeta = getGradeBcMeta(record.grade?.blockchainStatus);
+        const txHash = record.grade?.txHash;
+        return (
+          <Space direction="vertical" size={4}>
+            <Tag color={record.report?.submitTxHash ? 'green' : 'default'}>
+              Nộp: {record.report?.submitTxHash ? 'Có tx' : 'Chưa có tx'}
+            </Tag>
+            <Tag color={gradeMeta.color}>
+              Chấm: {gradeMeta.label}{record.grade?.fromGroup ? ' (theo nhóm)' : ''}
+            </Tag>
+            {txHash && (
+              isMockTx(txHash)
+                ? <Text type="secondary" italic>Đồng bộ từ chain</Text>
+                : (
+                  <Text copyable={{ text: txHash }} type="secondary">
+                    Tx: <Link href={etherscanTxUrl(txHash)} target="_blank" rel="noopener noreferrer">{shortenHash(txHash)}</Link>
+                  </Text>
+                )
+            )}
+          </Space>
+        );
+      }
     },
     {
       title: 'On-chain',
       key: 'chain',
       width: 180,
       render: (_, record) => {
-        const statusColor = record.chain?.status === 'found'
-          ? 'green'
-          : record.chain?.status === 'error'
-            ? 'red'
-            : 'default';
+        const statusMeta = getChainStatusMeta(record.chain?.status);
         return (
           <Space direction="vertical" size={4}>
             <Space wrap>
-              <Tag color={statusColor}>{record.chain?.status}</Tag>
+              <Tag color={statusMeta.color}>{statusMeta.label}</Tag>
               <Tag color={record.chain?.matchedByCid ? 'green' : 'orange'}>
                 CID {record.chain?.matchedByCid ? 'khớp' : 'chưa khớp'}
+                {record.chain?.matchedByCid && record.chain?.matchedVia === 'group' ? ' (nhóm)' : ''}
               </Tag>
             </Space>
             <Text type="secondary">{record.chain?.count || 0} bản ghi</Text>
@@ -251,13 +323,13 @@ const BlockchainDebugPage = () => {
                       {item.graded ? 'Đã chấm' : 'Chưa chấm'}
                     </Tag>
                   </Space>
-                  <Text>Điểm: <Text strong>{item.grade}</Text> / 10</Text>
-                  <Text type="secondary">Raw grade: {item.rawGrade}</Text>
-                  <Text type="secondary">Thời điểm: {formatTimestamp(item.timestamp)}</Text>
-                  <Text copyable type="secondary">Student DID: {item.studentDID}</Text>
-                  <Text copyable type="secondary">Topic ID: {item.topicId}</Text>
-                  <Text copyable type="secondary">IPFS CID: {item.ipfsCID}</Text>
-                  <Text>Feedback: {item.feedback || '-'}</Text>
+                  <Text><Text strong>Điểm:</Text> <Text strong>{item.grade}</Text> / 10</Text>
+                  <Text type="secondary"><Text strong>Điểm gốc (×10):</Text> {item.rawGrade}</Text>
+                  <Text type="secondary"><Text strong>Thời điểm:</Text> {formatTimestamp(item.timestamp)}</Text>
+                  <Text copyable={{ text: item.studentDID }} type="secondary"><Text strong>Student DID:</Text> {shortenHash(item.studentDID)}</Text>
+                  <Text copyable={{ text: item.topicId }} type="secondary"><Text strong>Topic ID:</Text> {shortenHash(item.topicId)}</Text>
+                  <Text copyable={{ text: item.ipfsCID }} type="secondary"><Text strong>IPFS CID:</Text> {shortenHash(item.ipfsCID)}</Text>
+                  <Text><Text strong>Feedback:</Text> {item.feedback || '-'}</Text>
                 </Space>
               </div>
             ))}
@@ -272,9 +344,9 @@ const BlockchainDebugPage = () => {
       <div style={{ maxWidth: 1180, margin: '0 auto' }}>
         <Space direction="vertical" size={22} style={{ width: '100%' }}>
           <div>
-            <Title level={2} style={{ marginBottom: 4 }}>Blockchain</Title>
+            <Title level={2} style={{ marginBottom: 4 }}>Đối Chiếu Blockchain</Title>
             <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              Trang kiểm tra dữ liệu contract độc lập, không được gắn vào menu của ứng dụng chính.
+              Đối chiếu dữ liệu điểm số giữa Database và Blockchain để chứng minh dữ liệu không bị giả mạo.
             </Paragraph>
           </div>
 
@@ -301,7 +373,7 @@ const BlockchainDebugPage = () => {
                     </Descriptions.Item>
                     <Descriptions.Item label="Thesis contract">
                       <Space wrap>
-                        <Text copyable>{contracts.contracts?.thesis?.address}</Text>
+                        {renderAddress(contracts.contracts?.thesis?.address)}
                         <Tag color="blue">{contracts.contracts?.thesis?.version}</Tag>
                         <Tag color={contracts.contracts?.thesis?.hasCode ? 'green' : 'red'}>
                           {contracts.contracts?.thesis?.hasCode ? 'Có bytecode' : 'Không có bytecode'}
@@ -309,82 +381,12 @@ const BlockchainDebugPage = () => {
                       </Space>
                     </Descriptions.Item>
                     <Descriptions.Item label="HR Payroll">
-                      <Text copyable>{contracts.contracts?.hrPayroll?.address || '-'}</Text>
+                      {renderAddress(contracts.contracts?.hrPayroll?.address)}
                     </Descriptions.Item>
                     <Descriptions.Item label="Token">
-                      <Text copyable>{contracts.contracts?.token?.address || '-'}</Text>
+                      {renderAddress(contracts.contracts?.token?.address)}
                     </Descriptions.Item>
                   </Descriptions>
-                </Space>
-              )}
-            </Spin>
-          </Card>
-
-          <Card
-            title={
-              <Space>
-                <Database size={18} />
-                <span>Dữ liệu DB đã đối chiếu Blockchain</span>
-              </Space>
-            }
-            extra={
-              <Button icon={<RefreshCw size={16} />} onClick={fetchDbRecords} loading={dbRecordsLoading}>
-                Tải lại
-              </Button>
-            }
-          >
-            {dbRecordsError && (
-              <Alert type="error" message="Không đọc được dữ liệu tổng hợp" description={dbRecordsError} showIcon />
-            )}
-            <Spin spinning={dbRecordsLoading}>
-              {dbRecords && (
-                <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                  <Space wrap>
-                    <Tag color="blue">{dbRecords.contract?.version}</Tag>
-                    <Tag color="green">{dbRecords.count} bản ghi từ DB</Tag>
-                  </Space>
-                  <Table
-                    rowKey={(record) => record.report?.id}
-                    columns={dbRecordColumns}
-                    dataSource={dbRecords.records || []}
-                    pagination={{ pageSize: 8 }}
-                    size="small"
-                    scroll={{ x: 1100 }}
-                    expandable={{
-                      expandedRowRender: (record) => (
-                        <Space direction="vertical" size={10} style={{ width: '100%' }}>
-                          <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
-                            <Descriptions.Item label="Student ID">
-                              <Text copyable>{record.student?.id}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Topic ID">
-                              <Text copyable>{record.topic?.id}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Report ID">
-                              <Text copyable>{record.report?.id}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Grade ID">
-                              <Text copyable>{record.grade?.id || '-'}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Submit tx">
-                              <Text copyable>{record.report?.submitTxHash || '-'}</Text>
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Grade tx">
-                              <Text copyable>{record.grade?.txHash || '-'}</Text>
-                            </Descriptions.Item>
-                          </Descriptions>
-                          <Table
-                            rowKey={(item, index) => `${item.timestamp}-${index}`}
-                            columns={submissionColumns}
-                            dataSource={record.chain?.data || []}
-                            pagination={false}
-                            size="small"
-                            scroll={{ x: 900 }}
-                          />
-                        </Space>
-                      )
-                    }}
-                  />
                 </Space>
               )}
             </Spin>
@@ -420,7 +422,7 @@ const BlockchainDebugPage = () => {
                     <Descriptions bordered size="small" column={1}>
                       <Descriptions.Item label="Contract">
                         <Space wrap>
-                          <Text copyable>{topic.contract?.address}</Text>
+                          {renderAddress(topic.contract?.address)}
                           <Tag color="blue">{topic.contract?.version}</Tag>
                         </Space>
                       </Descriptions.Item>
@@ -501,6 +503,98 @@ const BlockchainDebugPage = () => {
               </Card>
             </Col>
           </Row>
+
+          <Card
+            title={
+              <Space>
+                <Database size={18} />
+                <span>Dữ liệu DB đã đối chiếu Blockchain</span>
+              </Space>
+            }
+            extra={
+              <Space>
+                <Button icon={<History size={16} />} onClick={handleBackfillTx} loading={backfilling}>
+                  Truy hồi tx thật
+                </Button>
+                <Button icon={<RefreshCw size={16} />} onClick={fetchDbRecords} loading={dbRecordsLoading}>
+                  Tải lại
+                </Button>
+              </Space>
+            }
+          >
+            {dbRecordsError && (
+              <Alert type="error" message="Không đọc được dữ liệu tổng hợp" description={dbRecordsError} showIcon />
+            )}
+            <Spin spinning={dbRecordsLoading}>
+              {dbRecords && (
+                <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                  <Space wrap>
+                    <Tag color="blue">{dbRecords.contract?.version}</Tag>
+                    <Tag color="green">{dbRecords.count} bản ghi từ DB</Tag>
+                  </Space>
+                  {(() => {
+                    const recs = dbRecords.records || [];
+                    const total = recs.length;
+                    const matched = recs.filter((r) => r.chain?.matchedByCid).length;
+                    const allOk = total > 0 && matched === total;
+                    return (
+                      <Alert
+                        type={allOk ? 'success' : 'warning'}
+                        showIcon
+                        message={
+                          allOk
+                            ? `Tất cả ${total} bản ghi đều khớp dữ liệu trên Blockchain — không phát hiện sai lệch.`
+                            : `${matched}/${total} bản ghi khớp Blockchain. ${total - matched} bản ghi chưa khớp / chưa ghi — cần kiểm tra.`
+                        }
+                      />
+                    );
+                  })()}
+                  <Table
+                    rowKey={(record) => record.report?.id}
+                    columns={dbRecordColumns}
+                    dataSource={dbRecords.records || []}
+                    pagination={{ pageSize: 8 }}
+                    size="small"
+                    scroll={{ x: 1100 }}
+                    expandable={{
+                      expandedRowRender: (record) => (
+                        <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                          <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
+                            <Descriptions.Item label="Student ID">
+                              <Text copyable>{record.student?.id}</Text>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Topic ID">
+                              <Text copyable>{record.topic?.id}</Text>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Report ID">
+                              <Text copyable>{record.report?.id}</Text>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Grade ID">
+                              <Text copyable>{record.grade?.id || '-'}</Text>
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Submit tx">
+                              {renderTx(record.report?.submitTxHash)}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Grade tx">
+                              {renderTx(record.grade?.txHash)}
+                            </Descriptions.Item>
+                          </Descriptions>
+                          <Table
+                            rowKey={(item, index) => `${item.timestamp}-${index}`}
+                            columns={submissionColumns}
+                            dataSource={record.chain?.data || []}
+                            pagination={false}
+                            size="small"
+                            scroll={{ x: 900 }}
+                          />
+                        </Space>
+                      )
+                    }}
+                  />
+                </Space>
+              )}
+            </Spin>
+          </Card>
         </Space>
       </div>
     </div>

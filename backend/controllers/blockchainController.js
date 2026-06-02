@@ -175,34 +175,90 @@ exports.getThesisDbRecords = async (req, res) => {
             gradeMap.set(String(grade.BaoCao), grade);
         });
 
-        const records = [];
-        for (const report of reports) {
-            const grade = gradeMap.get(String(report._id)) || null;
-            const studentId = String(report.SinhVien?._id || report.SinhVien);
-            const topicId = String(report.DeTai?._id || report.DeTai);
-            let chain = { status: 'not_checked', count: 0, data: [], error: null };
+        // Chuan hoa thong tin co ban cho moi bao cao (gom san studentId/topicId de tra cuu)
+        const baseRecords = reports.map((report) => ({
+            report,
+            grade: gradeMap.get(String(report._id)) || null,
+            studentId: String(report.SinhVien?._id || report.SinhVien),
+            topicId: String(report.DeTai?._id || report.DeTai)
+        }));
 
-            try {
-                const history = await readOnChainHistory(contract, version, studentId, topicId);
-                const matchedByCid = history.find(item => item.ipfsCID === report.IPFS_CID) || null;
-                chain = {
-                    status: history.length > 0 ? 'found' : 'empty',
-                    count: history.length,
-                    matchedByCid: Boolean(matchedByCid),
-                    data: history,
-                    error: null
-                };
-            } catch (error) {
-                chain = {
-                    status: 'error',
-                    count: 0,
-                    matchedByCid: false,
-                    data: [],
-                    error: getErrorMessage(error)
-                };
+        // Bao cao nhom: tat ca thanh vien co cung de tai + cung file (IPFS_CID),
+        // nhung on-chain chi ghi MOT lan duoi ID nguoi nop -> dung khoa nay de chia se bang chung.
+        const groupKeyOf = (item) => `${item.topicId}::${item.report.IPFS_CID || ''}`;
+
+        // Bug 2: gom cac cap (studentId, topicId) duy nhat -> moi cap chi goi on-chain 1 lan
+        const uniquePairs = new Map();
+        for (const item of baseRecords) {
+            const pairKey = `${item.studentId}::${item.topicId}`;
+            if (!uniquePairs.has(pairKey)) {
+                uniquePairs.set(pairKey, { studentId: item.studentId, topicId: item.topicId });
+            }
+        }
+
+        // Bug 2: goi on-chain theo lo gioi han so luong song song (tranh 429 rate-limit cua Infura)
+        const CONCURRENCY = 5;
+        const historyByKey = new Map();
+        const pairList = Array.from(uniquePairs.entries());
+        for (let i = 0; i < pairList.length; i += CONCURRENCY) {
+            const batch = pairList.slice(i, i + CONCURRENCY);
+            await Promise.all(batch.map(async ([pairKey, { studentId, topicId }]) => {
+                try {
+                    const history = await readOnChainHistory(contract, version, studentId, topicId);
+                    historyByKey.set(pairKey, { data: history, error: null });
+                } catch (error) {
+                    historyByKey.set(pairKey, { data: null, error: getErrorMessage(error) });
+                }
+            }));
+        }
+
+        const buildChain = (result, via, ipfsCID) => {
+            if (!result || result.error) {
+                return { status: 'error', count: 0, matchedByCid: false, matchedVia: via, data: [], error: result?.error || 'not_checked' };
+            }
+            const history = result.data || [];
+            return {
+                status: history.length > 0 ? 'found' : 'empty',
+                count: history.length,
+                matchedByCid: history.some((sub) => sub.ipfsCID === ipfsCID),
+                matchedVia: via,
+                data: history,
+                error: null
+            };
+        };
+
+        const records = baseRecords.map(({ report, grade, studentId, topicId }) => {
+            const selfKey = `${studentId}::${topicId}`;
+            let chain = buildChain(historyByKey.get(selfKey), 'self', report.IPFS_CID);
+
+            // Bug 1: neu ID cua chinh minh khong khop -> tim bang chung tu thanh vien cung nhom (nguoi da nop on-chain)
+            if (!chain.matchedByCid && report.IPFS_CID) {
+                for (const other of baseRecords) {
+                    if (other.studentId === studentId || groupKeyOf(other) !== groupKeyOf({ report, topicId })) continue;
+                    const otherResult = historyByKey.get(`${other.studentId}::${other.topicId}`);
+                    if (otherResult && !otherResult.error && (otherResult.data || []).some((sub) => sub.ipfsCID === report.IPFS_CID)) {
+                        chain = buildChain(otherResult, 'group', report.IPFS_CID);
+                        break;
+                    }
+                }
             }
 
-            records.push({
+            // Bao cao nhom: chi nguoi dai dien co ban ghi diem (DiemSo) -> muon diem chung cua nhom cho cac thanh vien con lai
+            let effectiveGrade = grade;
+            let gradeFromGroup = false;
+            if (!effectiveGrade) {
+                const sibling = baseRecords.find((other) =>
+                    other.grade &&
+                    other.studentId !== studentId &&
+                    groupKeyOf(other) === groupKeyOf({ report, topicId })
+                );
+                if (sibling) {
+                    effectiveGrade = sibling.grade;
+                    gradeFromGroup = true;
+                }
+            }
+
+            return {
                 report: {
                     id: String(report._id),
                     title: report.TieuDe,
@@ -221,24 +277,108 @@ exports.getThesisDbRecords = async (req, res) => {
                     code: report.DeTai?.MaDeTai || '',
                     title: report.DeTai?.TenDeTai || ''
                 },
-                grade: grade ? {
-                    id: String(grade._id),
-                    score: grade.Diem,
-                    aiScore: grade.AI_Score,
-                    feedback: grade.NhanXet || '',
-                    txHash: grade.TxHash || null,
-                    blockchainStatus: grade.TrangThaiBlockchain,
-                    submissionIndex: grade.SubmissionIndex || 0,
-                    error: grade.LoiBlockchain || null
+                grade: effectiveGrade ? {
+                    id: String(effectiveGrade._id),
+                    score: effectiveGrade.Diem,
+                    aiScore: effectiveGrade.AI_Score,
+                    feedback: effectiveGrade.NhanXet || '',
+                    txHash: effectiveGrade.TxHash || null,
+                    blockchainStatus: effectiveGrade.TrangThaiBlockchain,
+                    submissionIndex: effectiveGrade.SubmissionIndex || 0,
+                    error: effectiveGrade.LoiBlockchain || null,
+                    fromGroup: gradeFromGroup
                 } : null,
                 chain
-            });
-        }
+            };
+        });
 
         res.json({
             contract: { address, version },
             count: records.length,
             records
+        });
+    } catch (error) {
+        res.status(500).json({ error: getErrorMessage(error) });
+    }
+};
+
+// Truy hoi ma tx THAT cho cac ban ghi cu (TxHash null / 0xMock) tu event log cua contract, roi cap nhat DB.
+// GradeFinalized / ReportSubmitted deu indexed theo student + topic nen loc duoc dung giao dich.
+exports.backfillTxHashes = async (req, res) => {
+    try {
+        const { contract, address, version } = await getThesisContract();
+        const fromBlock = Number(process.env.THESIS_DEPLOY_BLOCK || 0);
+        const keyOf = (value) => (version === 'v2' ? toBytes32(value) : value);
+
+        // 1) Backfill Grade tx
+        const grades = await DiemSo.find({
+            $or: [{ TxHash: { $exists: false } }, { TxHash: null }, { TxHash: { $regex: '^0xMock' } }]
+        });
+
+        let gradeUpdated = 0;
+        let gradeFailed = 0;
+        for (const grade of grades) {
+            const studentKey = keyOf(String(grade.SinhVien));
+            const topicKey = keyOf(String(grade.DeTai));
+            try {
+                const events = await contract.queryFilter(
+                    contract.filters.GradeFinalized(studentKey, topicKey), fromBlock, 'latest'
+                );
+                if (!events.length) { gradeFailed++; continue; }
+
+                const idx = grade.SubmissionIndex || 0;
+                const gradeInt = Math.round(Number(grade.Diem || 0) * 10);
+                // Uu tien khop dung gia tri diem, roi toi vi tri submission index
+                const match = events.find((e) => Number(e.args?.grade) === gradeInt)
+                    || events[idx]
+                    || events[events.length - 1];
+
+                if (match?.transactionHash) {
+                    grade.TxHash = match.transactionHash;
+                    grade.TrangThaiBlockchain = 'DaGhi';
+                    grade.LoiBlockchain = undefined;
+                    await grade.save();
+                    gradeUpdated++;
+                } else {
+                    gradeFailed++;
+                }
+            } catch (error) {
+                gradeFailed++;
+            }
+        }
+
+        // 2) Backfill Submit tx (chi nguoi nop that su moi co event tren chain)
+        const reports = await BaoCao.find({
+            $or: [{ SubmitTxHash: { $exists: false } }, { SubmitTxHash: null }, { SubmitTxHash: { $regex: '^0xMock' } }]
+        });
+
+        let reportUpdated = 0;
+        let reportFailed = 0;
+        for (const report of reports) {
+            const studentKey = keyOf(String(report.SinhVien));
+            const topicKey = keyOf(String(report.DeTai));
+            try {
+                const events = await contract.queryFilter(
+                    contract.filters.ReportSubmitted(studentKey, topicKey), fromBlock, 'latest'
+                );
+                const match = events.find((e) => e.args?.ipfsCID === report.IPFS_CID) || events[0];
+                if (match?.transactionHash) {
+                    report.SubmitTxHash = match.transactionHash;
+                    await report.save();
+                    reportUpdated++;
+                } else {
+                    reportFailed++;
+                }
+            } catch (error) {
+                reportFailed++;
+            }
+        }
+
+        res.json({
+            contract: { address, version },
+            fromBlock,
+            grade: { scanned: grades.length, updated: gradeUpdated, failed: gradeFailed },
+            report: { scanned: reports.length, updated: reportUpdated, failed: reportFailed }
         });
     } catch (error) {
         res.status(500).json({ error: getErrorMessage(error) });

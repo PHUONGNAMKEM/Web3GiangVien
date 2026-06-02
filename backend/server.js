@@ -246,12 +246,13 @@ app.put('/api/diemso/:id/adjust', ...requireLecturer, diemSoController.adjustGra
 app.get('/api/diemso/sinhvien/:svId', ...requireAuth, diemSoController.getDiemBySinhVien);
 app.get('/api/diemso/comparison/:gvId', ...requireLecturer, diemSoController.getComparison);
 
-// 7.1. Blockchain read-only debug routes (khong hien tren UI)
-app.get('/api/blockchain/contracts', blockchainController.getContracts);
-app.get('/api/blockchain/db-records', blockchainController.getThesisDbRecords);
-app.get('/api/blockchain/thesis/db-records', blockchainController.getThesisDbRecords);
-app.get('/api/blockchain/thesis/topic/:topicId', blockchainController.getThesisTopic);
-app.get('/api/blockchain/thesis/submissions', blockchainController.getThesisSubmissions);
+// 7.1. Blockchain read-only routes (doi chieu DB <-> on-chain, chi Giang Vien)
+app.get('/api/blockchain/contracts', ...requireLecturer, blockchainController.getContracts);
+app.get('/api/blockchain/db-records', ...requireLecturer, blockchainController.getThesisDbRecords);
+app.get('/api/blockchain/thesis/db-records', ...requireLecturer, blockchainController.getThesisDbRecords);
+app.get('/api/blockchain/thesis/topic/:topicId', ...requireLecturer, blockchainController.getThesisTopic);
+app.get('/api/blockchain/thesis/submissions', ...requireLecturer, blockchainController.getThesisSubmissions);
+app.post('/api/blockchain/backfill-tx', ...requireLecturer, blockchainController.backfillTxHashes);
 
 // 8. Tiến Độ
 app.post('/api/tiendo', ...requireStudent, tienDoController.createProgressEntry);
