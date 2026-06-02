@@ -70,6 +70,8 @@ const verifySignature = async (req, res) => {
       } else {
         userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
         if (!userRecord) {
+          // DISABLED: Admin approval flow
+          /*
           const pendingReq = await RoleRequest.findOne({ walletAddress: walletAddress.toLowerCase(), status: 'pending' });
           if (pendingReq) {
             challenges.delete(challengeId);
@@ -80,6 +82,7 @@ const verifySignature = async (req, res) => {
               message: 'Bạn đang có yêu cầu chờ duyệt.'
             });
           }
+          */
 
           const startOfDay = new Date();
           startOfDay.setHours(0, 0, 0, 0);
@@ -213,6 +216,8 @@ const verifyQrSignature = async (req, res) => {
       } else {
         userRecord = await SinhVien.findOne({ WalletAddress: walletAddress.toLowerCase() });
         if (!userRecord) {
+          // DISABLED: Admin approval flow
+          /*
           const pendingReq = await RoleRequest.findOne({ walletAddress: walletAddress.toLowerCase(), status: 'pending' });
           if (pendingReq) {
             qrSessions.delete(sessionId);
@@ -223,6 +228,7 @@ const verifyQrSignature = async (req, res) => {
               message: 'Bạn đang có yêu cầu chờ duyệt.'
             });
           }
+          */
 
           const startOfDay = new Date();
           startOfDay.setHours(0, 0, 0, 0);
@@ -322,6 +328,30 @@ const registerWithRole = async (req, res) => {
       });
     } 
     else if (role === 'LECTURER_ROLE') {
+      // NEW FLOW: Create GiangVien immediately, bypass Admin approval
+      const newUser = new GiangVien({
+        MaGV: `GV${uuidv4().substring(0, 6).toUpperCase()}`,
+        HoTen: hoTen || 'Giảng Viên Mới',
+        Email: email || `${uuidv4().substring(0, 6)}@huit.edu.vn`,
+        ChuyenNganh: chuyenNganh || '',
+        WalletAddress: lowerWallet
+      });
+      await newUser.save();
+
+      const token = jwt.sign(
+        { id: newUser._id, walletAddress: lowerWallet, role_id: 'LECTURER_ROLE' },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
+      return res.json({
+        success: true,
+        token,
+        user: { id: newUser._id, walletAddress: lowerWallet, role_id: 'LECTURER_ROLE', name: newUser.HoTen },
+        message: 'Đăng ký Giảng viên thành công'
+      });
+
+      /* DISABLED: Admin approval flow
       // Check for rate limit: Max 3 rejected requests today
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
@@ -368,6 +398,7 @@ const registerWithRole = async (req, res) => {
         isPending: true,
         message: 'Yêu cầu của bạn đã được gửi và đang chờ duyệt.'
       });
+      */
     }
 
     return res.status(400).json({ success: false, message: 'Role không hợp lệ.' });

@@ -148,6 +148,7 @@ function LoginPage() {
       console.log('Authenticating...');
       const result = await authService.authenticate();
       
+      /* DISABLED: Admin approval flow
       if (result.isPending) {
         setSuccess('Bạn đang có yêu cầu chờ duyệt. Đang chuyển hướng...');
         setTimeout(() => {
@@ -155,6 +156,7 @@ function LoginPage() {
         }, 1500);
         return;
       }
+      */
 
       if (result.needsRoleSelection) {
         setNeedsRoleSelection(true);
@@ -201,6 +203,7 @@ function LoginPage() {
 
       const result = await authService.authenticate();
       
+      /* DISABLED: Admin approval flow
       if (result.isPending) {
         setSuccess('Bạn đang có yêu cầu chờ duyệt. Đang chuyển hướng...');
         setTimeout(() => {
@@ -208,6 +211,7 @@ function LoginPage() {
         }, 1500);
         return;
       }
+      */
 
       if (result.needsRoleSelection) {
         setNeedsRoleSelection(true);
@@ -263,7 +267,7 @@ function LoginPage() {
     setError('');
     try {
       await authService.registerWithRole(tempWallet, LECTURER_ROLE, formData);
-      window.location.href = '/pending-approval';
+      window.location.href = '/dashboard';
     } catch (err) {
       setError(err.message || 'Lỗi khi đăng ký Giảng viên');
     } finally {

@@ -88,16 +88,18 @@ const RoleSelection = ({ walletAddress, onSelectStudent, onSelectLecturer, loadi
               color="success"
               endIcon={<ArrowForwardIcon />}
               onClick={() => setModalOpen(true)}
-              disabled={loading || rejectedCountToday >= 3}
+              disabled={loading}
               sx={{ borderRadius: 8 }}
             >
-              Yêu cầu cấp quyền Giảng Viên
+              Vào với tư cách Giảng Viên
             </Button>
+            {/* DISABLED: Admin approval flow
             {rejectedCountToday > 0 && (
               <Typography variant="caption" color={rejectedCountToday >= 3 ? "error" : "text.secondary"} mt={2} display="block">
                 Đã bị từ chối {rejectedCountToday}/3 lần hôm nay
               </Typography>
             )}
+            */}
           </Paper>
         </Grid>
       </Grid>
@@ -107,7 +109,7 @@ const RoleSelection = ({ walletAddress, onSelectStudent, onSelectLecturer, loadi
         <DialogTitle sx={{ fontWeight: 'bold' }}>Thông tin Giảng Viên</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="text.secondary" mb={2}>
-            Vui lòng cung cấp thông tin để Admin xét duyệt quyền Giảng viên cho ví của bạn.
+            Vui lòng cung cấp thông tin để hoàn tất đăng ký Giảng viên.
           </Typography>
           <TextField
             autoFocus
@@ -149,7 +151,7 @@ const RoleSelection = ({ walletAddress, onSelectStudent, onSelectLecturer, loadi
             disabled={!formData.hoTen || !formData.email || !formData.chuyenNganh || loading}
             startIcon={loading ? <CircularProgress size={20} /> : null}
           >
-            Gửi yêu cầu phê duyệt
+            Đăng ký Giảng Viên
           </Button>
         </DialogActions>
       </Dialog>
