@@ -80,7 +80,6 @@ function App() {
       <Routes>
         <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/dashboard" element={<RoleRedirect />} />
-        <Route path="/blockchain" element={<BlockchainDebugPage />} />
         <Route path="/pending-approval" element={<PendingApproval />} />
 
         {/* Nested User Routes under MainLayout */}
@@ -109,6 +108,7 @@ function App() {
           <Route path="courses" element={<CourseManagement />} />
           <Route path="classes" element={<ClassManagement />} />
           <Route path="students" element={<StudentManagement />} />
+          <Route path="blockchain" element={<BlockchainDebugPage />} />
         </Route>
 
         <Route path="/student" element={

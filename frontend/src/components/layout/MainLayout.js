@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Layout, Menu, Button, Avatar, theme, Dropdown, Badge } from 'antd';
-import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award, ClipboardList, BarChart2, School, Users, GraduationCap, Bell } from 'lucide-react';
+import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award, ClipboardList, BarChart2, School, Users, GraduationCap, Bell, ShieldCheck } from 'lucide-react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import authService from '../../services/authService';
 import axios from 'axios';
@@ -94,7 +94,8 @@ const MainLayout = () => {
     { key: '/lecturer/students', icon: <Users size={18} />, label: 'Quản Lý Sinh Viên' },
     { key: '/lecturer/rubrics', icon: <ClipboardList size={18} />, label: 'Quản Lý Rubrics' },
     { key: '/lecturer/review', icon: <FileText size={18} />, label: 'Chấm Điểm (AI)' },
-    { key: '/lecturer/comparison', icon: <BarChart2 size={18} />, label: 'So Sánh AI vs GV' }
+    { key: '/lecturer/comparison', icon: <BarChart2 size={18} />, label: 'So Sánh AI vs GV' },
+    { key: '/lecturer/blockchain', icon: <ShieldCheck size={18} />, label: 'Đối Chiếu Blockchain' }
   ];
 
   const adminMenuItems = [
