@@ -198,7 +198,13 @@ exports.createProgressEntry = async (req, res) => {
         }
         const nhomId = registrationCheck.dangKy?.Nhom;
 
-        const existingEntries = await TienDo.find({ DeTai: deTaiId, SinhVien: sinhVienId })
+        const queryExisting = { DeTai: deTaiId };
+        if (nhomId) {
+            queryExisting.Nhom = nhomId;
+        } else {
+            queryExisting.SinhVien = sinhVienId;
+        }
+        const existingEntries = await TienDo.find(queryExisting)
             .sort({ createdAt: -1 });
 
         // Tinh LanNopLai cho bao cao tuan: cho phep nop lai sau khi bi KhongDat
@@ -273,7 +279,26 @@ exports.getProgressBySinhVien = async (req, res) => {
     try {
         const { svId } = req.params;
         const { deTaiId } = req.query;
-        const filter = { SinhVien: svId };
+
+        // Tìm xem sinh viên có thuộc nhóm nào có đề tài được duyệt không
+        const queryDangKy = {
+            TrangThai: 'DaDuyet',
+            $or: [
+                { SinhVien: svId },
+                { TruongNhom: svId },
+                { 'ThanhVien.SinhVien': svId }
+            ]
+        };
+        if (deTaiId) {
+            queryDangKy.DeTai = deTaiId;
+        }
+
+        const dangKy = await DangKyDeTai.findOne(queryDangKy);
+
+        let filter = { SinhVien: svId };
+        if (dangKy && dangKy.Nhom) {
+            filter = { Nhom: dangKy.Nhom };
+        }
 
         if (deTaiId) {
             filter.DeTai = deTaiId;
@@ -330,34 +355,66 @@ exports.getProgressDetail = async (req, res) => {
         }
 
         const requesterId = req.user?.id || req.user?._id || req.query.sinhVienId || req.query.giangVienId;
-        if (requesterId && String(progress.SinhVien) !== String(requesterId)) {
+        const isOwner = String(progress.SinhVien) === String(requesterId);
+        let isMemberOfGroup = false;
+        if (progress.Nhom && requesterId) {
+            const dangKy = await DangKyDeTai.findOne({
+                DeTai: progress.DeTai._id || progress.DeTai,
+                Nhom: progress.Nhom,
+                $or: [
+                    { SinhVien: requesterId },
+                    { TruongNhom: requesterId },
+                    { 'ThanhVien.SinhVien': requesterId }
+                ]
+            });
+            if (dangKy) {
+                isMemberOfGroup = true;
+            }
+        }
+
+        if (requesterId && !isOwner && !isMemberOfGroup) {
             const ownerCheck = await assertGiangVienOwnsDeTai(progress.DeTai._id || progress.DeTai, requesterId);
             if (!ownerCheck.ok) {
                 return res.status(403).json({ error: ownerCheck.error, code: ownerCheck.code });
             }
         }
 
+        const queryHistory = {
+            DeTai: progress.DeTai._id || progress.DeTai,
+            TuanSo: progress.TuanSo
+        };
+        if (progress.Nhom) {
+            queryHistory.Nhom = progress.Nhom;
+        } else {
+            queryHistory.SinhVien = progress.SinhVien;
+        }
         const lichSu = isNumber(progress.TuanSo)
-            ? await TienDo.find({
-                DeTai: progress.DeTai._id || progress.DeTai,
-                SinhVien: progress.SinhVien,
-                TuanSo: progress.TuanSo
-            }).sort({ LanNopLai: -1, createdAt: -1 })
+            ? await TienDo.find(queryHistory).sort({ LanNopLai: -1, createdAt: -1 })
             : [];
 
+        const queryTuanTruoc = {
+            DeTai: progress.DeTai._id || progress.DeTai,
+            TuanSo: { $lt: progress.TuanSo }
+        };
+        if (progress.Nhom) {
+            queryTuanTruoc.Nhom = progress.Nhom;
+        } else {
+            queryTuanTruoc.SinhVien = progress.SinhVien;
+        }
         const tuanTruoc = isNumber(progress.TuanSo)
-            ? await TienDo.findOne({
-                DeTai: progress.DeTai._id || progress.DeTai,
-                SinhVien: progress.SinhVien,
-                TuanSo: { $lt: progress.TuanSo }
-            }).sort({ TuanSo: -1 })
+            ? await TienDo.findOne(queryTuanTruoc).sort({ TuanSo: -1 })
             : null;
 
-        const previousEntries = await TienDo.find({
+        const queryPrevious = {
             DeTai: progress.DeTai._id || progress.DeTai,
-            SinhVien: progress.SinhVien,
             _id: { $ne: progress._id }
-        }).sort({ createdAt: -1 });
+        };
+        if (progress.Nhom) {
+            queryPrevious.Nhom = progress.Nhom;
+        } else {
+            queryPrevious.SinhVien = progress.SinhVien;
+        }
+        const previousEntries = await TienDo.find(queryPrevious).sort({ createdAt: -1 });
 
         const anomalies = detectAnomalies(progress, previousEntries);
         const warnings = anomalies.warnings || [];
@@ -395,7 +452,24 @@ exports.updateProgressEntry = async (req, res) => {
         }
 
         const requesterId = req.user?.id || req.user?._id || sinhVienId;
-        if (requesterId && String(progress.SinhVien) !== String(requesterId)) {
+        const isOwner = String(progress.SinhVien) === String(requesterId);
+        let isMemberOfGroup = false;
+        if (progress.Nhom && requesterId) {
+            const dangKy = await DangKyDeTai.findOne({
+                DeTai: progress.DeTai,
+                Nhom: progress.Nhom,
+                $or: [
+                    { SinhVien: requesterId },
+                    { TruongNhom: requesterId },
+                    { 'ThanhVien.SinhVien': requesterId }
+                ]
+            });
+            if (dangKy) {
+                isMemberOfGroup = true;
+            }
+        }
+
+        if (requesterId && !isOwner && !isMemberOfGroup) {
             return res.status(403).json({ error: 'Không có quyền cập nhật', code: 'KHONG_CO_QUYEN' });
         }
 
@@ -449,11 +523,16 @@ exports.updateProgressEntry = async (req, res) => {
             progress.MinhChung = normalizeMinhChung(minhChung);
         }
 
-        const previousEntries = await TienDo.find({
+        const queryPrevious = {
             DeTai: progress.DeTai,
-            SinhVien: progress.SinhVien,
             _id: { $ne: progress._id }
-        }).sort({ createdAt: -1 });
+        };
+        if (progress.Nhom) {
+            queryPrevious.Nhom = progress.Nhom;
+        } else {
+            queryPrevious.SinhVien = progress.SinhVien;
+        }
+        const previousEntries = await TienDo.find(queryPrevious).sort({ createdAt: -1 });
 
         const anomalies = detectAnomalies(progress, previousEntries);
         let blockers = anomalies.blockers || [];

@@ -327,17 +327,42 @@ exports.getBaoCaoByLecturer = async (req, res) => {
 
         const result = approvedRegs.flatMap(reg => {
             const members = getAcceptedMembers(reg);
+            const topicId = reg.DeTai?._id?.toString() || reg.DeTai?.toString();
+
+            // Tìm trưởng nhóm và submission/grade của trưởng nhóm để fallback cho thành viên
+            const leader = members.find(tv => tv.VaiTro === 'TruongNhom');
+            const leaderId = leader?.SinhVien?._id?.toString() || leader?.SinhVien?.toString();
+
+            const leaderSub = leaderId ? submissions.find(s =>
+                s.SinhVien?._id?.toString() === leaderId &&
+                s.DeTai?._id?.toString() === topicId
+            ) : null;
+
+            const leaderGrade = leaderSub
+                ? diemSoList.find(d => d.BaoCao?.toString() === leaderSub._id.toString())
+                : null;
 
             return members.map(tv => {
                 const studentId = tv.SinhVien?._id?.toString() || tv.SinhVien?.toString();
-                const topicId = reg.DeTai?._id?.toString() || reg.DeTai?.toString();
-                const sub = submissions.find(s =>
+                const isLeader = tv.VaiTro === 'TruongNhom';
+
+                // Tìm BaoCao riêng của thành viên
+                let sub = submissions.find(s =>
                     s.SinhVien?._id?.toString() === studentId &&
                     s.DeTai?._id?.toString() === topicId
                 );
-                const grade = sub
+                let grade = sub
                     ? diemSoList.find(d => d.BaoCao?.toString() === sub._id.toString())
                     : null;
+
+                // Fallback nhóm: nếu thành viên không có BaoCao/DiemSo riêng,
+                // lấy từ trưởng nhóm để đồng bộ trạng thái và điểm
+                if (!sub && leaderSub && !isLeader) {
+                    sub = leaderSub;
+                }
+                if (!grade && leaderGrade && !isLeader) {
+                    grade = leaderGrade;
+                }
 
                 return {
                     _id: `${reg._id}-${studentId}`,
@@ -346,7 +371,7 @@ exports.getBaoCaoByLecturer = async (req, res) => {
                     registration: reg,
                     submission: sub || null,
                     grade: grade || null,
-                    isLeader: tv.VaiTro === 'TruongNhom',
+                    isLeader,
                     status: grade ? 'DaCham' : (sub ? 'DaNop' : 'ChuaNop')
                 };
             });
