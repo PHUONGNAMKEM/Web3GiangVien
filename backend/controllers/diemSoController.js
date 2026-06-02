@@ -7,6 +7,28 @@ const logger = require('../config/logger');
 const AILog = require('../models/AILog');
 const crypto = require('crypto');
 
+const parseBlockchainError = (error, walletAddress = '0xD6aB1D7521A6cd96317bd2d04d89d431b888a7F0') => {
+    const errorStr = String(error.message || error);
+    if (errorStr.includes('insufficient funds') || error.code === 'INSUFFICIENT_FUNDS') {
+        return `Tài khoản ví hệ thống không đủ phí gas Sepolia để thực hiện giao dịch ghi điểm. Địa chỉ ví hệ thống: ${walletAddress}. Vui lòng nạp thêm ETH Sepolia để tiếp tục.`;
+    }
+    if (errorStr.includes('already graded') || errorStr.includes('Submission already graded')) {
+        return 'Điểm số này đã được khóa và ghi nhận an toàn trên Smart Contract Blockchain từ trước.';
+    }
+    if (errorStr.includes('user rejected action') || errorStr.includes('ACTION_REJECTED')) {
+        return 'Giao dịch bị từ chối ký trên ví MetaMask.';
+    }
+    
+    const match = errorStr.match(/execution reverted: "([^"]+)"/) || errorStr.match(/reason="([^"]+)"/);
+    if (match && match[1]) {
+        return `Lỗi Smart Contract: ${match[1]}`;
+    }
+    if (errorStr.length > 200) {
+        return errorStr.split('\n')[0].substring(0, 200) + '...';
+    }
+    return errorStr;
+};
+
 // Tạo 1 bản ghi điểm cho 1 báo cáo + ghi blockchain (best-effort). Bỏ qua nếu đã chấm.
 const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, nhomId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs }) => {
     const sinhVienId = baoCao.SinhVien;
@@ -79,11 +101,40 @@ const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, nhomId, diem
         blockchainStatus = 'DaGhi';
         await diemSo.save();
     } catch (error) {
-        diemSo.TrangThaiBlockchain = 'LoiGhi';
-        diemSo.LoiBlockchain = error.message;
-        blockchainStatus = 'LoiGhi';
-        await diemSo.save();
-        logger.error(`[GRADE] Blockchain failed for student ${sinhVienId}: ${error.message}`);
+        const errorMsg = error.message || '';
+        if (errorMsg.includes('already graded') || errorMsg.includes('Submission already graded')) {
+            try {
+                logger.info(`[GRADE] Intercepted 'already graded' in createGradeForReport. Synchronizing from blockchain for student ${sinhVienId} and topic ${deTaiId}`);
+                const history = await contractService.getSubmissionHistory(String(sinhVienId), deTaiId);
+                if (history && history.length > submissionIndex) {
+                    const onChainSub = history[submissionIndex];
+                    if (onChainSub.graded) {
+                        const onChainGrade = Number(onChainSub.grade) / 10;
+                        diemSo.Diem = onChainGrade;
+                        diemSo.TrangThaiBlockchain = 'DaGhi';
+                        diemSo.LoiBlockchain = undefined;
+                        if (!diemSo.TxHash || diemSo.TxHash.startsWith('0xMock')) {
+                            diemSo.TxHash = '0xMockSyncedOnChain';
+                        }
+                        await diemSo.save();
+                        blockchainStatus = 'DaGhi';
+                        txHash = diemSo.TxHash;
+                        logger.info(`[GRADE] createGradeForReport self-healing sync successful. Score synced: ${onChainGrade}`);
+                    }
+                }
+            } catch (syncErr) {
+                logger.warn(`[GRADE] createGradeForReport self-healing failed: ${syncErr.message}`);
+            }
+        }
+
+        if (blockchainStatus !== 'DaGhi') {
+            const walletAddress = contractService.getWalletAddress ? contractService.getWalletAddress() : '0xD6aB1D7521A6cd96317bd2d04d89d431b888a7F0';
+            diemSo.TrangThaiBlockchain = 'LoiGhi';
+            diemSo.LoiBlockchain = parseBlockchainError(error, walletAddress);
+            blockchainStatus = 'LoiGhi';
+            await diemSo.save();
+            logger.error(`[GRADE] Blockchain failed for student ${sinhVienId}: ${error.message}`);
+        }
     }
 
     return { skipped: false, diemSo, blockchainStatus, txHash };
@@ -259,24 +310,19 @@ exports.chamDiem = async (req, res) => {
 
         // #12: Đề tài nhóm → áp CÙNG điểm/nhận xét cho TẤT CẢ thành viên trong nhóm
         let groupGraded = null;
-        const isGroupTopic = (ownerCheck.deTai?.SoLuongSinhVien || 1) > 1;
-        if (isGroupTopic && dangKy) {
-            const memberIds = (dangKy.ThanhVien || [])
-                .filter(tv => tv.SinhVien && tv.TrangThaiTV === 'DaChapNhan')
-                .map(tv => String(tv.SinhVien));
-
+        const isGroupTopic = (ownerCheck.deTai?.SoLuongSinhVien || 1) > 1 || (dangKy?.Nhom);
+        if (isGroupTopic && dangKy && nhomId) {
+            const groupReports = await BaoCao.find({ DeTai: deTaiId, Nhom: nhomId });
             let success = 1; // đã tính báo cáo chính
             let total = 1;
-            for (const memberId of memberIds) {
-                if (memberId === String(sinhVienId)) continue; // đã chấm ở trên
-                const memberReport = await BaoCao.findOne({ DeTai: deTaiId, SinhVien: memberId });
-                if (!memberReport) continue;
+            for (const memberReport of groupReports) {
+                if (String(memberReport.SinhVien) === String(sinhVienId)) continue; // đã chấm ở trên
                 total += 1;
                 const r = await createGradeForReport({ baoCao: memberReport, ...gradePayload });
                 if (!r.skipped) success += 1;
             }
             groupGraded = { total, success };
-            logger.info(`[GRADE] Group grade applied for topic ${deTaiId} | members=${total} | graded=${success}`);
+            logger.info(`[GRADE] Group grade applied for topic ${deTaiId} | members=${total} | graded=${success} | Nhom=${nhomId}`);
         }
 
         // #5: kiểm tra khép vòng đời đề tài sau khi chấm
@@ -300,12 +346,43 @@ exports.chamDiem = async (req, res) => {
 
 exports.getDiemBySinhVien = async (req, res) => {
     try {
-        const list = await DiemSo.find({ SinhVien: req.params.svId })
+        const svId = req.params.svId;
+        let list = await DiemSo.find({ SinhVien: svId })
             .populate('DeTai')
             .populate('BaoCao')
             .populate('Nhom')
             .populate('GiangVienCham', 'HoTen Email')
             .populate('GiangVienCam', 'HoTen Email');
+
+        // Fallback nhóm: nếu SV không có DiemSo riêng,
+        // kiểm tra xem SV có thuộc nhóm nào đã được chấm điểm không
+        if (list.length === 0) {
+            const groupRegs = await DangKyDeTai.find({
+                TrangThai: 'DaDuyet',
+                'ThanhVien.SinhVien': svId,
+                'ThanhVien.TrangThaiTV': 'DaChapNhan'
+            });
+
+            for (const reg of groupRegs) {
+                const leaderId = reg.TruongNhom?.toString();
+                if (!leaderId || leaderId === svId) continue;
+
+                const deTaiId = reg.DeTai?.toString();
+                if (!deTaiId) continue;
+
+                const leaderGrades = await DiemSo.find({ SinhVien: leaderId, DeTai: deTaiId })
+                    .populate('DeTai')
+                    .populate('BaoCao')
+                    .populate('Nhom')
+                    .populate('GiangVienCham', 'HoTen Email')
+                    .populate('GiangVienCam', 'HoTen Email');
+
+                if (leaderGrades.length > 0) {
+                    list = list.concat(leaderGrades);
+                }
+            }
+        }
+
         res.json(list);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -338,6 +415,42 @@ exports.retryBlockchain = async (req, res) => {
             });
         }
 
+        // 1. Kiểm tra trước trên Blockchain xem điểm số đã được chốt từ trước chưa để tự động phục hồi không cần tốn gas
+        try {
+            logger.info(`[GRADE] Pre-checking blockchain history in retry for student ${grade.SinhVien} and topic ${grade.DeTai}`);
+            const history = await contractService.getSubmissionHistory(
+                grade.SinhVien.toString(),
+                grade.DeTai.toString()
+            );
+            const idx = grade.SubmissionIndex || 0;
+            if (history && history.length > idx) {
+                const onChainSub = history[idx];
+                if (onChainSub.graded) {
+                    const onChainGrade = Number(onChainSub.grade) / 10;
+                    grade.Diem = onChainGrade;
+                    grade.TrangThaiBlockchain = 'DaGhi';
+                    grade.LoiBlockchain = undefined;
+                    if (!grade.TxHash || grade.TxHash.startsWith('0xMock')) {
+                        grade.TxHash = '0xMockSyncedOnChain';
+                    }
+                    await grade.save();
+                    
+                    logger.info(`[GRADE] Pre-check sync successful (Self-healed without transaction). Score synced: ${onChainGrade}`);
+                    
+                    return res.json({
+                        message: 'Dữ liệu đã được cập nhật lại theo bản ghi đã có trên Blockchain để đồng nhất dữ liệu và đảm bảo tính bảo mật.',
+                        data: grade,
+                        blockchain: {
+                            status: 'DaGhi',
+                            txHash: grade.TxHash
+                        }
+                    });
+                }
+            }
+        } catch (syncErr) {
+            logger.warn(`[GRADE] Pre-check sync failed/skipped: ${syncErr.message}`);
+        }
+
         grade.TrangThaiBlockchain = 'Pending';
         grade.LoiBlockchain = undefined;
         await grade.save();
@@ -365,13 +478,53 @@ exports.retryBlockchain = async (req, res) => {
                 }
             });
         } catch (error) {
+            const errorMsg = error.message || '';
+            if (errorMsg.includes('already graded') || errorMsg.includes('Submission already graded')) {
+                try {
+                    logger.info(`[GRADE] Intercepted 'already graded' in retry. Synchronizing grade from blockchain for student ${grade.SinhVien} and topic ${grade.DeTai}`);
+                    const history = await contractService.getSubmissionHistory(
+                        grade.SinhVien.toString(),
+                        grade.DeTai.toString()
+                    );
+                    const idx = grade.SubmissionIndex || 0;
+                    if (history && history.length > idx) {
+                        const onChainSub = history[idx];
+                        if (onChainSub.graded) {
+                            const onChainGrade = Number(onChainSub.grade) / 10;
+                            grade.Diem = onChainGrade;
+                            grade.TrangThaiBlockchain = 'DaGhi';
+                            grade.LoiBlockchain = undefined;
+                            if (!grade.TxHash || grade.TxHash.startsWith('0xMock')) {
+                                grade.TxHash = '0xMockSyncedOnChain';
+                            }
+                            await grade.save();
+                            logger.info(`[GRADE] Self-healing sync successful. Grade ID ${grade._id} score updated to match blockchain: ${onChainGrade}`);
+
+                            return res.json({
+                                message: 'Dữ liệu đã được cập nhật lại theo bản ghi đã có trên Blockchain để đồng nhất dữ liệu và đảm bảo tính bảo mật.',
+                                data: grade,
+                                blockchain: {
+                                    status: 'DaGhi',
+                                    txHash: grade.TxHash
+                                }
+                            });
+                        }
+                    }
+                } catch (syncErr) {
+                    logger.warn(`[GRADE] Self-healing sync failed: ${syncErr.message}`);
+                }
+            }
+
+            const walletAddress = contractService.getWalletAddress ? contractService.getWalletAddress() : '0xD6aB1D7521A6cd96317bd2d04d89d431b888a7F0';
+            const cleanError = parseBlockchainError(error, walletAddress);
+
             grade.TrangThaiBlockchain = 'LoiGhi';
-            grade.LoiBlockchain = error.message;
+            grade.LoiBlockchain = cleanError;
             await grade.save();
             logger.error(`[GRADE] Retry blockchain failed for grade ${grade._id}: ${error.message}`);
 
-            res.status(500).json({
-                error: error.message,
+            res.status(400).json({
+                error: cleanError,
                 code: 'RETRY_BLOCKCHAIN_FAILED',
                 data: grade,
                 blockchain: {
@@ -466,61 +619,9 @@ exports.getComparison = async (req, res) => {
     }
 };
 
-// MỚI: GV điều chỉnh điểm riêng cho 1 SV trong nhóm
+// MỚI: GV điều chỉnh điểm riêng cho 1 SV trong nhóm (ĐH/VÔ HIỆU HÓA)
 exports.adjustGrade = async (req, res) => {
-    try {
-        const { id } = req.params;  // DiemSo ID
-        const { diem, nhanXet } = req.body;
-        const giangVienId = req.user?.id || req.body.giangVienId;
-
-        const grade = await DiemSo.findById(id);
-        if (!grade) return res.status(404).json({ error: 'Không tìm thấy điểm số' });
-
-        // Kiểm tra GV sở hữu đề tài
-        const ownerCheck = await assertGiangVienOwnsDeTai(grade.DeTai, giangVienId);
-        if (!ownerCheck.ok) return res.status(403).json({ error: ownerCheck.error });
-
-        // Validate điểm
-        const diemValidation = validateDiem(diem);
-        if (!diemValidation.ok) {
-            return res.status(400).json({ error: diemValidation.error, code: diemValidation.code });
-        }
-
-        // Lưu điểm gốc nếu lần đầu điều chỉnh
-        if (!grade.LaDieuChinh) {
-            grade.DiemGoc = grade.Diem;  // Giữ lại điểm nhóm ban đầu
-        }
-        grade.Diem = diem;
-        if (nhanXet !== undefined) {
-            grade.NhanXet = nhanXet;
-        }
-        grade.LaDieuChinh = true;
-        grade.GiangVienCham = giangVienId;
-        
-        // blockchain write (best-effort)
-        grade.TrangThaiBlockchain = 'Pending';
-        await grade.save();
-
-        try {
-            const txHash = await contractService.finalizeGradeOnChain(
-                grade.SinhVien.toString(),
-                grade.DeTai.toString(),
-                diem,
-                nhanXet || grade.NhanXet || '',
-                grade.SubmissionIndex || 0
-            );
-            grade.TxHash = txHash;
-            grade.TrangThaiBlockchain = 'DaGhi';
-        } catch (error) {
-            grade.TrangThaiBlockchain = 'LoiGhi';
-            grade.LoiBlockchain = error.message;
-            logger.error(`[GRADE] Blockchain adjust failed for student ${grade.SinhVien}: ${error.message}`);
-        }
-        await grade.save();
-
-        res.json({ message: 'Đã điều chỉnh điểm cho SV', data: grade });
-    } catch (err) {
-        logger.error(`[GRADE] Adjust grade failed: ${err.message}`);
-        res.status(500).json({ error: err.message });
-    }
+    return res.status(403).json({
+        error: 'Chức năng điều chỉnh điểm cá nhân đã bị vô hiệu hóa để bảo toàn tính đồng nhất của điểm nhóm.'
+    });
 };

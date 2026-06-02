@@ -100,7 +100,7 @@ const EntranceTest = () => {
         // Nhóm mình thắng!
         setCompetitionResult('winner');
         if (!submittedRef.current) {
-          message.success({ content: '🏆 Chúc mừng! Nhóm bạn giành được đề tài!', duration: 10 });
+          message.success({ key: 'win_topic_toast', content: '🏆 Chúc mừng! Nhóm bạn giành được đề tài!', duration: 10 });
         }
       } else {
         // Nhóm khác thắng → dừng
@@ -187,7 +187,7 @@ const EntranceTest = () => {
       });
 
       if (res.competitionResult === 'winner') {
-        message.success('🏆 Chúc mừng! Nhóm bạn giành được đề tài!');
+        message.success({ key: 'win_topic_toast', content: '🏆 Chúc mừng! Nhóm bạn giành được đề tài!', duration: 10 });
       } else if (res.competitionResult === 'waiting') {
         message.info('⏳ Đạt ngưỡng! Đang chờ kết quả nhóm submit trước...');
       } else if (res.competitionResult === 'lost') {

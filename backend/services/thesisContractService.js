@@ -245,4 +245,29 @@ exports.submitProgressOnChain = async (topicId, studentDID, week, score) => {
     }
 };
 
+exports.getSubmissionHistory = async (studentDID, topicId) => {
+    try {
+        logger.info(`[BLOCKCHAIN] getSubmissionHistory | student=${studentDID} | topic=${topicId}`);
+        const { contract, version } = await getContractInstance();
+        if (version === 'v2') {
+            const studentHash = toBytes32(studentDID);
+            const topicHash = toBytes32(topicId);
+            return await contract.getSubmissionHistory(studentHash, topicHash);
+        }
+        return await contract.getSubmissionHistory(studentDID, topicId);
+    } catch (error) {
+        logger.error(`[BLOCKCHAIN] getSubmissionHistory failed: ${error.message}`);
+        throw error;
+    }
+};
+
+exports.getWalletAddress = () => {
+    try {
+        const { signer } = getProviderAndSigner();
+        return signer.address;
+    } catch (err) {
+        return '0xD6aB1D7521A6cd96317bd2d04d89d431b888a7F0';
+    }
+};
+
 exports.toBytes32 = toBytes32;

@@ -116,11 +116,11 @@ const ProgressTracking = () => {
 
       {/* Thông tin đề tài */}
       {registration && (
-        <Card style={{ marginBottom: 16, borderLeft: regStatus === 'DaDuyet' ? '4px solid #52c41a' : '4px solid #1677ff' }}>
+        <Card style={{ marginBottom: 16, borderLeft: '4px solid #1677ff' }}>
           <Space>
             <BookOpen size={18} />
             <Text strong>Đề tài: {topicName}</Text>
-            <Tag color={regStatus === 'DaDuyet' ? 'success' : 'processing'}>
+            <Tag color={regStatus === 'DaDuyet' ? 'blue' : 'processing'}>
               {regStatus === 'DaDuyet' ? 'Đã Duyệt' : 'Chờ Duyệt'}
             </Tag>
           </Space>
@@ -154,17 +154,17 @@ const ProgressTracking = () => {
             {
               title: 'AI Phân Tích',
               description: aiResult ? `Điểm AI: ${aiResult.score}/10` : (aiLoading ? 'Đang gọi PhoBERT...' : 'Chờ nộp báo cáo'),
-              icon: <BrainCircuit size={24} color={aiResult ? '#52c41a' : '#1677ff'} />
+              icon: <BrainCircuit size={24} color={aiResult ? '#1677ff' : undefined} />
             },
             {
               title: 'GV Đánh Giá',
               description: finalGrade ? `Điểm: ${finalGrade.Diem}/10` : 'Chờ chấm điểm',
-              icon: <Search size={24} color={finalGrade ? '#52c41a' : undefined} />
+              icon: <Search size={24} color={finalGrade ? '#1677ff' : undefined} />
             },
             {
               title: 'Blockchain',
               description: finalGrade?.TxHash ? 'Ghi hệ thống hoàn tất' : 'Chờ xác thực',
-              icon: <Clock size={24} color={finalGrade?.TxHash ? '#52c41a' : undefined} />
+              icon: <Clock size={24} color={finalGrade?.TxHash ? '#1677ff' : undefined} />
             },
           ]}
         />
@@ -173,7 +173,7 @@ const ProgressTracking = () => {
       <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
         <Col xs={24} lg={12}>
           <Card
-            title={<span><BrainCircuit size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} /> Đánh giá từ AI (PhoBERT - Local FastAPI Port 8001)</span>}
+            title={<span><BrainCircuit size={18} style={{ marginRight: 8, verticalAlign: 'middle' }} /> Đánh giá từ AI (PhoBERT)</span>}
             bordered={false}
           >
             {aiLoading ? (
@@ -197,7 +197,7 @@ const ProgressTracking = () => {
                       )}
                     </div>
                   }
-                  type={aiResult.score >= 7 ? "success" : aiResult.score >= 5 ? "info" : "warning"}
+                  type="info"
                   showIcon
                   style={{ marginBottom: 16 }}
                 />
@@ -251,7 +251,7 @@ const ProgressTracking = () => {
               type="dashboard"
               percent={finalGrade ? Math.round(finalGrade.Diem * 10) : (aiResult ? Math.round(aiResult.score * 10) : 0)}
               format={() => finalGrade ? `${finalGrade.Diem}/10` : (aiResult ? `${aiResult.score}/10` : 'Chờ')}
-              strokeColor={finalGrade ? '#1677ff' : (aiResult ? (aiResult.score >= 7 ? '#52c41a' : '#faad14') : { '0%': '#108ee9', '100%': '#87d068' })}
+              strokeColor={finalGrade || aiResult ? '#1677ff' : '#d9d9d9'}
               size={180}
             />
             <Divider />

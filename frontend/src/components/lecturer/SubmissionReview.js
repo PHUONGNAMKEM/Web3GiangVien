@@ -38,6 +38,34 @@ const countPendingProgress = (logs) => (
     : 0
 );
 
+const formatBlockchainError = (errorStr) => {
+  if (!errorStr) return '';
+  const str = String(errorStr);
+  if (str.includes('không đủ phí gas') || str.includes('Địa chỉ ví hệ thống')) {
+    return str;
+  }
+  if (str.includes('already graded') || str.includes('Submission already graded')) {
+    return 'Điểm số này đã được khóa và ghi nhận an toàn trên Smart Contract Blockchain từ trước. Để bảo vệ dữ liệu chống giả mạo, hệ thống chặn mọi thao tác ghi đè hoặc chấm lại điểm. Dữ liệu sẽ được cập nhật lại theo bản ghi đã có trên Blockchain để đồng nhất dữ liệu và đảm bảo tính bảo mật. Hãy nhấn nút "Đồng bộ từ Blockchain" để hoàn tất cập nhật.';
+  }
+  if (str.includes('user rejected action') || str.includes('ACTION_REJECTED')) {
+    return 'Giao dịch bị từ chối ký trên ví MetaMask.';
+  }
+  if (str.includes('insufficient funds')) {
+    return 'Tài khoản ví hệ thống không đủ phí gas Sepolia để thực hiện giao dịch ghi điểm. Vui lòng nạp thêm ETH Sepolia.';
+  }
+  
+  // Extract execution revert reason if possible
+  const match = str.match(/execution reverted: "([^"]+)"/) || str.match(/reason="([^"]+)"/);
+  if (match && match[1]) {
+    return `Lỗi Smart Contract: ${match[1]}`;
+  }
+  
+  if (str.length > 250) {
+    return str.split('\n')[0].substring(0, 250) + '...';
+  }
+  return str;
+};
+
 const getBlockchainStatusMeta = (status) => {
   const meta = {
     ChuaGhi: { label: 'Chưa ghi Blockchain', color: 'default', alertType: 'info' },
@@ -91,51 +119,7 @@ const SubmissionReview = () => {
   const [activeProgressStudentId, setActiveProgressStudentId] = useState(null);
   const [progressLoading, setProgressLoading] = useState(false);
 
-  // MỚI: Trạng thái điều chỉnh điểm cá nhân
-  const [adjustModalVisible, setAdjustModalVisible] = useState(false);
-  const [adjustTarget, setAdjustTarget] = useState(null);
-  const [adjustScore, setAdjustScore] = useState(0);
-  const [adjustComment, setAdjustComment] = useState('');
-  const [adjustSaving, setAdjustSaving] = useState(false);
 
-  const openAdjustModal = (member) => {
-    setAdjustTarget(member);
-    setAdjustScore(member.grade?.Diem ?? 0);
-    setAdjustComment(member.grade?.NhanXet || '');
-    setAdjustModalVisible(true);
-  };
-
-  const handleAdjustGrade = async () => {
-    if (!adjustTarget?.grade?._id) return;
-    try {
-      setAdjustSaving(true);
-      const res = await aiApiService.adjustGrade(adjustTarget.grade._id, adjustScore, adjustComment);
-      message.success('Đã điều chỉnh điểm cho sinh viên!');
-      setAdjustModalVisible(false);
-      setAdjustTarget(null);
-      
-      queryClient.setQueryData(['submissions', user?.id], (oldData) => {
-        if (!oldData) return oldData;
-        return {
-          ...oldData,
-          submissions: oldData.submissions.map(sub => 
-            sub.grade?._id === res.data?._id ? { ...sub, grade: res.data } : sub
-          )
-        };
-      });
-
-      if (selectedSubmission?.grade?._id === res.data?._id) {
-        setSelectedSubmission(prev => ({
-          ...prev,
-          grade: res.data
-        }));
-      }
-    } catch (err) {
-      message.error(err.response?.data?.error || 'Điều chỉnh điểm thất bại');
-    } finally {
-      setAdjustSaving(false);
-    }
-  };
 
   const groupMembers = useMemo(() => {
     if (!selectedSubmission) return [];
@@ -405,13 +389,15 @@ const SubmissionReview = () => {
       const updatedSubmission = { ...selectedSubmission, status: 'DaCham', grade: gradeData };
       setSelectedSubmission(updatedSubmission);
 
-      // Update the main submissions array
+      // Cập nhật trạng thái chấm điểm đồng bộ cho tất cả thành viên trong nhóm
       queryClient.setQueryData(['submissions', user?.id], (oldData) => {
         if (!oldData) return oldData;
         return {
           ...oldData,
           submissions: oldData.submissions.map(s =>
-            s.submission?._id === selectedSubmission.submission._id ? updatedSubmission : s
+            s.registration?._id === selectedSubmission.registration?._id
+              ? { ...s, status: 'DaCham', grade: s.isLeader ? gradeData : { ...gradeData, Diem: gradeData.Diem } }
+              : s
           )
         };
       });
@@ -449,11 +435,12 @@ const SubmissionReview = () => {
         return {
           ...oldData,
           submissions: oldData.submissions.map(s =>
-            s._id === selectedSubmission._id ? updatedSubmission : s
+            s.grade?._id === gradeId ? { ...s, grade: updatedGrade } : s
           )
         };
       });
-      message.success('Ghi lại Blockchain thành công');
+      const successMsg = response.data?.message || 'Ghi lại Blockchain thành công';
+      message.success({ content: successMsg, duration: 6 });
     } catch (error) {
       const updatedGrade = error.response?.data?.data;
       if (updatedGrade) {
@@ -464,7 +451,7 @@ const SubmissionReview = () => {
           return {
             ...oldData,
             submissions: oldData.submissions.map(s =>
-              s._id === selectedSubmission._id ? updatedSubmission : s
+              s.grade?._id === gradeId ? { ...s, grade: updatedGrade } : s
             )
           };
         });
@@ -794,30 +781,10 @@ const SubmissionReview = () => {
         if (member.status !== 'DaCham' || !member.grade) {
           return <Text type="secondary">—</Text>;
         }
-        const isAdjusted = member.grade.LaDieuChinh;
         return (
-          <Space>
-            <Text strong style={{ color: isAdjusted ? '#fa8c16' : '#52c41a', fontSize: 15 }}>
-              {member.grade.Diem}
-            </Text>
-            {isAdjusted && (
-              <Tag color="orange" style={{ margin: 0, fontSize: 10 }}>Đã chỉnh</Tag>
-            )}
-          </Space>
-        );
-      }
-    },
-    {
-      title: 'Thao Tác',
-      key: 'action',
-      render: (_, member) => {
-        if (member.status !== 'DaCham' || !member.grade) {
-          return null;
-        }
-        return (
-          <Button size="small" type="link" onClick={() => openAdjustModal(member)}>
-            Điều chỉnh điểm
-          </Button>
+          <Text strong style={{ color: '#52c41a', fontSize: 15 }}>
+            {member.grade.Diem}
+          </Text>
         );
       }
     }
@@ -1205,14 +1172,19 @@ const SubmissionReview = () => {
                       <div style={{ marginTop: 24 }}>
                         {selectedSubmission.status === 'DaCham' ? (
                           (() => {
-                            const blockchainMeta = getBlockchainStatusMeta(selectedSubmission.grade?.TrangThaiBlockchain);
+                            const isAlreadyGraded = selectedSubmission.grade?.LoiBlockchain && 
+                              (String(selectedSubmission.grade.LoiBlockchain).includes('already graded') || 
+                               String(selectedSubmission.grade.LoiBlockchain).includes('Submission already graded'));
+                            const blockchainMeta = isAlreadyGraded 
+                              ? { label: 'Đã ghi nhận an toàn (Blockchain)', color: 'success', alertType: 'success' }
+                              : getBlockchainStatusMeta(selectedSubmission.grade?.TrangThaiBlockchain);
                             return (
                           <div>
                             <Alert
                               type={blockchainMeta.alertType}
                               message={`Sinh viên đã được chấm điểm: ${selectedSubmission.grade?.Diem || score}`}
                               description={
-                                <Space direction="vertical" size={4}>
+                                <Space direction="vertical" size={4} style={{ width: '100%' }}>
                                   <Space size={8} wrap>
                                     <Text>Trạng thái Blockchain:</Text>
                                     <Tag color={blockchainMeta.color} style={{ margin: 0 }}>{blockchainMeta.label}</Tag>
@@ -1223,12 +1195,20 @@ const SubmissionReview = () => {
                                       icon={<RefreshCw size={14} />}
                                       onClick={handleRetryBlockchain}
                                       loading={isRetryingBlockchain}
+                                      style={{ marginTop: 4 }}
                                     >
-                                      Ghi lại Blockchain
+                                      Đồng bộ từ Blockchain
                                     </Button>
                                   )}
                                   {selectedSubmission.grade?.LoiBlockchain && (
-                                    <Text type="danger">Lỗi: {selectedSubmission.grade.LoiBlockchain}</Text>
+                                    <div style={{ marginTop: 8, borderTop: '1px dashed rgba(0, 0, 0, 0.08)', paddingTop: 8 }}>
+                                      <Text strong style={{ display: 'block', marginBottom: 4 }}>
+                                        Thông tin hệ thống Blockchain:
+                                      </Text>
+                                      <Text style={{ fontSize: 13, display: 'block', color: 'rgba(0, 0, 0, 0.65)' }}>
+                                        {formatBlockchainError(selectedSubmission.grade.LoiBlockchain)}
+                                      </Text>
+                                    </div>
                                   )}
                                 </Space>
                               }
@@ -1243,25 +1223,16 @@ const SubmissionReview = () => {
                                   <Users size={14} color="#52c41a" />
                                   <Text strong>Điểm các thành viên trong nhóm</Text>
                                 </Space>
-                                <span style={{ color: '#8c8c8c', fontSize: 12, display: 'block', marginBottom: 8 }}>
-                                  (Điểm gốc: {selectedSubmission.grade?.DiemGoc ?? selectedSubmission.grade?.Diem})
-                                </span>
                                 <List
                                   size="small"
                                   style={{ marginTop: 4 }}
                                   dataSource={groupMembers}
                                   renderItem={member => (
-                                    <List.Item actions={[
-                                      member.grade && (
-                                        <Button size="small" type="link" onClick={() => openAdjustModal(member)}>
-                                          Điều chỉnh
-                                        </Button>
-                                      )
-                                    ]}>
+                                    <List.Item>
                                       <Space>
                                         <Text>{member.student?.HoTen} ({member.student?.MaSV})</Text>
-                                        <Tag color={member.grade?.LaDieuChinh ? 'orange' : 'success'}>
-                                          {member.grade?.Diem ?? '—'}/10 {member.grade?.LaDieuChinh ? '(đã chỉnh)' : ''}
+                                        <Tag color="success">
+                                          {member.grade?.Diem ?? '—'}/10
                                         </Tag>
                                       </Space>
                                     </List.Item>
@@ -1349,21 +1320,6 @@ const SubmissionReview = () => {
             <span style={{ fontSize: 16, fontWeight: 600 }}>
               Tiến độ: {selectedSubmission?.registration?.Nhom?.TenNhom ? `Nhóm ${selectedSubmission.registration.Nhom.TenNhom}` : (selectedSubmission?.student?.HoTen || 'N/A')}
             </span>
-            {selectedSubmission?.members && selectedSubmission.members.length > 1 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 13, color: '#555' }}>Chọn sinh viên:</span>
-                <Select
-                  value={activeProgressStudentId}
-                  onChange={handleProgressStudentChange}
-                  style={{ width: 220 }}
-                  options={selectedSubmission.members.map(m => ({
-                    value: m.student?._id,
-                    label: `${m.student?.HoTen} (${m.student?.MaSV})`
-                  }))}
-                  size="small"
-                />
-              </div>
-            )}
           </div>
         }
         width={isMobile ? '100vw' : 550}
@@ -1639,45 +1595,7 @@ const SubmissionReview = () => {
         )}
       </Modal>
 
-      {/* Modal Điều Chỉnh Điểm Cá Nhân */}
-      <Modal
-        title={adjustTarget ? `Điều chỉnh điểm: ${adjustTarget.student?.HoTen} (${adjustTarget.student?.MaSV})` : 'Điều chỉnh điểm cá nhân'}
-        open={adjustModalVisible}
-        onOk={handleAdjustGrade}
-        onCancel={() => { setAdjustModalVisible(false); setAdjustTarget(null); }}
-        confirmLoading={adjustSaving}
-        okText="Xác nhận"
-        cancelText="Hủy"
-      >
-        {adjustTarget && (
-          <Space direction="vertical" style={{ width: '100%', marginTop: 12 }} size="middle">
-            <div>
-              <Text type="secondary">Điểm gốc nhóm: </Text>
-              <Text strong>{adjustTarget.grade?.DiemGoc ?? adjustTarget.grade?.Diem}/10</Text>
-            </div>
-            <div>
-              <Text strong>Điểm số điều chỉnh: </Text>
-              <InputNumber
-                min={0} max={10} step={0.5}
-                value={adjustScore}
-                onChange={setAdjustScore}
-                style={{ width: '100%', marginTop: 8 }}
-                size="large"
-              />
-            </div>
-            <div>
-              <Text strong>Lý do điều chỉnh (nhận xét): </Text>
-              <Input.TextArea
-                rows={4}
-                placeholder="Nhập lý do điều chỉnh điểm..."
-                value={adjustComment}
-                onChange={e => setAdjustComment(e.target.value)}
-                style={{ marginTop: 8 }}
-              />
-            </div>
-          </Space>
-        )}
-      </Modal>
+
     </div>
   );
 };
