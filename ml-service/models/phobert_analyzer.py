@@ -65,14 +65,25 @@ class PhoBertAnalyzer:
         issues = []
 
         if topic_requirements:
-            doc_emb = self._get_embedding(clean_text)
+            # Chunk toàn bộ text để đọc hết nội dung (không chỉ 256 tokens đầu)
+            chunks = chunk_text(clean_text)
+            chunk_embeddings = []
+            for chunk in chunks:
+                chunk_content = chunk.content[:2000] if len(chunk.content) > 2000 else chunk.content
+                emb = self._get_embedding(chunk_content)
+                chunk_embeddings.append(emb)
+            logger.info(f"[AI] analyze() chunking | chunks={len(chunks)} | requirements={len(topic_requirements)}")
 
             for req in topic_requirements:
                 req_norm = normalize_text(req)
                 req_emb = self._get_embedding(req_norm)
-                sim = F.cosine_similarity(doc_emb, req_emb).item()
-                logger.debug(f"[AI] Requirement '{req[:30]}...' similarity={sim:.4f}")
-                if sim > 0.45:
+                # Lấy MAX similarity across tất cả chunks
+                best_sim = max(
+                    F.cosine_similarity(chunk_emb, req_emb).item()
+                    for chunk_emb in chunk_embeddings
+                )
+                logger.debug(f"[AI] Requirement '{req[:30]}...' bestSimilarity={best_sim:.4f} (across {len(chunks)} chunks)")
+                if best_sim > 0.45:
                     semantic_hits += 1
 
             total_hits = max(hits, semantic_hits)
