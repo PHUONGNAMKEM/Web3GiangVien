@@ -1,6 +1,7 @@
 const TienDo = require('../models/TienDo');
 const DangKyDeTai = require('../models/DangKyDeTai');
 const DeTai = require('../models/DeTai');
+const BaoCao = require('../models/BaoCao');
 const aiService = require('../services/aiService');
 const logger = require('../config/logger');
 
@@ -196,6 +197,16 @@ exports.createProgressEntry = async (req, res) => {
         if (!registrationCheck.ok) {
             return res.status(403).json({ error: registrationCheck.error, code: registrationCheck.code });
         }
+
+        // Khóa tiến độ khi đã nộp báo cáo
+        const existingBaoCao = await BaoCao.findOne({ DeTai: deTaiId, SinhVien: sinhVienId });
+        if (existingBaoCao) {
+            return res.status(403).json({
+                error: 'Đã nộp báo cáo, không thể cập nhật tiến độ nữa. Hủy nộp bài nếu muốn tiếp tục cập nhật.',
+                code: 'DA_NOP_BAO_CAO'
+            });
+        }
+
         const nhomId = registrationCheck.dangKy?.Nhom;
 
         const queryExisting = { DeTai: deTaiId };
@@ -451,7 +462,15 @@ exports.updateProgressEntry = async (req, res) => {
             return res.status(404).json({ error: 'Không tìm thấy nhật ký tiến độ' });
         }
 
+        // Khóa tiến độ khi đã nộp báo cáo
         const requesterId = req.user?.id || req.user?._id || sinhVienId;
+        const existingBaoCao = await BaoCao.findOne({ DeTai: progress.DeTai, SinhVien: requesterId });
+        if (existingBaoCao) {
+            return res.status(403).json({
+                error: 'Đã nộp báo cáo, không thể sửa tiến độ nữa. Hủy nộp bài nếu muốn tiếp tục cập nhật.',
+                code: 'DA_NOP_BAO_CAO'
+            });
+        }
         const isOwner = String(progress.SinhVien) === String(requesterId);
         let isMemberOfGroup = false;
         if (progress.Nhom && requesterId) {

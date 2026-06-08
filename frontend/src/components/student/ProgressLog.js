@@ -37,7 +37,7 @@ const ProgressLog = () => {
     const { data: progressData = {}, isLoading: loading } = useQuery({
         queryKey: ['progress-log', user?.id, selectedClassId],
         queryFn: async () => {
-            let result = { registration: null, logs: [] };
+            let result = { registration: null, logs: [], hasBaoCao: false };
             if (!user || !selectedClassId) return result;
             try {
                 const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
@@ -47,6 +47,16 @@ const ProgressLog = () => {
                     const deTaiId = regRes.registration.DeTai?._id || regRes.registration.DeTai;
                     const logsRes = await aiApiService.getProgressBySinhVien(user.id, deTaiId);
                     result.logs = logsRes.data || [];
+
+                    // Kiểm tra đã nộp báo cáo chưa — nếu rồi thì khóa cập nhật tiến độ
+                    if (regRes.registration.TrangThai === 'DaDuyet') {
+                        try {
+                            const bcRes = await aiApiService.getMyBaoCao(user.id, deTaiId);
+                            result.hasBaoCao = !!(bcRes && bcRes.baocao);
+                        } catch (e) {
+                            result.hasBaoCao = false;
+                        }
+                    }
                 }
             } catch (e) {
                 console.error('Không thể lấy dữ liệu tiến độ', e);
@@ -56,7 +66,7 @@ const ProgressLog = () => {
         enabled: !!(user?.id && selectedClassId),
     });
 
-    const { registration, logs = [] } = progressData;
+    const { registration, logs = [], hasBaoCao = false } = progressData;
 
     const handleCreateLog = async (values) => {
         if (!registration || registration.TrangThai !== 'DaDuyet') {
@@ -269,12 +279,18 @@ const ProgressLog = () => {
                     type="primary"
                     icon={<PlusCircle size={16} />}
                     size="large"
-                    disabled={!isApproved}
+                    disabled={!isApproved || hasBaoCao}
                     onClick={openCreateModal}
                 >
                     Cập Nhật Tiến Độ
                 </Button>
             </div>
+
+            {hasBaoCao && (
+                <Card style={{ marginBottom: 24, borderLeft: '4px solid #1677ff', background: '#e6f4ff' }}>
+                    <Text>Đã nộp báo cáo — không thể cập nhật tiến độ nữa. Nếu muốn cập nhật lại, hãy hủy nộp bài ở trang <strong>Nộp Báo Cáo</strong>.</Text>
+                </Card>
+            )}
 
             {!isApproved && (
                 <Card style={{ marginBottom: 24, borderLeft: '4px solid #faad14', background: '#fffbe6' }}>

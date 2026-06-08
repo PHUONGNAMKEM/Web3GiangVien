@@ -120,6 +120,8 @@ const ReportUpload = () => {
       setProgress(100);
       setFileList([]);
       queryClient.invalidateQueries({ queryKey: ['report-upload'] });
+      queryClient.invalidateQueries({ queryKey: ['progress-tracking'] });
+      queryClient.invalidateQueries({ queryKey: ['progress-log'] });
       
       // Thông báo tùy theo trạng thái blockchain
       if (result.blockchainStatus === 'success') {
@@ -150,6 +152,8 @@ const ReportUpload = () => {
           await aiApiService.deleteBaoCao(existingBaoCao._id);
           setProgress(0);
           queryClient.invalidateQueries({ queryKey: ['report-upload'] });
+          queryClient.invalidateQueries({ queryKey: ['progress-tracking'] });
+          queryClient.invalidateQueries({ queryKey: ['progress-log'] });
           message.success('Đã hủy nộp. Bạn có thể nộp file mới.');
         } catch (e) {
           const errMsg = e.response?.data?.error || 'Hủy nộp thất bại';

@@ -53,13 +53,13 @@ const formatBlockchainError = (errorStr) => {
   if (str.includes('insufficient funds')) {
     return 'Tài khoản ví hệ thống không đủ phí gas Sepolia để thực hiện giao dịch ghi điểm. Vui lòng nạp thêm ETH Sepolia.';
   }
-  
+
   // Extract execution revert reason if possible
   const match = str.match(/execution reverted: "([^"]+)"/) || str.match(/reason="([^"]+)"/);
   if (match && match[1]) {
     return `Lỗi Smart Contract: ${match[1]}`;
   }
-  
+
   if (str.length > 250) {
     return str.split('\n')[0].substring(0, 250) + '...';
   }
@@ -124,7 +124,7 @@ const SubmissionReview = () => {
   const groupMembers = useMemo(() => {
     if (!selectedSubmission) return [];
     if (selectedSubmission.members) return selectedSubmission.members;
-    
+
     // Fallback: filter by registration ID instead of Nhom ID from submission
     const regId = selectedSubmission.registration?._id;
     if (!regId) return [];
@@ -152,7 +152,7 @@ const SubmissionReview = () => {
       setProgressLogs(logs);
       setProgressSummary(buildProgressSummary(logs));
       const matchedMember = record?.members?.find(m => m.student?._id === svId) || record;
-      
+
       queryClient.setQueryData(['submissions', user?.id], (oldData) => {
         if (!oldData) return oldData;
         return {
@@ -325,11 +325,11 @@ const SubmissionReview = () => {
         console.error('AI Analysis failed:', err);
         message.warning('PhoBERT AI chưa phản hồi.');
         setAiAnalysis({
-          score: 7.0,
-          feedback: 'AI Server không phản hồi.',
-          issues: ['Vui lòng kiểm tra uvicorn port 8001']
+          score: 0,
+          feedback: 'AI Server không phản hồi. Giảng viên có thể tự nhập điểm.',
+          issues: ['Không kết nối được ML Service. Vui lòng thử lại sau.']
         });
-        setScore(7.0);
+        setScore(0);
       } finally {
         setAnalyzing(false);
       }
@@ -562,7 +562,7 @@ const SubmissionReview = () => {
       setProgressLogs(prev => {
         const nextLogs = prev.map(item => item._id === weeklyTarget._id ? updated : item);
         setProgressSummary(buildProgressSummary(nextLogs));
-        
+
         queryClient.setQueryData(['submissions', user?.id], (oldData) => {
           if (!oldData) return oldData;
           return {
@@ -609,7 +609,7 @@ const SubmissionReview = () => {
       render: (_, record) => {
         const isGroup = record.members && record.members.length > 1;
         const groupName = record.registration?.Nhom?.TenNhom || record.submission?.Nhom?.TenNhom;
-        
+
         return (
           <div>
             {isGroup ? (
@@ -639,7 +639,7 @@ const SubmissionReview = () => {
         const classNameStr = isKL ? '📝 Khóa Luận' : (classes.map(c => c.TenLopHoc || c.MaLopHoc).join(', ') || 'N/A');
         const subjectName = isKL ? '—' : (record.topic?.MonHoc?.TenMonHoc || 'N/A');
         const lecturerName = record.topic?.GiangVienHuongDan?.HoTen || 'N/A';
-        
+
         return (
           <Space direction="vertical" size={2} style={{ fontSize: 13 }}>
             <div><Text type="secondary">Lớp:</Text> <Text strong style={{ color: isKL ? '#d4b106' : 'inherit' }}>{classNameStr}</Text></div>
@@ -999,7 +999,7 @@ const SubmissionReview = () => {
                 <div style={{ padding: 16, textAlign: 'center' }}>
                   <Spin size="large" />
                   <br />
-                  <Text type="secondary" style={{ marginTop: 12, display: 'inline-block' }}>Đang gọi PhoBERT AI tại cổng 8001...</Text>
+                  <Text type="secondary" style={{ marginTop: 12, display: 'inline-block' }}>Đang gọi PhoBERT AI...</Text>
                   <Skeleton active paragraph={{ rows: 2 }} />
                 </div>
               ) : aiAnalysis ? (
@@ -1049,7 +1049,7 @@ const SubmissionReview = () => {
                     <div><Text strong style={{ fontSize: 16, color: '#1677ff' }}>{progressSummary.averageScore != null ? progressSummary.averageScore : '—'}</Text></div>
                   </div>
                 </div>
-                
+
                 {progressSummary.warnings?.length > 0 ? (
                   <div style={{ marginBottom: 12 }}>
                     <Alert
@@ -1074,7 +1074,7 @@ const SubmissionReview = () => {
                     style={{ marginBottom: 12 }}
                   />
                 )}
-                
+
                 <Text type="secondary" italic style={{ display: 'block', fontSize: 12 }}>
                   * Điểm quá trình chỉ mang tính tham khảo - KHÔNG tự cộng vào điểm cuối kỳ.
                 </Text>
@@ -1172,122 +1172,122 @@ const SubmissionReview = () => {
                       <div style={{ marginTop: 24 }}>
                         {selectedSubmission.status === 'DaCham' ? (
                           (() => {
-                            const isAlreadyGraded = selectedSubmission.grade?.LoiBlockchain && 
-                              (String(selectedSubmission.grade.LoiBlockchain).includes('already graded') || 
-                               String(selectedSubmission.grade.LoiBlockchain).includes('Submission already graded'));
-                            const blockchainMeta = isAlreadyGraded 
+                            const isAlreadyGraded = selectedSubmission.grade?.LoiBlockchain &&
+                              (String(selectedSubmission.grade.LoiBlockchain).includes('already graded') ||
+                                String(selectedSubmission.grade.LoiBlockchain).includes('Submission already graded'));
+                            const blockchainMeta = isAlreadyGraded
                               ? { label: 'Đã ghi nhận an toàn (Blockchain)', color: 'success', alertType: 'success' }
                               : getBlockchainStatusMeta(selectedSubmission.grade?.TrangThaiBlockchain);
                             return (
-                          <div>
-                            <Alert
-                              type={blockchainMeta.alertType}
-                              message={`Sinh viên đã được chấm điểm: ${selectedSubmission.grade?.Diem || score}`}
-                              description={
-                                <Space direction="vertical" size={4} style={{ width: '100%' }}>
-                                  <Space size={8} wrap>
-                                    <Text>Trạng thái Blockchain:</Text>
-                                    <Tag color={blockchainMeta.color} style={{ margin: 0 }}>{blockchainMeta.label}</Tag>
-                                  </Space>
-                                  {selectedSubmission.grade?.TrangThaiBlockchain !== 'DaGhi' && (
-                                    <Button
-                                      size="small"
-                                      icon={<RefreshCw size={14} />}
-                                      onClick={handleRetryBlockchain}
-                                      loading={isRetryingBlockchain}
-                                      style={{ marginTop: 4 }}
-                                    >
-                                      Đồng bộ từ Blockchain
-                                    </Button>
-                                  )}
-                                  {selectedSubmission.grade?.LoiBlockchain && (
-                                    <div style={{ marginTop: 8, borderTop: '1px dashed rgba(0, 0, 0, 0.08)', paddingTop: 8 }}>
-                                      <Text strong style={{ display: 'block', marginBottom: 4 }}>
-                                        Thông tin hệ thống Blockchain:
-                                      </Text>
-                                      <Text style={{ fontSize: 13, display: 'block', color: 'rgba(0, 0, 0, 0.65)' }}>
-                                        {formatBlockchainError(selectedSubmission.grade.LoiBlockchain)}
-                                      </Text>
-                                    </div>
-                                  )}
-                                </Space>
-                              }
-                              showIcon
-                              style={{ marginBottom: 12 }}
-                            />
-
-                            {/* MỚI: Section danh sách thành viên nhóm */}
-                            {isGroupTopic && groupMembers.length > 0 && (
-                              <div style={{ padding: 12, background: '#fafafa', borderRadius: 8, marginBottom: 16, border: '1px solid #f0f0f0' }}>
-                                <Space style={{ marginBottom: 4 }}>
-                                  <Users size={14} color="#52c41a" />
-                                  <Text strong>Điểm các thành viên trong nhóm</Text>
-                                </Space>
-                                <List
-                                  size="small"
-                                  style={{ marginTop: 4 }}
-                                  dataSource={groupMembers}
-                                  renderItem={member => (
-                                    <List.Item>
-                                      <Space>
-                                        <Text>{member.student?.HoTen} ({member.student?.MaSV})</Text>
-                                        <Tag color="success">
-                                          {member.grade?.Diem ?? '—'}/10
-                                        </Tag>
+                              <div>
+                                <Alert
+                                  type={blockchainMeta.alertType}
+                                  message={`Sinh viên đã được chấm điểm: ${selectedSubmission.grade?.Diem || score}`}
+                                  description={
+                                    <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                                      <Space size={8} wrap>
+                                        <Text>Trạng thái Blockchain:</Text>
+                                        <Tag color={blockchainMeta.color} style={{ margin: 0 }}>{blockchainMeta.label}</Tag>
                                       </Space>
-                                    </List.Item>
-                                  )}
+                                      {selectedSubmission.grade?.TrangThaiBlockchain !== 'DaGhi' && (
+                                        <Button
+                                          size="small"
+                                          icon={<RefreshCw size={14} />}
+                                          onClick={handleRetryBlockchain}
+                                          loading={isRetryingBlockchain}
+                                          style={{ marginTop: 4 }}
+                                        >
+                                          Đồng bộ từ Blockchain
+                                        </Button>
+                                      )}
+                                      {selectedSubmission.grade?.LoiBlockchain && (
+                                        <div style={{ marginTop: 8, borderTop: '1px dashed rgba(0, 0, 0, 0.08)', paddingTop: 8 }}>
+                                          <Text strong style={{ display: 'block', marginBottom: 4 }}>
+                                            Thông tin hệ thống Blockchain:
+                                          </Text>
+                                          <Text style={{ fontSize: 13, display: 'block', color: 'rgba(0, 0, 0, 0.65)' }}>
+                                            {formatBlockchainError(selectedSubmission.grade.LoiBlockchain)}
+                                          </Text>
+                                        </div>
+                                      )}
+                                    </Space>
+                                  }
+                                  showIcon
+                                  style={{ marginBottom: 12 }}
                                 />
-                              </div>
-                            )}
 
-                            <Descriptions column={1} size="small" bordered style={{ background: '#fafafa', borderRadius: 8 }}>
-                              <Descriptions.Item label="Điểm GV chấm">
-                                <Text strong style={{ color: '#eb2f96', fontSize: 16 }}>{selectedSubmission.grade?.Diem || score}</Text>
-                              </Descriptions.Item>
-                              <Descriptions.Item label="Trạng thái Blockchain">
-                                <Tag color={blockchainMeta.color} style={{ margin: 0 }}>{blockchainMeta.label}</Tag>
-                              </Descriptions.Item>
-                              {selectedSubmission.grade?.AI_Score != null && (
-                                <Descriptions.Item label="Điểm AI gợi ý">
-                                  <Space>
-                                    <Text style={{ color: '#1677ff' }}>{selectedSubmission.grade.AI_Score}</Text>
-                                    {selectedSubmission.grade?.Diem !== undefined && selectedSubmission.grade.AI_Score !== undefined && (
-                                      (() => {
-                                        const diff = selectedSubmission.grade.Diem - selectedSubmission.grade.AI_Score;
-                                        if (Math.abs(diff) < 0.1) return <Tag color="green">Khớp gợi ý AI</Tag>;
-                                        return <Tag color={diff > 0 ? 'blue' : 'warning'}>{diff > 0 ? '+' : ''}{diff.toFixed(1)} so với AI</Tag>;
-                                      })()
-                                    )}
-                                  </Space>
-                                </Descriptions.Item>
-                              )}
-                              {selectedSubmission.grade?.NhanXet && (
-                                <Descriptions.Item label="Nhận xét">
-                                  <Text>{selectedSubmission.grade.NhanXet}</Text>
-                                </Descriptions.Item>
-                              )}
-                              {selectedSubmission.grade?.TxHash && (
-                                <Descriptions.Item label="Blockchain TxHash">
-                                  <Tooltip title="Xem trên Sepolia Etherscan">
-                                    <Tag
-                                      icon={<ShieldCheck size={12} style={{ marginRight: 4 }} />}
-                                      color="green"
-                                      style={{ cursor: 'pointer' }}
-                                      onClick={() => {
-                                        if (selectedSubmission.grade.TxHash && !selectedSubmission.grade.TxHash.startsWith('0xMock')) {
-                                          window.open(`https://sepolia.etherscan.io/tx/${selectedSubmission.grade.TxHash}`, '_blank');
-                                        }
-                                      }}
-                                    >
-                                      {selectedSubmission.grade.TxHash.substring(0, 18)}...
-                                      <ExternalLink size={10} style={{ marginLeft: 4 }} />
-                                    </Tag>
-                                  </Tooltip>
-                                </Descriptions.Item>
-                              )}
-                            </Descriptions>
-                          </div>
+                                {/* MỚI: Section danh sách thành viên nhóm */}
+                                {isGroupTopic && groupMembers.length > 0 && (
+                                  <div style={{ padding: 12, background: '#fafafa', borderRadius: 8, marginBottom: 16, border: '1px solid #f0f0f0' }}>
+                                    <Space style={{ marginBottom: 4 }}>
+                                      <Users size={14} color="#52c41a" />
+                                      <Text strong>Điểm các thành viên trong nhóm</Text>
+                                    </Space>
+                                    <List
+                                      size="small"
+                                      style={{ marginTop: 4 }}
+                                      dataSource={groupMembers}
+                                      renderItem={member => (
+                                        <List.Item>
+                                          <Space>
+                                            <Text>{member.student?.HoTen} ({member.student?.MaSV})</Text>
+                                            <Tag color="success">
+                                              {member.grade?.Diem ?? '—'}/10
+                                            </Tag>
+                                          </Space>
+                                        </List.Item>
+                                      )}
+                                    />
+                                  </div>
+                                )}
+
+                                <Descriptions column={1} size="small" bordered style={{ background: '#fafafa', borderRadius: 8 }}>
+                                  <Descriptions.Item label="Điểm GV chấm">
+                                    <Text strong style={{ color: '#eb2f96', fontSize: 16 }}>{selectedSubmission.grade?.Diem || score}</Text>
+                                  </Descriptions.Item>
+                                  <Descriptions.Item label="Trạng thái Blockchain">
+                                    <Tag color={blockchainMeta.color} style={{ margin: 0 }}>{blockchainMeta.label}</Tag>
+                                  </Descriptions.Item>
+                                  {selectedSubmission.grade?.AI_Score != null && (
+                                    <Descriptions.Item label="Điểm AI gợi ý">
+                                      <Space>
+                                        <Text style={{ color: '#1677ff' }}>{selectedSubmission.grade.AI_Score}</Text>
+                                        {selectedSubmission.grade?.Diem !== undefined && selectedSubmission.grade.AI_Score !== undefined && (
+                                          (() => {
+                                            const diff = selectedSubmission.grade.Diem - selectedSubmission.grade.AI_Score;
+                                            if (Math.abs(diff) < 0.1) return <Tag color="green">Khớp gợi ý AI</Tag>;
+                                            return <Tag color={diff > 0 ? 'blue' : 'warning'}>{diff > 0 ? '+' : ''}{diff.toFixed(1)} so với AI</Tag>;
+                                          })()
+                                        )}
+                                      </Space>
+                                    </Descriptions.Item>
+                                  )}
+                                  {selectedSubmission.grade?.NhanXet && (
+                                    <Descriptions.Item label="Nhận xét">
+                                      <Text>{selectedSubmission.grade.NhanXet}</Text>
+                                    </Descriptions.Item>
+                                  )}
+                                  {selectedSubmission.grade?.TxHash && (
+                                    <Descriptions.Item label="Blockchain TxHash">
+                                      <Tooltip title="Xem trên Sepolia Etherscan">
+                                        <Tag
+                                          icon={<ShieldCheck size={12} style={{ marginRight: 4 }} />}
+                                          color="green"
+                                          style={{ cursor: 'pointer' }}
+                                          onClick={() => {
+                                            if (selectedSubmission.grade.TxHash && !selectedSubmission.grade.TxHash.startsWith('0xMock')) {
+                                              window.open(`https://sepolia.etherscan.io/tx/${selectedSubmission.grade.TxHash}`, '_blank');
+                                            }
+                                          }}
+                                        >
+                                          {selectedSubmission.grade.TxHash.substring(0, 18)}...
+                                          <ExternalLink size={10} style={{ marginLeft: 4 }} />
+                                        </Tag>
+                                      </Tooltip>
+                                    </Descriptions.Item>
+                                  )}
+                                </Descriptions>
+                              </div>
                             );
                           })()
                         ) : (
