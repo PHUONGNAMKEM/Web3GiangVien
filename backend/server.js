@@ -266,7 +266,7 @@ app.get('/api/tiendo/detai/:deTaiId', ...requireAuth, tienDoController.getProgre
 app.put('/api/tiendo/:id/nhanxet', ...requireLecturer, tienDoController.commentProgress);
 
 // 9. AI / ML Services
-app.post('/api/ai/analyze-report', ...requireLecturer, aiLimiter, aiController.analyzeReport);
+app.post('/api/ai/analyze-report', ...requireAuth, aiLimiter, aiController.analyzeReport);
 app.post('/api/ai/analyze-rubrics', ...requireLecturer, aiLimiter, aiController.analyzeReportWithRubrics);
 app.post('/api/ai/match-student', ...requireStudent, aiLimiter, aiController.matchStudent);
 
