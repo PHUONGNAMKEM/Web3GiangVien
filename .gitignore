@@ -33,4 +33,9 @@ ml-service/logs/
 
 # Hardhat build artifacts & cache (auto-generated khi compile contract)
 backend/artifacts/
+!backend/artifacts/contracts/
+!backend/artifacts/contracts/ThesisManagement.sol/
+!backend/artifacts/contracts/ThesisManagement.sol/ThesisManagement.json
+!backend/artifacts/contracts/ThesisManagementV2.sol/
+!backend/artifacts/contracts/ThesisManagementV2.sol/ThesisManagementV2.json
 backend/cache/
