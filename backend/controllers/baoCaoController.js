@@ -383,19 +383,22 @@ exports.getBaoCaoByLecturer = async (req, res) => {
     }
 };
 
-// GV lay noi dung PDF da trich xuat khi mo chi tiet bao cao
+// GV hoac SV (chu bao cao) lay noi dung PDF da trich xuat
 exports.getExtractedText = async (req, res) => {
     try {
         const bc = await BaoCao.findById(req.params.id)
-            .select('DeTai ExtractedText ExtractionMethod ExtractionWarnings PageCount ExtractedAt')
+            .select('DeTai SinhVien ExtractedText ExtractionMethod ExtractionWarnings PageCount ExtractedAt')
             .populate('DeTai', 'GiangVienHuongDan');
 
         if (!bc) {
             return res.status(404).json({ error: 'Bao cao khong ton tai', code: 'BAOCAO_KHONG_TON_TAI' });
         }
 
-        const giangVienId = req.user?.id;
-        if (giangVienId && String(bc.DeTai?.GiangVienHuongDan) !== String(giangVienId)) {
+        const userId = req.user?.id;
+        const isLecturer = userId && String(bc.DeTai?.GiangVienHuongDan) === String(userId);
+        const isOwner = userId && String(bc.SinhVien) === String(userId);
+
+        if (userId && !isLecturer && !isOwner) {
             return res.status(403).json({ error: 'Khong co quyen xem bao cao nay', code: 'KHONG_CO_QUYEN' });
         }
 

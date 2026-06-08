@@ -59,8 +59,34 @@ const ProgressTracking = () => {
               const bcRes = await aiApiService.getMyBaoCao(user.id, deTaiId);
               if (bcRes && bcRes.baocao) {
                 const topic = activeReg.DeTai;
-                const demoText = `Báo cáo: ${bcRes.baocao.TieuDe}. Đề tài đồ án: ${topic?.TenDeTai || ''}. Báo cáo hoàn chỉnh.`;
-                const aiRes = await aiApiService.analyzeReportAI(demoText, topic?.YeuCau || []);
+                const baoCaoId = bcRes.baocao._id;
+
+                // Lấy ExtractedText đầy đủ từ PDF (giống luồng GV)
+                let textForAI = '';
+                try {
+                  const extractedData = await aiApiService.getExtractedText(baoCaoId);
+                  textForAI = extractedData?.ExtractedText || '';
+                } catch (extractErr) {
+                  console.warn('Không lấy được ExtractedText:', extractErr);
+                }
+
+                // Fallback nếu ExtractedText rỗng
+                if (!textForAI) {
+                  textForAI = [
+                    `Đề tài: ${topic?.TenDeTai || ''}`,
+                    topic?.MoTa ? `Mô tả: ${topic.MoTa}` : '',
+                    (topic?.YeuCau || []).length > 0 ? `Yêu cầu: ${topic.YeuCau.join(', ')}` : ''
+                  ].filter(Boolean).join('\n');
+                }
+
+                // Phân nhánh rubrics / legacy giống SubmissionReview
+                const hasSuDungRubrics = topic?.SuDungRubrics && topic?.Rubrics && topic.Rubrics.length > 0;
+                let aiRes;
+                if (hasSuDungRubrics) {
+                  aiRes = await aiApiService.analyzeReportWithRubrics(textForAI, topic.Rubrics);
+                } else {
+                  aiRes = await aiApiService.analyzeReportAI(textForAI, topic?.YeuCau || []);
+                }
                 result.aiResult = aiRes;
               }
             } catch (err) {
