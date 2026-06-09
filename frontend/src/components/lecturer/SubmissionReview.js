@@ -6,6 +6,9 @@ import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import { useLecturerClassContext } from '../../contexts/LecturerClassContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import DeadlineBadge from '../common/DeadlineBadge';
+import { getEffectiveDeadline } from '../../utils/deadlineUtils';
+import dayjs from 'dayjs';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -727,13 +730,36 @@ const SubmissionReview = () => {
     {
       title: 'Thời Gian Nộp',
       key: 'submitDate',
-      width: 160,
+      width: 180,
       className: 'hide-on-mobile',
-      render: (_, record) => (
-        record.submission
-          ? new Date(record.submission.NgayNop || record.submission.createdAt).toLocaleString('vi-VN')
-          : <Text type="secondary">—</Text>
-      ),
+      render: (_, record) => {
+        const deadline = getEffectiveDeadline(record.topic, 'baoCao');
+        let isLate = false;
+        let submitTime = null;
+
+        if (record.submission) {
+          submitTime = new Date(record.submission.NgayNop || record.submission.createdAt);
+          if (deadline && new Date(submitTime) > new Date(deadline)) {
+            isLate = true;
+          }
+        }
+
+        return (
+          <Space direction="vertical" size={2}>
+            {submitTime ? (
+              <Text>{submitTime.toLocaleString('vi-VN')}</Text>
+            ) : (
+              <Text type="secondary">—</Text>
+            )}
+            {deadline && (
+              <div style={{ fontSize: 12 }}>
+                <Text type="secondary">Hạn: {new Date(deadline).toLocaleString('vi-VN')}</Text>
+              </div>
+            )}
+            {isLate && <Tag color="error" style={{ margin: 0, marginTop: 4 }}>Nộp trễ hạn</Tag>}
+          </Space>
+        );
+      },
     },
     {
       title: 'Điểm Số',
@@ -789,7 +815,7 @@ const SubmissionReview = () => {
                 Chấm Điểm & Review
               </Button>
             ) : (
-              <Tag color="default" style={{ margin: 0 }}>Chờ SV nộp bài</Tag>
+              <Button disabled style={{ margin: 0 }}>Chờ SV nộp bài</Button>
             )}
           </Space>
         );

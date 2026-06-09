@@ -207,6 +207,16 @@ exports.createProgressEntry = async (req, res) => {
             });
         }
 
+        // Kiểm tra quá hạn cập nhật tiến độ
+        const deTai = await DeTai.findById(deTaiId).select('HanCapNhatTienDo HanNopBaoCao Deadline');
+        const hanTienDo = deTai?.HanCapNhatTienDo || deTai?.HanNopBaoCao || deTai?.Deadline;
+        if (hanTienDo && new Date() > new Date(hanTienDo)) {
+            return res.status(400).json({ 
+                error: 'Đã quá hạn cập nhật tiến độ cho đề tài này.', 
+                code: 'QUA_HAN_TIEN_DO' 
+            });
+        }
+
         const nhomId = registrationCheck.dangKy?.Nhom;
 
         const queryExisting = { DeTai: deTaiId };
@@ -280,6 +290,24 @@ exports.createProgressEntry = async (req, res) => {
             throw saveErr;
         }
         res.status(201).json({ message: 'Tạo báo cáo tiến độ thành công', data: tienDo, canhBao: warnings });
+
+        // Realtime: Thông báo GV có sinh viên cập nhật tiến độ (non-blocking, after response)
+        try {
+            const io = req.app.get('io');
+            const deTai = await DeTai.findById(deTaiId).select('GiangVienHuongDan TenDeTai').lean();
+            const giangVienId = deTai?.GiangVienHuongDan?.toString();
+            if (io && giangVienId) {
+                io.to(`lecturer:${giangVienId}`).emit('progress:new', {
+                    deTaiId,
+                    sinhVienId,
+                    tuanSo: tuanSo || null,
+                    phanTramHoanThanh: phanTramHoanThanh || 0,
+                    tenDeTai: deTai?.TenDeTai || '',
+                });
+            }
+        } catch (socketErr) {
+            logger.warn(`[SOCKET] Emit progress:new failed: ${socketErr.message}`);
+        }
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -469,6 +497,16 @@ exports.updateProgressEntry = async (req, res) => {
             return res.status(403).json({
                 error: 'Đã nộp báo cáo, không thể sửa tiến độ nữa. Hủy nộp bài nếu muốn tiếp tục cập nhật.',
                 code: 'DA_NOP_BAO_CAO'
+            });
+        }
+
+        // Kiểm tra quá hạn cập nhật tiến độ
+        const deTai = await DeTai.findById(progress.DeTai).select('HanCapNhatTienDo HanNopBaoCao Deadline');
+        const hanTienDo = deTai?.HanCapNhatTienDo || deTai?.HanNopBaoCao || deTai?.Deadline;
+        if (hanTienDo && new Date() > new Date(hanTienDo)) {
+            return res.status(400).json({ 
+                error: 'Đã quá hạn cập nhật tiến độ cho đề tài này.', 
+                code: 'QUA_HAN_TIEN_DO' 
             });
         }
         const isOwner = String(progress.SinhVien) === String(requesterId);

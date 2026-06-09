@@ -19,7 +19,8 @@ const ketQuaTestSchema = new mongoose.Schema({
   DiemToiDa: { type: Number, default: 0 },
   TxHash: { type: String },                          // Blockchain transaction
   ThoiGianBatDau: { type: Date },
-  ThoiGianNop: { type: Date }
+  ThoiGianNop: { type: Date },
+  SoLanNop: { type: Number, default: 1 }             // Số lần đã nộp (tối đa 3)
 }, { timestamps: true });
 
 // Một SV chỉ nộp 1 lần cho 1 bài test

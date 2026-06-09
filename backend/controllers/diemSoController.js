@@ -328,6 +328,33 @@ exports.chamDiem = async (req, res) => {
         // #5: kiểm tra khép vòng đời đề tài sau khi chấm
         await checkAndCompleteTopic(deTaiId);
 
+        // Realtime: Thông báo SV đã được chấm điểm
+        try {
+            const io = req.app.get('io');
+            if (io) {
+                const notifyStudents = [sinhVienId];
+                // Nếu đề tài nhóm, thông báo tất cả thành viên
+                if (isGroupTopic && dangKy) {
+                    const leaderId = dangKy.SinhVien?.toString();
+                    if (leaderId && !notifyStudents.includes(leaderId)) notifyStudents.push(leaderId);
+                    (dangKy.ThanhVien || []).forEach(tv => {
+                        const tvId = tv.SinhVien?.toString();
+                        if (tvId && !notifyStudents.includes(tvId)) notifyStudents.push(tvId);
+                    });
+                }
+                notifyStudents.forEach(svId => {
+                    io.to(`student:${svId}`).emit('grade:new', {
+                        deTaiId,
+                        diem,
+                        nhanXet: nhanXet || '',
+                        tenDeTai: ownerCheck.deTai?.TenDeTai || '',
+                    });
+                });
+            }
+        } catch (socketErr) {
+            logger.warn(`[SOCKET] Emit grade:new failed: ${socketErr.message}`);
+        }
+
         logger.info(`[GRADE] Student ${sinhVienId} graded ${diem}/10 for topic ${deTaiId} | AI: ${aiScore || 'N/A'} | txHash: ${primary.txHash || 'N/A'}`);
         res.status(201).json({
             message: groupGraded ? 'Chấm điểm thành công cho cả nhóm' : 'Chấm điểm thành công',

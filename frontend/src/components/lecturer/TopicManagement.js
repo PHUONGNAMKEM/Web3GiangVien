@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider, Descriptions, Switch, Alert, Row, Col } from 'antd';
-import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle, NotebookText, ListChecks, Trophy, Clock } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle, NotebookText, ListChecks, Trophy, Clock, Save } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
@@ -157,6 +157,72 @@ const TopicManagement = () => {
     }
   };
 
+  // === LƯU RUBRICS HIỆN TẠI THÀNH TEMPLATE ===
+  const handleSaveAsTemplate = () => {
+    if (rubricsTieuChi.length === 0) {
+      message.warning('Chưa có tiêu chí nào để lưu!');
+      return;
+    }
+    if (tongTrongSo !== 100) {
+      message.warning('Tổng trọng số phải bằng 100% trước khi lưu template!');
+      return;
+    }
+    const invalid = rubricsTieuChi.find(tc => !tc.TenTieuChi || tc.TrongSo <= 0);
+    if (invalid) {
+      message.warning('Mỗi tiêu chí cần có tên và trọng số > 0!');
+      return;
+    }
+    let tenMau = '';
+    Modal.confirm({
+      title: '💾 Lưu Rubrics thành Template mới',
+      icon: null,
+      content: (
+        <div style={{ marginTop: 12 }}>
+          <Text>Đặt tên cho template:</Text>
+          <Input
+            placeholder="VD: Rubrics đồ án Web3"
+            style={{ marginTop: 8 }}
+            onChange={e => { tenMau = e.target.value; }}
+            autoFocus
+          />
+          <div style={{ marginTop: 8 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Template sẽ chứa {rubricsTieuChi.length} tiêu chí hiện tại
+            </Text>
+          </div>
+        </div>
+      ),
+      okText: 'Lưu Template',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        if (!tenMau.trim()) {
+          message.error('Vui lòng nhập tên template!');
+          throw new Error('empty name');
+        }
+        try {
+          await aiApiService.createRubricsTemplate({
+            TenMau: tenMau.trim(),
+            GiangVien: user.id,
+            TieuChi: rubricsTieuChi.map(tc => ({
+              TenTieuChi: tc.TenTieuChi,
+              MoTa: tc.MoTa || '',
+              TrongSo: tc.TrongSo,
+              DiemToiDa: tc.DiemToiDa || 10,
+              GoiYChoAI: tc.GoiYChoAI || []
+            }))
+          });
+          message.success(`Đã lưu template "${tenMau.trim()}" thành công!`);
+          queryClient.invalidateQueries({ queryKey: ['rubrics-templates', user?.id] });
+        } catch (err) {
+          if (err.message !== 'empty name') {
+            message.error(err.response?.data?.error || 'Lỗi khi lưu template!');
+          }
+          throw err;
+        }
+      }
+    });
+  };
+
   const handleAddSubmit = async (values) => {
     try {
       // Validate Rubrics nếu bật
@@ -189,6 +255,7 @@ const TopicManagement = () => {
         Deadline: deadlineDate,
         HanDangKy: values.hanDangKy ? values.hanDangKy.toDate() : undefined,
         HanNopBaoCao: values.hanNopBaoCao ? values.hanNopBaoCao.toDate() : undefined,
+        HanCapNhatTienDo: values.hanCapNhatTienDo ? values.hanCapNhatTienDo.toDate() : undefined,
         GiangVienHuongDan: user.id,
         TrangThai: editingTopic ? editingTopic.TrangThai : 'MoDangKy',
         LoaiDeTai: selectedClassId === 'KHOA_LUAN' ? 'KhoaLuan' : 'MonHoc',
@@ -231,6 +298,7 @@ const TopicManagement = () => {
       deadline: record.Deadline ? dayjs(record.Deadline) : null,
       hanDangKy: record.HanDangKy ? dayjs(record.HanDangKy) : null,
       hanNopBaoCao: record.HanNopBaoCao ? dayjs(record.HanNopBaoCao) : null,
+      hanCapNhatTienDo: record.HanCapNhatTienDo ? dayjs(record.HanCapNhatTienDo) : null,
       lopHoc: (record.LopHoc || []).map(lh => lh._id || lh),
     });
     setChiTietBoSung(record.ChiTietBoSung || []);
@@ -509,9 +577,22 @@ const TopicManagement = () => {
                 <Row gutter={[24, 24]}>
                   {/* Cột trái: Chi tiết đề tài */}
                   <Col xs={24} lg={12}>
-                    <Title level={5} style={{ color: '#1677ff', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <NotebookText size={16} /> Chi Tiết Đề Tài
-                    </Title>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                      <Title level={5} style={{ color: '#1677ff', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <NotebookText size={16} /> Chi Tiết Đề Tài
+                      </Title>
+                      {record.CoBaiTest && (
+                        <Button 
+                          type="primary" 
+                          size="small"
+                          icon={<ListChecks size={14} />} 
+                          onClick={() => navigate(`/lecturer/entrance-test/${record._id}`)}
+                          style={{ background: '#eb2f96', borderColor: '#eb2f96' }}
+                        >
+                          Quản Lý Bài Test / Kết Quả
+                        </Button>
+                      )}
+                    </div>
                     <Descriptions size="small" column={1} bordered style={{ background: '#fff' }}>
                       <Descriptions.Item label={<strong>Mã đề tài</strong>}>
                         <Tag color="blue">{record.MaDeTai}</Tag>
@@ -547,8 +628,17 @@ const TopicManagement = () => {
                           ))}
                         </div>
                       </Descriptions.Item>
-                      <Descriptions.Item label={<strong>Hạn chót đăng ký</strong>}>
+                      <Descriptions.Item label={<strong>Deadline (chung)</strong>}>
                         {record.Deadline ? new Date(record.Deadline).toLocaleString('vi-VN') : 'Không giới hạn'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={<strong>Hạn đăng ký</strong>}>
+                        {record.HanDangKy ? new Date(record.HanDangKy).toLocaleString('vi-VN') : 'Dùng Deadline chung'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={<strong>Hạn nộp báo cáo</strong>}>
+                        {record.HanNopBaoCao ? new Date(record.HanNopBaoCao).toLocaleString('vi-VN') : 'Dùng Deadline chung'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label={<strong>Hạn cập nhật tiến độ</strong>}>
+                        {record.HanCapNhatTienDo ? new Date(record.HanCapNhatTienDo).toLocaleString('vi-VN') : 'Dùng Hạn nộp báo cáo'}
                       </Descriptions.Item>
                       <Descriptions.Item label={<strong>Số lượng SV tối đa</strong>}>
                         {record.SoLuongSinhVien || 1} SV ({record.SoLuongSinhVien > 1 ? 'Đề tài nhóm' : 'Đề tài cá nhân'})
@@ -767,7 +857,20 @@ const TopicManagement = () => {
 
             <Form.Item name="hanNopBaoCao" label="Hạn nộp báo cáo" style={{ flex: 1 }}
               tooltip="Sau mốc này SV không thể nộp báo cáo. Bỏ trống = dùng Deadline chung.">
-              <DatePicker showTime style={{ width: '100%' }} size="large" placeholder="Hạn chót nộp báo cáo" />
+              <DatePicker 
+                showTime 
+                style={{ width: '100%' }} 
+                size="large" 
+                placeholder="Hạn chót nộp báo cáo" 
+                onChange={(date) => {
+                  form.setFieldsValue({ hanCapNhatTienDo: date });
+                }}
+              />
+            </Form.Item>
+            
+            <Form.Item name="hanCapNhatTienDo" label="Hạn cập nhật tiến độ" style={{ flex: 1 }}
+              tooltip="Sau mốc này SV không thể cập nhật nhật ký tiến độ. Bỏ trống = dùng Hạn nộp báo cáo.">
+              <DatePicker showTime style={{ width: '100%' }} size="large" placeholder="Hạn chót cập nhật tiến độ" />
             </Form.Item>
           </div>
 
@@ -823,37 +926,50 @@ const TopicManagement = () => {
           {suDungRubrics && (
             <div style={{ padding: 16, border: '1px solid #d3adf7', borderRadius: 8, background: '#faf0ff' }}>
               {/* Chọn nguồn Rubrics */}
-              <div style={{ marginBottom: 16 }}>
-                <Select
-                  value={rubricsSource}
-                  onChange={v => {
-                    setRubricsSource(v);
-                    if (v === 'new') {
-                      setSelectedTemplateId(null);
-                      setRubricsTieuChi([{ TenTieuChi: '', MoTa: '', TrongSo: 0, DiemToiDa: 10, GoiYChoAI: [] }]);
-                    }
-                  }}
-                  style={{ width: 200, marginRight: 12 }}
-                >
-                  <Option value="new">Tạo Rubrics mới</Option>
-                  <Option value="template" disabled={templates.length === 0}>Chọn từ mẫu có sẵn</Option>
-                </Select>
-
-                {rubricsSource === 'template' && (
+              <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
                   <Select
-                    value={selectedTemplateId}
-                    onChange={handleTemplateSelect}
-                    placeholder="Chọn Rubrics Template..."
-                    style={{ width: 300 }}
+                    value={rubricsSource}
+                    onChange={v => {
+                      setRubricsSource(v);
+                      if (v === 'new') {
+                        setSelectedTemplateId(null);
+                        setRubricsTieuChi([{ TenTieuChi: '', MoTa: '', TrongSo: 0, DiemToiDa: 10, GoiYChoAI: [] }]);
+                      }
+                    }}
+                    style={{ width: 200, marginRight: 12 }}
                   >
-                    {templates.map(tpl => (
-                      <Option key={tpl._id} value={tpl._id}>
-                        {tpl.TenMau} ({tpl.TieuChi?.length} tiêu chí)
-                        {tpl.MacDinh && ' ⭐'}
-                      </Option>
-                    ))}
+                    <Option value="new">Tạo Rubrics mới</Option>
+                    <Option value="template" disabled={templates.length === 0}>Chọn từ mẫu có sẵn</Option>
                   </Select>
-                )}
+
+                  {rubricsSource === 'template' && (
+                    <Select
+                      value={selectedTemplateId}
+                      onChange={handleTemplateSelect}
+                      placeholder="Chọn Rubrics Template..."
+                      style={{ width: 300 }}
+                    >
+                      {templates.map(tpl => (
+                        <Option key={tpl._id} value={tpl._id}>
+                          {tpl.TenMau} ({tpl.TieuChi?.length} tiêu chí)
+                          {tpl.MacDinh && ' ⭐'}
+                        </Option>
+                      ))}
+                    </Select>
+                  )}
+                </div>
+
+                <Tooltip title="Lưu rubrics hiện tại thành template mẫu">
+                  <Button
+                    icon={<Save size={14} />}
+                    onClick={handleSaveAsTemplate}
+                    disabled={rubricsTieuChi.length === 0 || tongTrongSo !== 100}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+                  >
+                    Lưu thành mẫu
+                  </Button>
+                </Tooltip>
               </div>
 
               {/* Hiển thị tổng trọng số */}

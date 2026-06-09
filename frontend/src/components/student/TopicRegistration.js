@@ -7,7 +7,8 @@ import nhomService from '../../services/nhomService';
 import authService from '../../services/authService';
 import { useClassContext } from '../../contexts/ClassContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
+import DeadlineBadge from '../common/DeadlineBadge';
+import { getEffectiveDeadline, getDeadlineStatus } from '../../utils/deadlineUtils';
 const { Title, Paragraph, Text } = Typography;
 
 const TopicRegistration = () => {
@@ -203,6 +204,13 @@ const TopicRegistration = () => {
               </Tag>
             )}
             {topic.DaChotNhom && <Tag color="red" style={{ marginLeft: 4, marginTop: 4 }}>Đã chốt</Tag>}
+            <br />
+            <br />
+            <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>Hạn đăng ký:</Text>
+            <DeadlineBadge deadline={getEffectiveDeadline(topic, 'dangKy')} label="Hạn đăng ký" />
+            <br />
+            <Text type="secondary" style={{ display: 'block', marginTop: 8, marginBottom: 4 }}>Hạn nộp báo cáo:</Text>
+            <DeadlineBadge deadline={getEffectiveDeadline(topic, 'baoCao')} label="Hạn nộp báo cáo" />
             <br />
             <br />
             <Text type="secondary">Độ Tương Thích (AI SBERT Match):</Text>
@@ -451,20 +459,18 @@ const TopicRegistration = () => {
               <Alert
                 message={testSubmitted ? "Bạn đã hoàn thành bài test" : "Đề tài yêu cầu Bài Test Đầu Vào"}
                 description={testSubmitted
-                  ? "Kết quả bài test của bạn đang được xử lý. Vui lòng chờ hệ thống duyệt tự động."
+                  ? "Hãy xem lại kết quả test hoặc làm lại nếu chưa đạt."
                   : "Giảng viên đã tạo bài test đầu vào. Bạn cần hoàn thành bài test để được duyệt đề tài."
                 }
                 type={testSubmitted ? 'info' : 'warning'}
                 showIcon
                 icon={<ListChecks size={20} />}
                 action={
-                  !testSubmitted ? (
-                    <Button type="primary" size="small"
-                      style={{ background: '#722ed1', borderColor: '#722ed1' }}
-                      onClick={() => navigate(`/student/entrance-test/${registeredTopicId}`)}>
-                      Bắt Đầu Làm Bài Test
-                    </Button>
-                  ) : null
+                  <Button type="primary" size="small"
+                    style={!testSubmitted ? { background: '#722ed1', borderColor: '#722ed1' } : {}}
+                    onClick={() => navigate(`/student/entrance-test/${registeredTopicId}`)}>
+                    {!testSubmitted ? 'Bắt Đầu Làm Bài Test' : 'Xem Kết Quả / Làm Lại'}
+                  </Button>
                 }
               />
             )}
@@ -540,7 +546,10 @@ const TopicRegistration = () => {
               return topic.LopHoc.some(lh => (lh._id || lh).toString() === selectedClassId.toString());
             }).map(topic => {
               const thisRegistered = isRegistered(topic._id);
-              const disabled = hasAnyRegistration || !myNhom || !myNhom.DaChot || topic.DaChotNhom;
+              const dangKyDeadline = getEffectiveDeadline(topic, 'dangKy');
+              const dangKyStatus = getDeadlineStatus(dangKyDeadline);
+              const isDangKyExpired = dangKyStatus === 'expired';
+              const disabled = hasAnyRegistration || !myNhom || !myNhom.DaChot || topic.DaChotNhom || isDangKyExpired;
               const sizeMismatch = myNhom && myNhom.DaChot && (topic.SoLuongSinhVien || 1) !== (myNhom.ThanhVien?.filter(tv => tv.TrangThai === 'DaChapNhan').length || 0);
 
               const thisRegRecord = selectedClassId === 'KHOA_LUAN'
@@ -568,16 +577,16 @@ const TopicRegistration = () => {
                         Đã chốt cho nhóm khác
                       </Button>
                     ) : (
-                      <Tooltip title={sizeMismatch ? `Đề tài cần ${topic.SoLuongSinhVien} SV, nhóm bạn có ${myNhom?.ThanhVien?.filter(tv => tv.TrangThai === 'DaChapNhan').length || 0}` : ''}>
+                      <Tooltip title={sizeMismatch ? `Đề tài cần ${topic.SoLuongSinhVien} SV, nhóm bạn có ${myNhom?.ThanhVien?.filter(tv => tv.TrangThai === 'DaChapNhan').length || 0}` : isDangKyExpired ? 'Đã hết hạn đăng ký đề tài này' : ''}>
                         <Button
-                          type={topic.isRecommended ? 'primary' : 'default'}
+                          type={topic.isRecommended && !isDangKyExpired ? 'primary' : 'default'}
                           icon={<CheckCircle size={16} />}
                           onClick={() => handleRegister(topic)}
                           loading={loadingId === topic._id}
                           disabled={disabled || sizeMismatch}
                           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%' }}
                         >
-                          {!myNhom ? 'Cần tạo nhóm' : sizeMismatch ? 'Số SV không khớp' : disabled ? 'Không khả dụng' : 'Đăng Ký'}
+                          {!myNhom ? 'Cần tạo nhóm' : sizeMismatch ? 'Số SV không khớp' : isDangKyExpired ? 'Hết hạn' : disabled ? 'Không khả dụng' : 'Đăng Ký'}
                         </Button>
                       </Tooltip>
                     )}
@@ -649,7 +658,11 @@ const TopicRegistration = () => {
                   )}
                   {topic.DaChotNhom && <Tag color="red" style={{ marginLeft: 4, marginTop: 4 }}>Đã chốt</Tag>}
                   <br />
-                  <br />
+                  <div style={{ marginBottom: 12, marginTop: 12 }}>
+                    {!(topic.DaChotNhom || thisRegStatus === 'DaDuyet') && (
+                      <DeadlineBadge deadline={getEffectiveDeadline(topic, 'dangKy')} label="Hạn đăng ký" />
+                    )}
+                  </div>
                   <Text type="secondary">Mô tả cốt lõi:</Text>
                   <Paragraph ellipsis={{ rows: 2, expandable: false }} style={{ marginTop: 4, marginBottom: 12 }}>
                     {topic.MoTa}

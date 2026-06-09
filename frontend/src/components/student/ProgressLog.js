@@ -6,6 +6,8 @@ import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import { useClassContext } from '../../contexts/ClassContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import DeadlineBadge from '../common/DeadlineBadge';
+import { getEffectiveDeadline, getDeadlineStatus } from '../../utils/deadlineUtils';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -271,6 +273,10 @@ const ProgressLog = () => {
 
     const isApproved = registration && registration.TrangThai === 'DaDuyet';
 
+    const tienDoDeadline = registration?.DeTai ? getEffectiveDeadline(registration.DeTai, 'tienDo') : null;
+    const tienDoStatus = getDeadlineStatus(tienDoDeadline);
+    const isTienDoExpired = tienDoStatus === 'expired';
+
     return (
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -279,12 +285,18 @@ const ProgressLog = () => {
                     type="primary"
                     icon={<PlusCircle size={16} />}
                     size="large"
-                    disabled={!isApproved || hasBaoCao}
+                    disabled={!isApproved || hasBaoCao || isTienDoExpired}
                     onClick={openCreateModal}
                 >
-                    Cập Nhật Tiến Độ
+                    {isTienDoExpired ? 'Đã quá hạn' : 'Cập Nhật Tiến Độ'}
                 </Button>
             </div>
+
+            {isApproved && tienDoDeadline && (
+                <div style={{ marginBottom: 24 }}>
+                    <DeadlineBadge deadline={tienDoDeadline} label="Hạn cập nhật tiến độ" />
+                </div>
+            )}
 
             {hasBaoCao && (
                 <Card style={{ marginBottom: 24, borderLeft: '4px solid #1677ff', background: '#e6f4ff' }}>

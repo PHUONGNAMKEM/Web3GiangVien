@@ -105,6 +105,18 @@ io.on('connection', (socket) => {
     console.log(`Socket ${socket.id} joined pending room for wallet ${walletAddress}`);
   });
 
+  // Giảng viên join room theo userId để nhận realtime updates
+  socket.on('lecturer:join', (lecturerId) => {
+    socket.join(`lecturer:${lecturerId}`);
+    logger.info(`[SOCKET] Lecturer ${lecturerId} joined room`);
+  });
+
+  // Sinh viên join room theo userId để nhận realtime updates
+  socket.on('student:join', (studentId) => {
+    socket.join(`student:${studentId}`);
+    logger.info(`[SOCKET] Student ${studentId} joined room`);
+  });
+
   socket.on('disconnect', () => {
     logger.info(`[SOCKET] User disconnected: ${socket.id}`);
   });

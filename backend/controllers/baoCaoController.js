@@ -181,6 +181,24 @@ exports.uploadBaoCao = async (req, res) => {
 
         const populated = await BaoCao.findById(myReport._id).populate('DeTai').populate('SinhVien');
 
+        // Realtime: Thông báo GV có sinh viên nộp báo cáo mới
+        try {
+            const io = req.app.get('io');
+            const giangVienId = deTai.GiangVienHuongDan?.toString() || deTai.GiangVienHuongDan;
+            if (io && giangVienId) {
+                io.to(`lecturer:${giangVienId}`).emit('submission:new', {
+                    deTaiId,
+                    sinhVienId: requesterId,
+                    baoCaoId: myReport._id,
+                    tieuDe: populated?.TieuDe || tieuDe,
+                    tenSinhVien: populated?.SinhVien?.HoTen || '',
+                    tenDeTai: populated?.DeTai?.TenDeTai || '',
+                });
+            }
+        } catch (socketErr) {
+            logger.warn(`[SOCKET] Emit submission:new failed: ${socketErr.message}`);
+        }
+
         logger.info(`[REPORT] Uploaded by student ${requesterId} | topic=${deTaiId} | CID=${ipfsCid} | members=${acceptedMembers.length}`);
         res.status(201).json({
             message: isGroupTopic ? 'Nộp báo cáo thành công cho cả nhóm' : 'Nộp báo cáo thành công',

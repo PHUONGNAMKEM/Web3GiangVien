@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Input, Select, InputNumber, Space, Typography, Table, Tag, Modal, message, Tabs, Empty, Badge, Popconfirm, Alert, Descriptions } from 'antd';
+import { Card, Button, Input, Select, InputNumber, Space, Typography, Table, Tag, Modal, message, Tabs, Empty, Badge, Popconfirm, Alert, Descriptions, Tooltip } from 'antd';
 import { Plus, Trash2, Trophy, Code2, ListChecks, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
@@ -17,6 +17,9 @@ const EntranceTestManager = () => {
   const queryClient = useQueryClient();
 
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('info');
+  const [viewedCount, setViewedCount] = useState(() => parseInt(localStorage.getItem(`test_viewed_${deTaiId}`)) || 0);
+
   const [tieuDe, setTieuDe] = useState('');
   const [moTa, setMoTa] = useState('');
   const [thoiGianLam, setThoiGianLam] = useState(30);
@@ -60,6 +63,15 @@ const EntranceTestManager = () => {
   });
 
   const { topic = null, baiTest = null, results = [], registrations = [] } = testData;
+
+  useEffect(() => {
+    if (activeTab === 'results' && results.length > 0) {
+      setViewedCount(results.length);
+      localStorage.setItem(`test_viewed_${deTaiId}`, results.length);
+    }
+  }, [activeTab, results.length, deTaiId]);
+
+  const unreadCount = Math.max(0, results.length - viewedCount);
 
   // Thêm câu hỏi
   const addTracNghiem = () => {
@@ -200,6 +212,13 @@ const EntranceTestManager = () => {
       },
     },
     {
+      title: 'Lần nộp',
+      key: 'soLanNop',
+      width: 80,
+      align: 'center',
+      render: (_, r) => <Tag color="purple">{r.SoLanNop || 1}/3</Tag>,
+    },
+    {
       title: 'Chi Tiết',
       key: 'detail',
       render: (_, r) => (
@@ -224,6 +243,8 @@ const EntranceTestManager = () => {
 
   if (loading) return <Card loading />;
 
+  const hasWinner = registrations.some(r => r.TrangThai === 'DaDuyet');
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -236,7 +257,7 @@ const EntranceTestManager = () => {
 
       {baiTest ? (
         // === ĐÃ CÓ BÀI TEST ===
-        <Tabs items={[
+        <Tabs activeKey={activeTab} onChange={setActiveTab} items={[
           {
             key: 'info',
             label: `📋 Thông tin (${baiTest.CauHoi?.length || 0} câu)`,
@@ -301,15 +322,28 @@ const EntranceTestManager = () => {
                   </Card>
                 ))}
 
-                <Popconfirm title="Xóa bài test này?" onConfirm={handleDelete}>
-                  <Button danger style={{ marginTop: 16 }} icon={<Trash2 size={14} />}>Xóa bài test</Button>
-                </Popconfirm>
+                <div style={{ marginTop: 16 }}>
+                  {hasWinner ? (
+                    <Tooltip title="Không thể xóa bài test vì đã có nhóm trúng tuyển đề tài.">
+                      <Button danger disabled icon={<Trash2 size={14} />}>Xóa bài test</Button>
+                    </Tooltip>
+                  ) : (
+                    <Popconfirm 
+                      title={results.length > 0 ? "Đã có sinh viên nộp bài. Nếu xóa, toàn bộ kết quả test sẽ bị mất. Bạn chắc chắn chứ?" : "Xóa bài test này?"} 
+                      onConfirm={handleDelete}
+                      okText="Xóa"
+                      cancelText="Hủy"
+                    >
+                      <Button danger icon={<Trash2 size={14} />}>Xóa bài test</Button>
+                    </Popconfirm>
+                  )}
+                </div>
               </Card>
             )
           },
           {
             key: 'results',
-            label: <Badge count={results.length} offset={[10, 0]}>📊 Kết Quả Test</Badge>,
+            label: unreadCount > 0 ? <Badge count={unreadCount} offset={[10, 0]}>📊 Kết Quả Test</Badge> : '📊 Kết Quả Test',
             children: (
               <Table
                 columns={resultColumns}

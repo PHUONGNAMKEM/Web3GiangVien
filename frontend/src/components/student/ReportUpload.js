@@ -6,6 +6,8 @@ import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import { useClassContext } from '../../contexts/ClassContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import DeadlineBadge from '../common/DeadlineBadge';
+import { getEffectiveDeadline, getDeadlineStatus } from '../../utils/deadlineUtils';
 
 const { Title, Paragraph, Text } = Typography;
 const { Dragger } = Upload;
@@ -66,6 +68,10 @@ const ReportUpload = () => {
   const isApproved = registration?.TrangThai === 'DaDuyet';
   const hasSubmission = !!existingBaoCao;
 
+  const baoCaoDeadline = registration?.DeTai ? getEffectiveDeadline(registration.DeTai, 'baoCao') : null;
+  const baoCaoStatus = getDeadlineStatus(baoCaoDeadline);
+  const isBaoCaoExpired = baoCaoStatus === 'expired';
+
   const isLeader = registration ? (
     (registration.SinhVien && registration.SinhVien._id === user.id) ||
     registration.SinhVien === user.id
@@ -122,6 +128,7 @@ const ReportUpload = () => {
       queryClient.invalidateQueries({ queryKey: ['report-upload'] });
       queryClient.invalidateQueries({ queryKey: ['progress-tracking'] });
       queryClient.invalidateQueries({ queryKey: ['progress-log'] });
+      queryClient.invalidateQueries({ queryKey: ['student-dashboard'] });
       
       // Thông báo tùy theo trạng thái blockchain
       if (result.blockchainStatus === 'success') {
@@ -154,6 +161,7 @@ const ReportUpload = () => {
           queryClient.invalidateQueries({ queryKey: ['report-upload'] });
           queryClient.invalidateQueries({ queryKey: ['progress-tracking'] });
           queryClient.invalidateQueries({ queryKey: ['progress-log'] });
+          queryClient.invalidateQueries({ queryKey: ['student-dashboard'] });
           message.success('Đã hủy nộp. Bạn có thể nộp file mới.');
         } catch (e) {
           const errMsg = e.response?.data?.error || 'Hủy nộp thất bại';
@@ -194,6 +202,9 @@ const ReportUpload = () => {
                 {isApproved ? 'Đã Duyệt' : 'Chờ Duyệt'}
               </Tag>
             </Space>
+            <div style={{ marginTop: 8 }}>
+              <DeadlineBadge deadline={baoCaoDeadline} label="Hạn nộp báo cáo" />
+            </div>
             {topicRequires.length > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                 <Text type="secondary">Yêu cầu:</Text>
@@ -265,12 +276,15 @@ const ReportUpload = () => {
               {isGroupTopic && (
                 <Alert message="Trưởng nhóm nộp cho cả nhóm" description="File báo cáo bạn nộp sẽ được dùng chung cho tất cả các thành viên trong nhóm." type="info" showIcon style={{ marginBottom: 16 }} />
               )}
-              <Dragger {...props} height={isMobile ? 180 : 250} style={{ padding: isMobile ? 12 : 24, background: '#fafafa' }} disabled={!isApproved}>
+              {isBaoCaoExpired && (
+                <Alert message="Đã quá hạn nộp báo cáo" description="Thời gian nộp báo cáo đã kết thúc, bạn không thể nộp thêm." type="error" showIcon style={{ marginBottom: 16 }} />
+              )}
+              <Dragger {...props} height={isMobile ? 180 : 250} style={{ padding: isMobile ? 12 : 24, background: '#fafafa' }} disabled={!isApproved || isBaoCaoExpired}>
                 <p className="ant-upload-drag-icon" style={{ marginBottom: 16 }}>
-                  <UploadCloud size={64} color={isApproved ? "#1677ff" : "#d9d9d9"} style={{ opacity: 0.8 }} />
+                  <UploadCloud size={64} color={isApproved && !isBaoCaoExpired ? "#1677ff" : "#d9d9d9"} style={{ opacity: 0.8 }} />
                 </p>
                 <Text strong style={{ fontSize: 18, display: 'block', marginBottom: 8 }}>
-                  {isApproved ? 'Kéo thả hoặc Nhấp để chọn File Báo Cáo' : 'Chờ duyệt đề tài để mở khóa nộp bài'}
+                  {isApproved && !isBaoCaoExpired ? 'Kéo thả hoặc Nhấp để chọn File Báo Cáo' : isBaoCaoExpired ? 'Đã hết hạn nộp báo cáo' : 'Chờ duyệt đề tài để mở khóa nộp bài'}
                 </Text>
                 <Text type="secondary">Chỉ hỗ trợ định dạng PDF. Dung lượng tối đa 20MB.</Text>
               </Dragger>

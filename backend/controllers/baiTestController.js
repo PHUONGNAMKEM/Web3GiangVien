@@ -235,9 +235,17 @@ exports.submitTest = async (req, res) => {
         if (!baiTest) return res.status(404).json({ error: 'Không tìm thấy bài test.' });
         if (baiTest.TrangThai === 'DaDong') return res.status(400).json({ error: 'Bài test đã đóng.' });
 
-        // Kiểm tra đã nộp chưa
+        // Kiểm tra đã nộp chưa và lấy số lần nộp
         const existingResult = await KetQuaTest.findOne({ BaiTest: baiTest._id, SinhVien: sinhVienId });
-        if (existingResult) return res.status(400).json({ error: 'Bạn đã nộp bài test này rồi.' });
+        let soLanNop = 1;
+        if (existingResult) {
+            if (existingResult.SoLanNop >= 3) {
+                return res.status(400).json({ error: 'Bạn đã hết số lần nộp bài (tối đa 3 lần).' });
+            }
+            soLanNop = (existingResult.SoLanNop || 1) + 1;
+            // Xóa kết quả cũ để ghi đè kết quả mới
+            await KetQuaTest.findByIdAndDelete(existingResult._id);
+        }
 
         // === 1. GHI ThoiGianSubmit NGAY LẬP TỨC (trước khi AI chấm) ===
         const thoiGianSubmit = new Date();
@@ -340,7 +348,8 @@ exports.submitTest = async (req, res) => {
             DiemToiDa: diemToiDa,
             TxHash: txHash,
             ThoiGianBatDau: thoiGianBatDau ? new Date(thoiGianBatDau) : null,
-            ThoiGianNop: thoiGianSubmit
+            ThoiGianNop: thoiGianSubmit,
+            SoLanNop: soLanNop
         });
 
         // === 5. HYBRID COMPETITION LOGIC ===
@@ -352,20 +361,24 @@ exports.submitTest = async (req, res) => {
 
         if (dangKy) {
             if (!isDat) {
-                // Không đạt ngưỡng → TuChoi
-                await DangKyDeTai.findByIdAndUpdate(dangKy._id, { TrangThai: 'TuChoi' });
+                const canRetake = soLanNop < 3;
+                const newTrangThai = canRetake ? 'ChoTest' : 'TuChoi';
+                // Không đạt ngưỡng → TuChoi hoặc ChoTest để làm lại
+                await DangKyDeTai.findByIdAndUpdate(dangKy._id, { TrangThai: newTrangThai });
                 competitionResult = 'rejected';
-                logger.info(`[TEST] REJECTED: ${sinhVienId} scored ${phanTram}% < ${nguongDat}%`);
+                logger.info(`[TEST] REJECTED: ${sinhVienId} scored ${phanTram}% < ${nguongDat}%. Lần nộp: ${soLanNop}/3`);
 
-                // Kiểm tra nhóm ChoDoi có thể claim winner
-                await resolveWaitingGroups(baiTest.DeTai, io);
+                if (!canRetake) {
+                    // Hết lượt, kiểm tra nhóm ChoDoi có thể claim winner
+                    await resolveWaitingGroups(baiTest.DeTai, io);
+                }
 
                 // Emit status update
                 if (io) {
                     io.to(`competition:${baiTest.DeTai}`).emit('competition:status', {
                         deTaiId: baiTest.DeTai.toString(),
                         nhomId: (nhomId || dangKy.Nhom || '').toString(),
-                        status: 'TuChoi'
+                        status: newTrangThai
                     });
                 }
             } else {
@@ -394,7 +407,9 @@ exports.submitTest = async (req, res) => {
             phanTram,
             nguongDat,
             isDat,
-            competitionResult
+            competitionResult,
+            canRetake: soLanNop < 3,
+            soLanNop
         });
     } catch (err) {
         logger.error(`[TEST] Submit failed: ${err.message}`);
@@ -475,6 +490,8 @@ exports.checkSubmitted = async (req, res) => {
             else if (status === 'ChoDoi') competitionResult = 'waiting';
             else if (status === 'Thua') competitionResult = 'lost';
             else if (status === 'TuChoi') competitionResult = 'rejected';
+            // ChoTest/DangLamTest khi đã có kết quả test = đã rớt và được retry
+            else if (status === 'ChoTest' || status === 'DangLamTest') competitionResult = 'rejected';
         }
 
         res.json({
@@ -482,7 +499,8 @@ exports.checkSubmitted = async (req, res) => {
             submitted: !!result,
             result: result ? {
                 ...result.toObject(),
-                competitionResult: competitionResult
+                competitionResult: competitionResult,
+                canRetake: (result.SoLanNop || 1) < 3
             } : null,
             testId: baiTest._id
         });

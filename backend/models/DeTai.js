@@ -24,6 +24,7 @@ const deTaiSchema = new mongoose.Schema({
   Deadline: { type: Date, required: true },           // (giữ tương thích) hạn tổng quát
   HanDangKy: { type: Date },                           // Hạn chót đăng ký đề tài (sau hạn này không cho đăng ký)
   HanNopBaoCao: { type: Date },                        // Hạn chót nộp báo cáo (mặc định lấy theo Deadline nếu trống)
+  HanCapNhatTienDo: { type: Date },                    // Hạn chót cập nhật nhật ký tiến độ (mặc định lấy theo HanNopBaoCao || Deadline)
   GiangVienHuongDan: { type: mongoose.Schema.Types.ObjectId, ref: 'GiangVien', required: true },
   MonHoc: { type: mongoose.Schema.Types.ObjectId, ref: 'MonHoc' },
   LopHoc: [{ type: mongoose.Schema.Types.ObjectId, ref: 'LopHoc' }],

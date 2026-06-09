@@ -77,6 +77,7 @@ const CourseManagement = () => {
       form.resetFields();
       setEditingItem(null);
       queryClient.invalidateQueries({ queryKey: ['courses'] });
+      queryClient.invalidateQueries({ queryKey: ['classes'] }); // Cập nhật dropdown môn học ở Quản Lý Lớp
     } catch (err) {
       const errMsg = err?.response?.data?.message || 'Lỗi thao tác';
       message.error(errMsg);
@@ -89,6 +90,7 @@ const CourseManagement = () => {
       if (res.success) {
         message.success('Đã xóa môn học');
         queryClient.invalidateQueries({ queryKey: ['courses'] });
+        queryClient.invalidateQueries({ queryKey: ['classes'] }); // Cập nhật dropdown môn học ở Quản Lý Lớp
       }
     } catch (err) {
       const errMsg = err?.response?.data?.message || 'Không thể xóa môn học';

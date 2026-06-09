@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Layout, Menu, Button, Avatar, theme, Dropdown, Badge } from 'antd';
+import { Layout, Menu, Button, Avatar, theme, Dropdown, Badge, message } from 'antd';
 import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award, ClipboardList, BarChart2, School, Users, GraduationCap, Bell, ShieldCheck } from 'lucide-react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import authService from '../../services/authService';
@@ -7,6 +7,7 @@ import axios from 'axios';
 import io from 'socket.io-client';
 import { useIsMobile } from '../../hooks/useResponsive';
 import ClassSelector from '../common/ClassSelector';
+import { useQueryClient } from '@tanstack/react-query';
 
 const { Header, Content, Sider } = Layout;
 
@@ -56,6 +57,55 @@ const MainLayout = () => {
 
   const isLecturer = currentUser?.role_id === 'LECTURER_ROLE';
   const isAdmin = currentUser?.role_id === 'ADMIN_ROLE';
+  const isStudent = currentUser?.role_id === 'STUDENT_ROLE';
+  const queryClient = useQueryClient();
+
+  // Realtime: Lecturer / Student socket connections
+  useEffect(() => {
+    if (!currentUser?.id || isAdmin) return;
+
+    const SOCKET_URL = process.env.REACT_APP_API_URL
+      ? process.env.REACT_APP_API_URL.replace(/\/api\/?$/, '')
+      : 'http://localhost:5000';
+    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
+
+    socket.on('connect', () => {
+      if (isLecturer) {
+        socket.emit('lecturer:join', currentUser.id);
+      } else if (isStudent) {
+        socket.emit('student:join', currentUser.id);
+      }
+    });
+
+    // === Lecturer events ===
+    if (isLecturer) {
+      socket.on('submission:new', (data) => {
+        message.info(`📄 ${data.tenSinhVien || 'Sinh viên'} đã nộp báo cáo: ${data.tenDeTai || ''}`);
+        queryClient.invalidateQueries({ queryKey: ['submission-review'] });
+        queryClient.invalidateQueries({ queryKey: ['lecturer-dashboard'] });
+      });
+
+      socket.on('progress:new', (data) => {
+        message.info(`📊 Tiến độ mới từ sinh viên — ${data.tenDeTai || ''} (Tuần ${data.tuanSo || '?'})`);
+        queryClient.invalidateQueries({ queryKey: ['submission-review'] });
+        queryClient.invalidateQueries({ queryKey: ['lecturer-dashboard'] });
+      });
+    }
+
+    // === Student events ===
+    if (isStudent) {
+      socket.on('grade:new', (data) => {
+        message.success(`🎓 Giảng viên đã chấm điểm: ${data.tenDeTai || ''} — ${data.diem}/10`);
+        queryClient.invalidateQueries({ queryKey: ['student-dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['progress-tracking'] });
+        queryClient.invalidateQueries({ queryKey: ['report-upload'] });
+      });
+    }
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [currentUser?.id, isLecturer, isStudent, isAdmin, queryClient]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -78,7 +128,7 @@ const MainLayout = () => {
   }, [isAdmin, fetchPendingRequestsCount]);
 
   const studentMenuItems = [
-    { key: '/student', icon: <Monitor size={18} />, label: 'Dashboard Sinh Viên' },
+    { key: '/student', icon: <Monitor size={18} />, label: 'Dashboard' },
     { key: '/student/group', icon: <BookOpen size={18} />, label: 'Nhóm' },
     { key: '/student/register', icon: <Award size={18} />, label: 'Đăng Ký Đề Tài' },
     { key: '/student/upload', icon: <FileText size={18} />, label: 'Nộp Báo Cáo' },
@@ -87,28 +137,28 @@ const MainLayout = () => {
   ];
 
   const lecturerMenuItems = [
-    { key: '/lecturer', icon: <Monitor size={18} />, label: 'Dashboard Giảng Viên' },
+    { key: '/lecturer', icon: <Monitor size={18} />, label: 'Dashboard' },
     { key: '/lecturer/topics', icon: <Award size={18} />, label: 'Quản Lý Đề Tài' },
     { key: '/lecturer/courses', icon: <BookOpen size={18} />, label: 'Quản Lý Môn Học' },
     { key: '/lecturer/classes', icon: <School size={18} />, label: 'Quản Lý Lớp Học' },
     { key: '/lecturer/students', icon: <Users size={18} />, label: 'Quản Lý Sinh Viên' },
     { key: '/lecturer/rubrics', icon: <ClipboardList size={18} />, label: 'Quản Lý Rubrics' },
     { key: '/lecturer/review', icon: <FileText size={18} />, label: 'Chấm Điểm (AI)' },
-    { key: '/lecturer/comparison', icon: <BarChart2 size={18} />, label: 'So Sánh AI vs GV' },
-    { key: '/lecturer/blockchain', icon: <ShieldCheck size={18} />, label: 'Đối Chiếu Blockchain' }
+    { key: '/lecturer/comparison', icon: <BarChart2 size={18} />, label: 'So Sánh AI - GV' },
+    { key: '/lecturer/blockchain', icon: <ShieldCheck size={18} />, label: 'Blockchain' }
   ];
 
   const adminMenuItems = [
     { key: '/admin', icon: <Monitor size={18} />, label: 'Dashboard Admin' },
-    { 
-      key: '/admin/requests', 
-      icon: <Bell size={18} />, 
+    {
+      key: '/admin/requests',
+      icon: <Bell size={18} />,
       label: (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Yêu cầu</span>
           <Badge count={pendingRequestsCount} size="small" />
         </div>
-      ) 
+      )
     }
   ];
 

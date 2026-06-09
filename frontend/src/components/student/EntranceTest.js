@@ -33,6 +33,7 @@ const EntranceTest = () => {
   const [competitionStopped, setCompetitionStopped] = useState(false); // Bị dừng do nhóm khác thắng
   const socketRef = useRef(null);
   const submittedRef = useRef(false);
+  const retryingRef = useRef(false); // Flag để tránh cache cũ ghi đè state khi đang retry
 
   useEffect(() => {
     submittedRef.current = submitted;
@@ -56,9 +57,16 @@ const EntranceTest = () => {
       if (check.submitted) {
         data.submitted = true;
         data.result = check.result;
+        // Nếu còn có thể làm lại → vẫn phải lấy bài test để sẵn sàng retake
+        if (check.result?.canRetake) {
+          try {
+            const test = await aiApiService.getBaiTestForStudent(deTaiId);
+            data.baiTest = test;
+          } catch (e) { /* ignore */ }
+        }
         return data;
       }
-      
+
       const test = await aiApiService.getBaiTestForStudent(deTaiId);
       data.baiTest = test;
       return data;
@@ -69,12 +77,17 @@ const EntranceTest = () => {
   useEffect(() => {
     if (testData) {
       if (testData.myNhom) setMyNhom(testData.myNhom);
-      if (testData.submitted) {
+      // Khi đang retry, không cho cache cũ ghi đè state submitted
+      if (testData.submitted && !retryingRef.current) {
         setSubmitted(true);
         setResult(testData.result);
       }
       if (testData.baiTest) {
         setBaiTest(testData.baiTest);
+        // Nếu đang retry và đã có baiTest mới, tắt flag retry
+        if (retryingRef.current) {
+          retryingRef.current = false;
+        }
       }
     }
   }, [testData]);
@@ -96,14 +109,15 @@ const EntranceTest = () => {
 
     // Nhận thông báo có nhóm thắng
     socket.on('competition:winner', ({ winnerNhomId, winnerName }) => {
-      if (myNhom && winnerNhomId === myNhom._id) {
+      const isMyTeam = myNhom && String(winnerNhomId) === String(myNhom._id);
+      if (isMyTeam) {
         // Nhóm mình thắng!
         setCompetitionResult('winner');
         if (!submittedRef.current) {
           message.success({ key: 'win_topic_toast', content: '🏆 Chúc mừng! Nhóm bạn giành được đề tài!', duration: 10 });
         }
-      } else {
-        // Nhóm khác thắng → dừng
+      } else if (!submittedRef.current) {
+        // Nhóm khác thắng → chỉ hiện modal nếu mình CHƯA nộp bài (đang làm dở)
         setCompetitionStopped(true);
         setCompetitionResult('lost');
         Modal.warning({
@@ -113,6 +127,7 @@ const EntranceTest = () => {
           onOk: () => navigate('/student/register')
         });
       }
+      // Nếu đã submitted → không hiện modal (kết quả đã hiển thị ở màn hình result)
     });
 
     // Nhận cập nhật trạng thái
@@ -183,7 +198,9 @@ const EntranceTest = () => {
         phanTram: res.phanTram,
         nguongDat: res.nguongDat,
         autoResult: res.autoResult,
-        competitionResult: res.competitionResult
+        competitionResult: res.competitionResult,
+        canRetake: res.canRetake,
+        SoLanNop: res.soLanNop
       });
 
       if (res.competitionResult === 'winner') {
@@ -238,9 +255,14 @@ const EntranceTest = () => {
             </Descriptions.Item>
             <Descriptions.Item label="Thời gian nộp">{new Date(result.ThoiGianNop).toLocaleString('vi-VN')}</Descriptions.Item>
             <Descriptions.Item label="Kết quả cạnh tranh">
-              <Tag color={cr === 'winner' ? 'gold' : cr === 'waiting' ? 'blue' : cr === 'lost' ? 'orange' : 'red'}>
-                {cr === 'winner' ? '🏆 Thắng' : cr === 'waiting' ? '⏳ Đang chờ' : cr === 'lost' ? '😞 Thua' : '❌ Không đạt'}
-              </Tag>
+              <Space>
+                <Tag color={cr === 'winner' ? 'gold' : cr === 'waiting' ? 'blue' : cr === 'lost' ? 'orange' : 'red'}>
+                  {cr === 'winner' ? '🏆 Thắng' : cr === 'waiting' ? '⏳ Đang chờ' : cr === 'lost' ? '😞 Thua' : '❌ Không đạt'}
+                </Tag>
+                {result.SoLanNop > 1 && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>Lần nộp: {result.SoLanNop}/3</Text>
+                )}
+              </Space>
             </Descriptions.Item>
             {result.TxHash && (
               <Descriptions.Item label="Blockchain">
@@ -264,9 +286,24 @@ const EntranceTest = () => {
             </div>
           ))}
 
-          <Button type="primary" style={{ marginTop: 16 }} onClick={() => navigate('/student/register')}>
-            Quay lại Đăng Ký Đề Tài
-          </Button>
+          <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
+            <Button type="primary" onClick={() => navigate('/student/register')}>
+              Quay lại Đăng Ký Đề Tài
+            </Button>
+            {result.canRetake && !isDat && (
+              <Button type="dashed" danger onClick={() => {
+                retryingRef.current = true;
+                setSubmitted(false);
+                setStarted(false);
+                setAnswers({});
+                setResult(null);
+                setCompetitionResult(null);
+                queryClient.invalidateQueries({ queryKey: ['entrance-test', deTaiId, user?.id] });
+              }}>
+                Làm lại bài test (Còn {3 - (result.SoLanNop || 1)} lần)
+              </Button>
+            )}
+          </div>
         </Card>
       </div>
     );
@@ -289,7 +326,7 @@ const EntranceTest = () => {
             <Descriptions.Item label="Ngưỡng đạt">{baiTest.NguongDat || 75}%</Descriptions.Item>
           </Descriptions>
 
-          <Alert message="Lưu ý: Bạn chỉ được nộp 1 lần. Ai submit sớm nhất + đạt ngưỡng = Thắng!" type="warning" showIcon style={{ marginBottom: 16, textAlign: 'left' }} />
+          <Alert message="Lưu ý: Bạn chỉ được nộp 3 lần. Ai submit sớm nhất + đạt ngưỡng = Thắng!" type="warning" showIcon style={{ marginBottom: 16, textAlign: 'left' }} />
 
           {!isLeader && (
             <Alert

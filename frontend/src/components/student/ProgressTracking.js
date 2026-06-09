@@ -227,8 +227,10 @@ const ProgressTracking = () => {
                   showIcon
                   style={{ marginBottom: 16 }}
                 />
-                <Tag color="cyan">Model: {aiResult.model || 'vinai/phobert-base'}</Tag>
-                <Tag color="geekblue">Provider: {aiResult.aiProvider || 'local-fastapi'}</Tag>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                  <Tag color="cyan">Model: {aiResult.model || 'vinai/phobert-base'}</Tag>
+                  <Tag color="geekblue">Provider: {aiResult.aiProvider || 'local-fastapi'}</Tag>
+                </div>
               </>
             ) : (
               <Alert

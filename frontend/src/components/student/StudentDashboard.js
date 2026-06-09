@@ -8,6 +8,8 @@ import { useIsMobile } from '../../hooks/useResponsive';
 import QrAuthentication from '../QrAuthentication';
 import { useClassContext } from '../../contexts/ClassContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import DeadlineBadge from '../common/DeadlineBadge';
+import { getEffectiveDeadline } from '../../utils/deadlineUtils';
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -137,9 +139,9 @@ const StudentDashboard = () => {
       const currentKyNang = studentProfile.KyNang || [];
       const currentScores = {};
       if (studentProfile.BangDiemKyNang) {
-          studentProfile.BangDiemKyNang.forEach(item => {
-              currentScores[item.TenKyNang] = item.Diem;
-          });
+        studentProfile.BangDiemKyNang.forEach(item => {
+          currentScores[item.TenKyNang] = item.Diem;
+        });
       }
 
       form.setFieldsValue({
@@ -223,10 +225,10 @@ const StudentDashboard = () => {
           style={{ marginBottom: 24, border: '1px solid #1677ff', background: '#e6f4ff' }}
           action={
             <Space direction="vertical">
-              <Button size="small" type="primary" onClick={() => handleRespondInvitation(inv._id, true)}>
+              <Button size="small" type="primary" style={{ minWidth: 90 }} onClick={() => handleRespondInvitation(inv._id, true)}>
                 Chấp nhận
               </Button>
-              <Button size="small" danger onClick={() => handleRespondInvitation(inv._id, false)}>
+              <Button size="small" danger style={{ minWidth: 90 }} onClick={() => handleRespondInvitation(inv._id, false)}>
                 Từ chối
               </Button>
             </Space>
@@ -240,7 +242,7 @@ const StudentDashboard = () => {
           key={`class-${inv._id}`}
           message={
             <Space>
-              <GraduationCap size={16} />
+              {/* <GraduationCap size={16} /> */}
               <span>Lời mời vào lớp: <strong>{inv.LopHoc?.TenLopHoc || inv.LopHoc?.MaLopHoc || '—'}</strong></span>
             </Space>
           }
@@ -250,10 +252,10 @@ const StudentDashboard = () => {
           style={{ marginBottom: 24, border: '1px solid #faad14', background: '#fffbe6' }}
           action={
             <Space direction="vertical">
-              <Button size="small" type="primary" onClick={() => handleRespondClassInvite(inv._id, true)}>
+              <Button size="small" type="primary" style={{ minWidth: 90 }} onClick={() => handleRespondClassInvite(inv._id, true)}>
                 Chấp nhận
               </Button>
-              <Button size="small" danger onClick={() => handleRespondClassInvite(inv._id, false)}>
+              <Button size="small" danger style={{ minWidth: 90 }} onClick={() => handleRespondClassInvite(inv._id, false)}>
                 Từ chối
               </Button>
             </Space>
@@ -314,9 +316,20 @@ const StudentDashboard = () => {
               valueStyle={{ color: registration?.TrangThai === 'DaDuyet' ? '#52c41a' : '#faad14', fontSize: 18, fontWeight: 'bold' }}
             />
             {registration && registration.DeTai && (
-              <Paragraph style={{ marginTop: 12 }} ellipsis={{ rows: 2, tooltip: true }}>
-                <Text type="secondary">{registration.DeTai.TenDeTai || (typeof registration.DeTai === 'string' ? registration.DeTai : '')}</Text>
-              </Paragraph>
+              <>
+                <Paragraph style={{ marginTop: 12 }} ellipsis={{ rows: 2, tooltip: true }}>
+                  <Text type="secondary">{registration.DeTai.TenDeTai || (typeof registration.DeTai === 'string' ? registration.DeTai : '')}</Text>
+                </Paragraph>
+                <div style={{ marginTop: 12 }}>
+                  <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                    {registration.TrangThai !== 'DaDuyet' && (
+                      <DeadlineBadge deadline={getEffectiveDeadline(registration.DeTai, 'dangKy')} label="Hạn đăng ký" />
+                    )}
+                    <DeadlineBadge deadline={getEffectiveDeadline(registration.DeTai, 'baoCao')} label="Hạn nộp báo cáo" />
+                    <DeadlineBadge deadline={getEffectiveDeadline(registration.DeTai, 'tienDo')} label="Hạn tiến độ" />
+                  </Space>
+                </div>
+              </>
             )}
           </Card>
         </Col>
@@ -505,10 +518,10 @@ const StudentDashboard = () => {
           </style>
 
           <Form.Item name="KyNang" label="Kỹ Năng (Dùng cho AI SBERT Matching)" rules={[{ required: true, message: 'Vui lòng chọn ít nhất 1 kỹ năng!' }]} tooltip="Nhập kỹ năng và nhấn Enter">
-            <Select 
-              mode="tags" 
-              style={{ width: '100%' }} 
-              placeholder="React, Node.js, Python..." 
+            <Select
+              mode="tags"
+              style={{ width: '100%' }}
+              placeholder="React, Node.js, Python..."
               size="large"
               popupClassName="skill-select-dropdown"
             >

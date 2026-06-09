@@ -3,7 +3,7 @@ import {
   Card, Typography, Table, Button, Modal, Form, Input, Select, Space, Tag,
   Popconfirm, message, Spin, Descriptions, List, Avatar, Badge, Tabs, Divider, AutoComplete, Alert
 } from 'antd';
-import { Plus, Pencil, Trash2, School, Eye, UserPlus, UserMinus, Users, Clock, XCircle, CheckCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, School, Eye, UserPlus, UserMinus, Users, Clock, XCircle, CheckCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import authService from '../../services/authService';
 import managementService from '../../services/managementService';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -27,8 +27,10 @@ const ClassManagement = () => {
   const [svSearchText, setSvSearchText] = useState('');
   const [importModalVisible, setImportModalVisible] = useState(false);
   const [importText, setImportText] = useState('');
-  // Lời mời pending
+  // Lời mời pending và đã từ chối
   const [pendingInvites, setPendingInvites] = useState([]);
+  const [rejectedInvites, setRejectedInvites] = useState([]);
+  const [showRejected, setShowRejected] = useState(false);
   const [invitesLoading, setInvitesLoading] = useState(false);
 
   const { data: { lopHocs = [], monHocs = [] } = {}, isLoading: loading } = useQuery({
@@ -113,7 +115,9 @@ const ClassManagement = () => {
         setDetailData(res.data);
       }
       if (invRes.success) {
-        setPendingInvites((invRes.data || []).filter(inv => inv.TrangThai === 'ChoChapNhan'));
+        const allInvites = invRes.data || [];
+        setPendingInvites(allInvites.filter(inv => inv.TrangThai === 'ChoChapNhan'));
+        setRejectedInvites(allInvites.filter(inv => inv.TrangThai === 'TuChoi'));
       }
     } catch (err) {
       message.error('Lỗi tải chi tiết lớp học');
@@ -132,7 +136,7 @@ const ClassManagement = () => {
       const currentSvIds = (detailData?.lopHoc?.SinhVien || []).map(sv => sv._id);
       const pendingSvIds = pendingInvites.map(inv => inv.SinhVien?._id);
       const excludeIds = [...currentSvIds, ...pendingSvIds];
-      
+
       setSvSearchOptions(
         svList
           .filter(sv => !excludeIds.includes(sv._id))
@@ -215,6 +219,20 @@ const ClassManagement = () => {
       }
     } catch (err) {
       message.error('Lỗi hủy lời mời');
+    }
+  };
+
+  // Thêm lại SV đã từ chối
+  const handleReinvite = async (svId) => {
+    if (!detailData?.lopHoc?._id) return;
+    try {
+      const res = await managementService.inviteSinhVienToLop(detailData.lopHoc._id, svId);
+      if (res.success) {
+        message.success('Đã gửi lại lời mời cho sinh viên');
+        handleViewDetail({ _id: detailData.lopHoc._id });
+      }
+    } catch (err) {
+      message.error(err?.response?.data?.message || 'Lỗi thêm lại sinh viên');
     }
   };
 
@@ -373,8 +391,8 @@ const ClassManagement = () => {
     {
       title: 'Trạng Thái',
       key: 'TrangThai',
-      width: 130,
-      render: () => <Tag icon={<Clock size={12} style={{ marginRight: 4 }} />} color="gold">Chờ chấp nhận</Tag>,
+      width: 150,
+      render: () => <Tag color="gold" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Clock size={12} /> Chờ chấp nhận</Tag>,
     },
     {
       title: '',
@@ -446,7 +464,7 @@ const ClassManagement = () => {
       <Modal
         title={detailData?.lopHoc ? `Chi Tiết Lớp: ${detailData.lopHoc.TenLopHoc}` : 'Chi Tiết Lớp Học'}
         open={detailVisible}
-        onCancel={() => { setDetailVisible(false); setDetailData(null); setPendingInvites([]); }}
+        onCancel={() => { setDetailVisible(false); setDetailData(null); setPendingInvites([]); setRejectedInvites([]); setShowRejected(false); }}
         footer={null}
         width={900}
         destroyOnClose
@@ -481,10 +499,18 @@ const ClassManagement = () => {
                   ),
                   children: (
                     <div>
-                      <div style={{ marginBottom: 12, textAlign: 'right' }}>
+                      <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Button
+                          type="text"
+                          icon={<RefreshCw size={14} />}
+                          onClick={() => handleViewDetail({ _id: detailData.lopHoc._id })}
+                          loading={detailLoading}
+                        >
+                          Làm mới
+                        </Button>
                         <Space>
                           <Button type="primary" icon={<UserPlus size={14} />} onClick={handleOpenAddSv}>
-                            Mời Sinh Viên
+                            Thêm Sinh Viên
                           </Button>
                           <Button type="dashed" onClick={() => setImportModalVisible(true)}>
                             Import Danh Sách SV
@@ -506,10 +532,10 @@ const ClassManagement = () => {
                       {pendingInvites.length > 0 && (
                         <div style={{ marginTop: 20 }}>
                           <Divider orientation="left" orientationMargin={0}>
-                            <Space>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               <Clock size={14} style={{ color: '#faad14' }} />
-                              <Text type="warning" strong>Lời mời đang chờ chấp nhận ({pendingInvites.length})</Text>
-                            </Space>
+                              <Text type="warning" strong>Đang chờ ({pendingInvites.length})</Text>
+                            </div>
                           </Divider>
                           <Table
                             columns={inviteColumns}
@@ -518,6 +544,64 @@ const ClassManagement = () => {
                             pagination={false}
                             size="small"
                           />
+                        </div>
+                      )}
+
+                      {/* Bảng sinh viên đã từ chối */}
+                      {rejectedInvites.length > 0 && (
+                        <div style={{ marginTop: 20 }}>
+                          <Divider orientation="left" orientationMargin={0}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <XCircle size={14} style={{ color: '#ff4d4f' }} />
+                              <Text type="danger" strong>Đã từ chối ({rejectedInvites.length})</Text>
+                              <Button
+                                type="link"
+                                size="small"
+                                onClick={() => setShowRejected(!showRejected)}
+                                style={{ padding: 0, height: 'auto', marginLeft: 8, display: 'flex', alignItems: 'center', gap: 4 }}
+                              >
+                                {showRejected ? (
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Thu gọn <ChevronUp size={14} /></span>
+                                ) : (
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>Xem chi tiết <ChevronDown size={14} /></span>
+                                )}
+                              </Button>
+                            </div>
+                          </Divider>
+                          {showRejected && (
+                            <Table
+                              dataSource={rejectedInvites}
+                              rowKey="_id"
+                              pagination={false}
+                              size="small"
+                              columns={[
+                                {
+                                  title: 'Mã SV', key: 'MaSV', width: 120,
+                                  render: (_, inv) => <Tag color="red">{inv.SinhVien?.MaSV || '—'}</Tag>,
+                                },
+                                {
+                                  title: 'Họ Tên', key: 'HoTen',
+                                  render: (_, inv) => inv.SinhVien?.HoTen || '—',
+                                },
+                                {
+                                  title: 'Email', key: 'Email', ellipsis: true,
+                                  render: (_, inv) => <Text type="secondary">{inv.SinhVien?.Email || '—'}</Text>,
+                                },
+                                {
+                                  title: 'Trạng Thái', key: 'TrangThai', width: 130,
+                                  render: () => <Tag color="red" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><XCircle size={12} /> Đã từ chối</Tag>,
+                                },
+                                {
+                                  title: '', key: 'action', width: 100,
+                                  render: (_, inv) => (
+                                    <Button type="link" size="small" icon={<UserPlus size={12} />} onClick={() => handleReinvite(inv.SinhVien?._id)}>
+                                      Thêm lại
+                                    </Button>
+                                  ),
+                                },
+                              ]}
+                            />
+                          )}
                         </div>
                       )}
                     </div>
@@ -603,7 +687,7 @@ const ClassManagement = () => {
 
       {/* Modal Mời Sinh Viên (trước đây là Thêm) */}
       <Modal
-        title="Mời Sinh Viên Vào Lớp"
+        title="Thêm Sinh Viên Vào Lớp"
         open={addSvModalVisible}
         onOk={handleInviteSv}
         onCancel={() => { setAddSvModalVisible(false); setSelectedSvId(null); setSvSearchText(''); }}
@@ -648,7 +732,7 @@ const ClassManagement = () => {
 
       {/* Modal Import Sinh Viên Hàng Loạt */}
       <Modal
-        title="Import Lời Mời Sinh Viên"
+        title="Import Danh Sách Sinh Viên"
         open={importModalVisible}
         onOk={handleImportSv}
         onCancel={() => { setImportModalVisible(false); setImportText(''); }}

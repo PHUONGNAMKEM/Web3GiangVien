@@ -272,6 +272,13 @@ exports.registerTopic = async (req, res) => {
         // 5. CHO PHÉP nhiều nhóm đăng ký cùng 1 đề tài (cạnh tranh Kaggle-style)
         const trangThai = deTai.CoBaiTest ? 'ChoTest' : 'ChoDuyet';
 
+        // Xóa đăng ký cũ nếu nhóm/SV đã từng đăng ký và bị Từ chối/Thua để tránh lỗi E11000 Duplicate Key
+        await DangKyDeTai.findOneAndDelete({
+            DeTai: deTaiId,
+            TrangThai: { $in: ['TuChoi', 'Thua'] },
+            $or: [{ Nhom: nhomId }, { SinhVien: nhomId ? nhom.TruongNhom : sinhVienId }]
+        });
+
         const dangKy = new DangKyDeTai({ 
             DeTai: deTaiId, 
             Nhom: nhomId,

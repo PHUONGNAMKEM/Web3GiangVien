@@ -1,0 +1,15 @@
+- [x] **Backend: Cập nhật `KetQuaTest` Schema**
+  - Thêm field `SoLanNop` (Number, default: 1) vào model `KetQuaTest`.
+- [x] **Backend: Cập nhật `baiTestController.js`**
+  - Sửa `checkTestSubmitted`: Trả về `SoLanNop` hiện tại.
+  - Sửa `submitTest`:
+    - Nếu đã có `KetQuaTest`: 
+      - Kiểm tra `SoLanNop >= 3`. Nếu >= 3 thì chặn.
+      - Xóa bản ghi cũ để tạo lại với `SoLanNop = old_SoLanNop + 1`.
+    - Nếu `!isDat`: KHÔNG cập nhật `DangKyDeTai.TrangThai` thành `TuChoi`. Cập nhật lại thành `ChoTest`.
+    - Trả về `canRetake: true/false` trong response phụ thuộc vào `SoLanNop`.
+- [x] **Frontend: Cập nhật `EntranceTest.js`**
+  - Lấy thông tin `SoLanNop` và `canRetake` từ kết quả trả về.
+  - Hiển thị UI số lần đã nộp (VD: `Lần thử: 1/3`).
+  - Nút "Làm lại bài test" khi thất bại (nếu còn lượt).
+  - Logic reset state khi nhấn "Làm lại".
