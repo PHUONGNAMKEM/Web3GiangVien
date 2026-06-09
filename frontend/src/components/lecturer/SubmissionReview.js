@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Table, Button, Badge, Drawer, Alert, Typography, InputNumber, Space, message, Tag, Steps, Spin, Skeleton, Empty, Tooltip, Descriptions, List, Divider, Input, Modal, Select, Card } from 'antd';
 import { CheckSquare, ShieldCheck, BrainCircuit, ScanSearch, Fingerprint, ExternalLink, Download, Clock, RefreshCw, Users, TrendingUp, ListChecks } from 'lucide-react';
 import aiApiService from '../../services/aiService';
@@ -119,6 +119,9 @@ const SubmissionReview = () => {
   const [activeProgressStudentId, setActiveProgressStudentId] = useState(null);
   const [progressLoading, setProgressLoading] = useState(false);
 
+  // Cache kết quả AI theo submissionId — tránh gọi lại API khi đóng/mở modal
+  const aiCacheRef = useRef({});
+
 
 
   const groupMembers = useMemo(() => {
@@ -224,19 +227,65 @@ const SubmissionReview = () => {
   };
 
   const viewDetails = async (record) => {
+    const submissionId = record.submission?._id;
     setSelectedSubmission(record);
     setDrawerVisible(true);
-    setAiAnalysis(null);
     setScore(0);
     setExistingGrade(null);
     setRubricsResult([]);
     setGvRubricsScores([]);
     setProgressSummary(null);
 
-    let workingRecord = record;
-    if (record.submission?._id) {
+    // === 1. Nếu đã chấm điểm → khôi phục từ grade, không gọi AI ===
+    const alreadyGraded = record.status === 'DaCham' && record.grade;
+    if (alreadyGraded) {
+      setExistingGrade(record.grade);
+      setScore(record.grade.Diem || 0);
+      if (record.grade.RubricsResult && record.grade.RubricsResult.length > 0) {
+        setRubricsResult(record.grade.RubricsResult);
+        setGvRubricsScores(record.grade.RubricsResult);
+      }
+      setAiAnalysis({
+        score: record.grade.AI_Score ?? record.grade.Diem ?? 0,
+        feedback: record.grade.AI_Feedback || record.grade.NhanXet || '',
+        issues: [],
+        model: 'vinai/phobert-base',
+      });
+      // Vẫn lấy tiến độ
       try {
-        const extractedData = await aiApiService.getExtractedText(record.submission._id);
+        const progressRes = await aiApiService.getProgressBySinhVien(record.student?._id, record.topic?._id);
+        setProgressSummary(buildProgressSummary(progressRes.data || []));
+      } catch (err) {
+        console.error('Lỗi lấy tóm tắt tiến độ:', err);
+      }
+      return; // Dừng — không gọi AI
+    }
+
+    // === 2. Nếu có cache AI cho submission này → khôi phục từ cache ===
+    if (submissionId && aiCacheRef.current[submissionId]) {
+      const cached = aiCacheRef.current[submissionId];
+      setAiAnalysis(cached.aiAnalysis);
+      setScore(cached.score);
+      if (cached.rubricsResult) setRubricsResult(cached.rubricsResult);
+      if (cached.gvRubricsScores) setGvRubricsScores(cached.gvRubricsScores);
+      if (cached.workingRecord) setSelectedSubmission(cached.workingRecord);
+      // Lấy tiến độ
+      try {
+        const progressRes = await aiApiService.getProgressBySinhVien(record.student?._id, record.topic?._id);
+        setProgressSummary(buildProgressSummary(progressRes.data || []));
+      } catch (err) {
+        console.error('Lỗi lấy tóm tắt tiến độ:', err);
+      }
+      return; // Dừng — dùng cache
+    }
+
+    // === 3. Chưa có cache → gọi AI lần đầu ===
+    setAiAnalysis(null);
+
+    let workingRecord = record;
+    if (submissionId) {
+      try {
+        const extractedData = await aiApiService.getExtractedText(submissionId);
         workingRecord = {
           ...record,
           submission: {
@@ -245,6 +294,8 @@ const SubmissionReview = () => {
           }
         };
         setSelectedSubmission(workingRecord);
+
+        // Ghi ExtractedText vào submission trong cache react-query
         queryClient.setQueryData(['submissions', user?.id], (oldData) => {
           if (!oldData) return oldData;
           return {
@@ -256,16 +307,6 @@ const SubmissionReview = () => {
         });
       } catch (err) {
         console.warn('Khong lay duoc ExtractedText:', err);
-      }
-    }
-
-    // Nếu đã chấm điểm rồi, lấy thông tin điểm đã lưu
-    if (workingRecord.status === 'DaCham' && workingRecord.grade) {
-      setExistingGrade(workingRecord.grade);
-      setScore(workingRecord.grade.Diem || 0);
-      if (workingRecord.grade.RubricsResult && workingRecord.grade.RubricsResult.length > 0) {
-        setRubricsResult(workingRecord.grade.RubricsResult);
-        setGvRubricsScores(workingRecord.grade.RubricsResult);
       }
     }
 
@@ -283,43 +324,55 @@ const SubmissionReview = () => {
         ].filter(Boolean).join('\n');
         const textForAI = extractedText || metadataFallback;
 
-        if (hasSuDungRubrics) {
-          // === RUBRICS MODE: gọi analyze-with-rubrics ===
-          const aiResult = await aiApiService.analyzeReportWithRubrics(textForAI, topic.Rubrics);
+        let aiData = null;
+        let rubricsData = null;
+        let gvScoresData = null;
+        let scoreData = 0;
 
-          setAiAnalysis({
+        if (hasSuDungRubrics) {
+          const aiResult = await aiApiService.analyzeReportWithRubrics(textForAI, topic.Rubrics);
+          aiData = {
             score: aiResult.score,
             feedback: aiResult.feedback,
             model: aiResult.model || 'vinai/phobert-base',
             chunks_info: aiResult.chunks_info || [],
             security_flags: aiResult.security_flags || [],
             repetition_rate: aiResult.repetition_rate ?? null,
-          });
-          setRubricsResult(aiResult.rubrics_result || []);
-          // Init GV scores from AI suggestions
-          setGvRubricsScores((aiResult.rubrics_result || []).map(r => ({
-            ...r,
-            GV_DiemTieuChi: r.AI_DiemTieuChi,
-          })));
-          // Calculate initial weighted score
-          const initScore = calcWeightedScore((aiResult.rubrics_result || []).map(r => ({
-            ...r,
-            GV_DiemTieuChi: r.AI_DiemTieuChi,
-          })));
-          setScore(initScore);
+          };
+          rubricsData = aiResult.rubrics_result || [];
+          gvScoresData = rubricsData.map(r => ({ ...r, GV_DiemTieuChi: r.AI_DiemTieuChi }));
+          scoreData = calcWeightedScore(gvScoresData);
+
+          setAiAnalysis(aiData);
+          setRubricsResult(rubricsData);
+          setGvRubricsScores(gvScoresData);
+          setScore(scoreData);
         } else {
-          // === LEGACY MODE: chấm tự do ===
           const topicReqs = topic?.YeuCau || [];
           const aiResult = await aiApiService.analyzeReportAI(textForAI, topicReqs);
-          setAiAnalysis({
+          aiData = {
             score: aiResult.score,
             feedback: aiResult.feedback,
             issues: aiResult.issues || [],
             model: aiResult.model || 'vinai/phobert-base',
             security_flags: aiResult.security_flags || [],
             repetition_rate: aiResult.repetition_rate ?? null,
-          });
-          setScore(aiResult.score);
+          };
+          scoreData = aiResult.score;
+
+          setAiAnalysis(aiData);
+          setScore(scoreData);
+        }
+
+        // Lưu cache
+        if (submissionId) {
+          aiCacheRef.current[submissionId] = {
+            aiAnalysis: aiData,
+            score: scoreData,
+            rubricsResult: rubricsData,
+            gvRubricsScores: gvScoresData,
+            workingRecord,
+          };
         }
       } catch (err) {
         console.error('AI Analysis failed:', err);
@@ -1150,7 +1203,7 @@ const SubmissionReview = () => {
               current={aiAnalysis ? 2 : 1}
               items={[
                 { title: 'Sinh viên Nộp Hệ Thống (IPFS)', description: selectedSubmission.submission ? 'Đã nộp' : 'Chưa nộp' },
-                { title: 'PhoBERT AI Phân Tích', description: analyzing ? 'Đang gọi API cổng 8001...' : (aiAnalysis ? `Điểm gợi ý: ${aiAnalysis.score}` : 'Chờ xử lý') },
+                { title: 'PhoBERT AI Phân Tích', description: analyzing ? 'Đang phân tích báo cáo...' : (aiAnalysis ? `Điểm gợi ý: ${aiAnalysis.score}` : 'Chờ xử lý') },
                 {
                   title: 'Nhập Điểm Chấm Thực Tế',
                   description: (

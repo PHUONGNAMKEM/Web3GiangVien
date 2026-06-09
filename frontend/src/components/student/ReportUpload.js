@@ -195,9 +195,9 @@ const ReportUpload = () => {
               </Tag>
             </Space>
             {topicRequires.length > 0 && (
-              <div>
-                <Text type="secondary">Yêu cầu: </Text>
-                {topicRequires.map((tag, i) => <Tag key={i} color="blue">{tag}</Tag>)}
+              <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                <Text type="secondary">Yêu cầu:</Text>
+                {topicRequires.map((tag, i) => <Tag key={i} color="blue" style={{ margin: 0 }}>{tag}</Tag>)}
               </div>
             )}
           </Space>

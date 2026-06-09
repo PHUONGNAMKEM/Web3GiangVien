@@ -60,11 +60,11 @@ const TopicManagement = () => {
       const gvHD = t.GiangVienHuongDan;
       if (!gvHD) return false;
       const gvId = typeof gvHD === 'object' ? (gvHD._id || gvHD).toString() : gvHD.toString();
-      
+
       if (selectedClassId === 'KHOA_LUAN') {
         return t.LoaiDeTai === 'KhoaLuan' && gvId === user.id;
       }
-      
+
       if (t.LoaiDeTai === 'KhoaLuan') return false;
 
       if (gvId === user.id) return true;
@@ -416,7 +416,7 @@ const TopicManagement = () => {
       align: 'center',
       render: status => {
         const colorMap = { 'MoDangKy': 'green', 'DaChot': 'volcano', 'HoanThanh': 'blue' };
-        const labelMap = { 'MoDangKy': 'Mở ĐK', 'DaChot': 'Đã Chốt', 'HoanThanh': 'Xong' };
+        const labelMap = { 'MoDangKy': 'Mở Đăng Ký', 'DaChot': 'Đã Chốt', 'HoanThanh': 'Đã Hoàn Thành' };
         return <Tag color={colorMap[status] || 'default'} style={{ margin: 0 }}>{labelMap[status] || status}</Tag>;
       },
     },
@@ -457,12 +457,12 @@ const TopicManagement = () => {
     },
   ];
 
-      const filteredTopics = topics.filter(topic => {
-        if (!selectedClassId || selectedClassId === 'ALL' || selectedClassId === 'KHOA_LUAN') return true;
-        return (topic.LopHoc || []).some(lh => (lh._id || lh).toString() === selectedClassId.toString());
-      });
+  const filteredTopics = topics.filter(topic => {
+    if (!selectedClassId || selectedClassId === 'ALL' || selectedClassId === 'KHOA_LUAN') return true;
+    return (topic.LopHoc || []).some(lh => (lh._id || lh).toString() === selectedClassId.toString());
+  });
 
-      return (
+  return (
     <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0 }}>Quản Lý Đề Tài Hướng Dẫn</Title>
@@ -541,7 +541,7 @@ const TopicManagement = () => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           {(record.LopHoc || []).map(lh => (
                             <span key={lh._id || lh}>
-                              <Tag color="cyan">{lh.MaLopHoc}</Tag> 
+                              <Tag color="cyan">{lh.MaLopHoc}</Tag>
                               <Text type="secondary" style={{ fontSize: 12 }}>{lh.TenLopHoc} {lh.MonHoc?.TenMonHoc ? `(${lh.MonHoc.TenMonHoc})` : ''} - GV: {lh.GiangVien?.HoTen || 'N/A'}</Text>
                             </span>
                           ))}
@@ -869,10 +869,18 @@ const TopicManagement = () => {
                   padding: 10, marginBottom: 10, border: '1px solid #f0f0f0',
                   borderRadius: 6, background: '#fff'
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <Text strong style={{ color: '#722ed1' }}>Tiêu chí {index + 1}</Text>
-                    <Button type="text" danger size="small" icon={<MinusCircle size={14} />}
-                      onClick={() => removeRubricsTieuChi(index)} disabled={rubricsTieuChi.length <= 1} />
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'center' }}>
+                    <div style={{ flex: 2 }}>
+                      <Text strong style={{ color: '#722ed1' }}>Tiêu chí {index + 1}</Text>
+                    </div>
+                    <div style={{ width: 110 }}>
+                      <Text type="secondary" style={{ fontSize: 12, fontWeight: 500 }}>Trọng số</Text>
+                    </div>
+                    <div style={{ width: 110, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text type="secondary" style={{ fontSize: 12, fontWeight: 500 }}>Tối đa</Text>
+                      <Button type="text" danger size="small" icon={<MinusCircle size={14} />}
+                        onClick={() => removeRubricsTieuChi(index)} disabled={rubricsTieuChi.length <= 1} style={{ height: 20, width: 20, padding: 0 }} />
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
                     <Input

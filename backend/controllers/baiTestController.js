@@ -298,7 +298,8 @@ exports.submitTest = async (req, res) => {
                 let similarity = 0;
                 try {
                     const axios = require('axios');
-                    const response = await axios.post('http://127.0.0.1:8001/compare-code', {
+                    const mlServiceUrl = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8001';
+                    const response = await axios.post(`${mlServiceUrl}/compare-code`, {
                         student_code: svAnswer, answer_code: cauHoi.DapAnMau || ''
                     }, { timeout: 15000 });
                     similarity = response.data.similarity || 0;
