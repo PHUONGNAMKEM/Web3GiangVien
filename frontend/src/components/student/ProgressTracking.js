@@ -144,15 +144,15 @@ const ProgressTracking = () => {
       {registration && (
         <Card style={{ marginBottom: 16, borderLeft: '4px solid #1677ff' }}>
           <Space>
-            <BookOpen size={18} />
+            <BookOpen style={{ verticalAlign: 'middle' }} size={18} />
             <Text strong>Đề tài: {topicName}</Text>
             <Tag color={regStatus === 'DaDuyet' ? 'blue' : 'processing'}>
               {regStatus === 'DaDuyet' ? 'Đã Duyệt' : 'Chờ Duyệt'}
             </Tag>
           </Space>
           {topicRequires.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              {topicRequires.map((t, i) => <Tag key={i} color="blue">{t}</Tag>)}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+              {topicRequires.map((t, i) => <Tag key={i} color="blue" style={{ margin: 0 }}>{t}</Tag>)}
             </div>
           )}
         </Card>

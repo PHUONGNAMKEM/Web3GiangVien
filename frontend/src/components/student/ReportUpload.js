@@ -32,7 +32,7 @@ const ReportUpload = () => {
         isGraded: false
       };
       if (!user || !selectedClassId) return result;
-      
+
       try {
         const regRes = await aiApiService.getMyRegistration(user.id, selectedClassId);
         result.registration = regRes.registration;
@@ -41,7 +41,7 @@ const ReportUpload = () => {
           const deTaiId = regRes.registration.DeTai?._id || regRes.registration.DeTai;
           const bcRes = await aiApiService.getMyBaoCao(user.id, deTaiId);
           result.existingBaoCao = bcRes.baocao;
-          
+
           if (result.existingBaoCao) {
             try {
               const diemRes = await aiApiService.getDiemBySinhVien(user.id);
@@ -129,7 +129,7 @@ const ReportUpload = () => {
       queryClient.invalidateQueries({ queryKey: ['progress-tracking'] });
       queryClient.invalidateQueries({ queryKey: ['progress-log'] });
       queryClient.invalidateQueries({ queryKey: ['student-dashboard'] });
-      
+
       // Thông báo tùy theo trạng thái blockchain
       if (result.blockchainStatus === 'success') {
         message.success('Nộp báo cáo thành công! Đã ghi lên IPFS & Blockchain ✅');
@@ -195,8 +195,8 @@ const ReportUpload = () => {
       {registration ? (
         <Card style={{ marginBottom: 16, borderLeft: isApproved ? '4px solid #52c41a' : '4px solid #faad14', background: isApproved ? '#f6ffed' : '#fffbe6' }}>
           <Space direction="vertical" size={4}>
-            <Space>
-              <BookOpen size={18} color={isApproved ? '#52c41a' : '#faad14'} />
+            <Space style={{ display: 'flex', alignItems: 'center' }}>
+              <BookOpen style={{ verticalAlign: 'middle' }} size={18} color={isApproved ? '#52c41a' : '#faad14'} />
               <Text strong style={{ fontSize: 16 }}>Đề tài: {topicName}</Text>
               <Tag color={isApproved ? 'success' : 'warning'}>
                 {isApproved ? 'Đã Duyệt' : 'Chờ Duyệt'}
