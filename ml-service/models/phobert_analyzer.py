@@ -187,7 +187,7 @@ class PhoBertAnalyzer:
 
             # Blend: 70% semantic similarity + 30% keyword hit rate
             blended_sim = 0.7 * best_sim + 0.3 * keyword_hit_rate
-            logger.debug(f"[AI] Criteria '{rubric['TenTieuChi']}' | bestSim={best_sim:.4f} | keywordHitRate={keyword_hit_rate:.4f} | blended={blended_sim:.4f}")
+            logger.info(f"[AI] Criteria '{rubric['TenTieuChi']}' | bestSim={best_sim:.4f} | keywordHitRate={keyword_hit_rate:.4f} | blended={blended_sim:.4f}")
 
             # Chuyển blended_sim → điểm (scale + clamp)
             diem_toi_da = rubric.get('DiemToiDa', 10)
@@ -214,7 +214,10 @@ class PhoBertAnalyzer:
             else:
                 nhan_xet = f"Yếu: Thiếu nội dung liên quan đến '{rubric['TenTieuChi']}'"
 
-            logger.debug(f"[AI] Criteria '{rubric['TenTieuChi']}' | bestSim={best_sim:.4f} | blended={blended_sim:.4f} | score={score} | goodThr={good_threshold:.3f} | okThr={ok_threshold:.3f} | chunk='{best_chunk.heading}'")
+            # Log top-3 chunks cho tiêu chí này để debug
+            sorted_sims = sorted(chunk_similarities, key=lambda x: x[1], reverse=True)[:3]
+            top3_str = ' | '.join([f"chunk{idx}='{chunks[idx].heading}'({sim:.4f})" for idx, sim in sorted_sims])
+            logger.info(f"[AI] Criteria '{rubric['TenTieuChi']}' | bestSim={best_sim:.4f} | blended={blended_sim:.4f} | score={score} | goodThr={good_threshold:.3f} | okThr={ok_threshold:.3f} | BEST='{best_chunk.heading}' | TOP3: {top3_str}")
 
             results.append({
                 "TenTieuChi": rubric['TenTieuChi'],
@@ -235,6 +238,33 @@ class PhoBertAnalyzer:
         elapsed = int((time.time() - start_time) * 1000)
         logger.info(f"[AI] Rubrics analysis completed | score={final_score} | criteria={len(rubrics)} | chunks={len(chunks)} | time={elapsed}ms")
 
+        # === TẠO PHẢN HỒI TRỌNG TÂM (dựa trên điểm thực tế + nhận xét tiêu chí) ===
+        weak_points = [r['TenTieuChi'] for r in results if r['AI_NhanXetTieuChi'].startswith('Yếu:')]
+        ok_points = [r['TenTieuChi'] for r in results if r['AI_NhanXetTieuChi'].startswith('Khá:')]
+        good_points = [r['TenTieuChi'] for r in results if r['AI_NhanXetTieuChi'].startswith('Tốt:')]
+
+        # Ưu tiên final_score làm tín hiệu chính — tránh mâu thuẫn điểm thấp nhưng khen cao
+        if final_score < 5.0:
+            detail = ""
+            if weak_points:
+                detail = f" Yếu: {', '.join(weak_points)}."
+            elif ok_points:
+                detail = f" Cần cải thiện: {', '.join(ok_points)}."
+            feedback_str = f"Báo cáo chưa đạt yêu cầu ({final_score}/10). Cần bổ sung và cải thiện nội dung.{detail}"
+        elif final_score < 7.0:
+            issues = weak_points + ok_points
+            if issues:
+                feedback_str = f"Báo cáo đạt mức trung bình ({final_score}/10). Cần cải thiện: {', '.join(issues)}."
+            else:
+                feedback_str = f"Báo cáo đạt mức trung bình ({final_score}/10). Có thể nâng cao chất lượng nội dung thêm."
+        elif final_score < 8.5:
+            if weak_points:
+                feedback_str = f"Báo cáo khá ({final_score}/10). Cần khắc phục: {', '.join(weak_points)}."
+            else:
+                feedback_str = f"Báo cáo khá tốt ({final_score}/10), đáp ứng phần lớn tiêu chí."
+        else:
+            feedback_str = f"Báo cáo tốt ({final_score}/10), đáp ứng đầy đủ các tiêu chí Rubrics."
+
         return {
             "score": final_score,
             "rubrics_result": results,
@@ -245,6 +275,6 @@ class PhoBertAnalyzer:
                     "char_count": c.char_count
                 } for c in chunks
             ],
-            "feedback": f"Phân tích {len(rubrics)} tiêu chí qua {len(chunks)} phần nội dung.",
+            "feedback": feedback_str,
             "model": self.model_name
         }

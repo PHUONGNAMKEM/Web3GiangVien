@@ -213,7 +213,18 @@ const ProgressTracking = () => {
                   message={`Điểm AI PhoBERT: ${aiResult.score} / 10`}
                   description={
                     <div>
-                      <Text>Phản hồi: {aiResult.feedback}</Text>
+                      <Text>Phản hồi: {
+                        (() => {
+                          const fb = aiResult.feedback || '';
+                          const sc = aiResult.score || 0;
+                          const isStale = !fb || /^Phân tích \d+ tiêu chí qua \d+ phần nội dung/.test(fb) || (sc < 6 && fb.includes('xuất sắc'));
+                          if (!isStale) return fb;
+                          if (sc < 5) return `Báo cáo chưa đạt yêu cầu (${sc}/10). Cần bổ sung và cải thiện nội dung.`;
+                          if (sc < 7) return `Báo cáo đạt mức trung bình (${sc}/10). Có thể nâng cao chất lượng nội dung thêm.`;
+                          if (sc < 8.5) return `Báo cáo khá tốt (${sc}/10), đáp ứng phần lớn tiêu chí.`;
+                          return `Báo cáo tốt (${sc}/10), đáp ứng đầy đủ các tiêu chí Rubrics.`;
+                        })()
+                      }</Text>
                       {aiResult.issues && aiResult.issues.length > 0 && (
                         <ul style={{ marginTop: 8, paddingLeft: 20 }}>
                           {aiResult.issues.map((iss, i) => (
@@ -223,7 +234,7 @@ const ProgressTracking = () => {
                       )}
                     </div>
                   }
-                  type="info"
+                  type={aiResult.score >= 7 ? 'success' : aiResult.score >= 5 ? 'info' : 'warning'}
                   showIcon
                   style={{ marginBottom: 16 }}
                 />

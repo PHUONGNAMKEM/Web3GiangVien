@@ -367,7 +367,7 @@ const TopicRegistration = () => {
                 : 'Nhóm cần được chốt (đủ thành viên) trước khi đăng ký đề tài. '
               }
               <Button type="link" size="small" onClick={() => navigate('/student/group')} style={{ padding: 0 }}>
-                <Users size={14} style={{ marginRight: 4 }} />Quản lý nhóm
+                <Users size={14} style={{ marginRight: 4 }} />Nhóm
               </Button>
             </span>
           }

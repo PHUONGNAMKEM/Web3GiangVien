@@ -138,11 +138,11 @@ const MainLayout = () => {
 
   const lecturerMenuItems = [
     { key: '/lecturer', icon: <Monitor size={18} />, label: 'Dashboard' },
-    { key: '/lecturer/topics', icon: <Award size={18} />, label: 'Quản Lý Đề Tài' },
-    { key: '/lecturer/courses', icon: <BookOpen size={18} />, label: 'Quản Lý Môn Học' },
-    { key: '/lecturer/classes', icon: <School size={18} />, label: 'Quản Lý Lớp Học' },
-    { key: '/lecturer/students', icon: <Users size={18} />, label: 'Quản Lý Sinh Viên' },
-    { key: '/lecturer/rubrics', icon: <ClipboardList size={18} />, label: 'Quản Lý Rubrics' },
+    { key: '/lecturer/topics', icon: <Award size={18} />, label: 'Đề Tài' },
+    { key: '/lecturer/courses', icon: <BookOpen size={18} />, label: 'Môn Học' },
+    { key: '/lecturer/classes', icon: <School size={18} />, label: 'Lớp Học' },
+    { key: '/lecturer/students', icon: <Users size={18} />, label: 'Sinh Viên' },
+    { key: '/lecturer/rubrics', icon: <ClipboardList size={18} />, label: 'Rubrics' },
     { key: '/lecturer/review', icon: <FileText size={18} />, label: 'Chấm Điểm (AI)' },
     { key: '/lecturer/comparison', icon: <BarChart2 size={18} />, label: 'So Sánh AI - GV' },
     { key: '/lecturer/blockchain', icon: <ShieldCheck size={18} />, label: 'Blockchain' }
@@ -174,9 +174,31 @@ const MainLayout = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} theme="light">
-        <div style={{ height: 64, margin: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: collapsed ? 12 : 18, color: '#1677ff' }}>
-          {collapsed ? 'W3GV' : 'Web3 Giảng Viên'}
+      <Sider 
+        collapsible 
+        collapsed={collapsed} 
+        onCollapse={(value) => setCollapsed(value)} 
+        theme="light"
+        style={{ overflow: 'auto', height: '100vh', position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100 }}
+      >
+        <div style={{ 
+          height: 136, 
+          padding: '16px 8px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          borderInlineEnd: '1px solid rgba(5, 5, 5, 0.06)'
+        }}>
+          <img
+            src="/LOGOWeb3GiangVien.png"
+            alt="Web3 Giảng Viên Logo"
+            style={{
+              height: collapsed ? '32px' : '100%',
+              width: '100%',
+              objectFit: 'contain',
+              transition: 'all 0.2s ease-in-out'
+            }}
+          />
         </div>
         <Menu
           theme="light"
@@ -186,8 +208,8 @@ const MainLayout = () => {
           onClick={(e) => navigate(e.key)}
         />
       </Sider>
-      <Layout>
-        <Header style={{ padding: isMobile ? '0 12px' : '0 24px', background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Layout style={{ marginLeft: collapsed ? 80 : 200, transition: 'margin-left 0.2s ease' }}>
+        <Header style={{ position: 'sticky', top: 0, zIndex: 99, padding: isMobile ? '0 12px' : '0 24px', background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,21,41,.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center' }}>
             {!isAdmin && <ClassSelector />}
           </div>

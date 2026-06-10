@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider, Descriptions, Switch, Alert, Row, Col } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, Drawer, List, Spin, Badge, InputNumber, DatePicker, Divider, Descriptions, Switch, Alert, Row, Col, Card } from 'antd';
 import { Plus, Edit2, Trash2, Users, CheckCircle, XCircle, Eye, MinusCircle, NotebookText, ListChecks, Trophy, Clock, Save } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import aiApiService from '../../services/aiService';
@@ -531,9 +531,20 @@ const TopicManagement = () => {
   });
 
   return (
-    <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+    <div>
+      <style>
+        {`
+          .spaced-tags-dropdown .ant-select-item {
+            margin-bottom: 4px;
+            border-radius: 6px;
+          }
+          .spaced-tags-dropdown .ant-select-item:last-child {
+            margin-bottom: 0;
+          }
+        `}
+      </style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0 }}>Quản Lý Đề Tài Hướng Dẫn</Title>
+        <Title level={2} style={{ margin: 0 }}>Đề Tài Hướng Dẫn</Title>
         <Button
           type="primary"
           icon={<Plus size={18} />}
@@ -557,7 +568,8 @@ const TopicManagement = () => {
         </Button>
       </div>
 
-      <Table
+      <Card bordered={false}>
+        <Table
         columns={columns}
         dataSource={filteredTopics}
         rowKey="_id"
@@ -589,7 +601,7 @@ const TopicManagement = () => {
                           onClick={() => navigate(`/lecturer/entrance-test/${record._id}`)}
                           style={{ background: '#eb2f96', borderColor: '#eb2f96' }}
                         >
-                          Quản Lý Bài Test / Kết Quả
+                          Bài Test / Kết Quả
                         </Button>
                       )}
                     </div>
@@ -777,6 +789,7 @@ const TopicManagement = () => {
           rowExpandable: record => true,
         }}
       />
+      </Card>
 
       {/* Modal Tạo / Sửa Đề Tài - MỞ RỘNG VỚI RUBRICS */}
       <Modal
@@ -810,7 +823,14 @@ const TopicManagement = () => {
             label="Yêu cầu Kỹ năng / Stack (Dùng cho SBERT Matching)"
             tooltip="Hệ thống AI sẽ dùng các từ khóa này để chấm điểm độ tương đồng với sinh viên."
           >
-            <Select mode="tags" style={{ width: '100%' }} placeholder="React, Django, Python..." size="large" tokenSeparators={[',']}>
+            <Select 
+              mode="tags" 
+              style={{ width: '100%' }} 
+              placeholder="Nhập kỹ năng rồi nhấn Enter (VD: React, Python...)" 
+              size="large" 
+              tokenSeparators={[',']}
+              popupClassName="spaced-tags-dropdown"
+            >
               <Option value="React">React</Option>
               <Option value="NodeJS">NodeJS</Option>
               <Option value="Python">Python</Option>
@@ -1034,6 +1054,8 @@ const TopicManagement = () => {
                     placeholder="Gợi ý từ khóa cho AI (nhấn Enter thêm)"
                     style={{ width: '100%' }}
                     size="small"
+                    tokenSeparators={[',']}
+                    popupClassName="spaced-tags-dropdown"
                   />
                 </div>
               ))}

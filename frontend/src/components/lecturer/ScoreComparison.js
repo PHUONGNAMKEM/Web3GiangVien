@@ -418,120 +418,99 @@ const ScoreComparison = () => {
       children: (
         <div>
           {/* Thống kê cards */}
-          <Row gutter={[12, 12]} style={{ marginBottom: 24 }}>
-            <Col xs={12} sm={8} md={6} lg={3}>
-              <Card 
-                size="small" 
-                style={{ 
-                  background: 'linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)', 
-                  border: 'none', 
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                }}
-              >
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
+            gap: '12px', 
+            marginBottom: '24px' 
+          }}>
+            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Users size={20} color="#1677ff" />
-                  <Statistic title="Sinh viên" value={displayStats.totalGraded || 0} valueStyle={{ fontSize: 20 }} />
+                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                    <Users size={18} color="#1677ff" />
+                  </div>
+                  <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>Sinh viên</Text>
                 </div>
-              </Card>
-            </Col>
-            <Col xs={12} sm={8} md={6} lg={3}>
-              <Card 
-                size="small" 
-                style={{ 
-                  background: 'linear-gradient(135deg, #fff0f6 0%, #ffd6e7 100%)', 
-                  border: 'none', 
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                }}
-              >
+                <Text style={{ fontSize: '24px', fontWeight: 400, color: '#000' }}>{displayStats.totalGraded || 0}</Text>
+              </div>
+            </Card>
+
+            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #fff0f6 0%, #ffd6e7 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Award size={20} color="#eb2f96" />
-                  <Statistic title="TB Điểm GV" value={displayStats.avgGV || 0} precision={2} valueStyle={{ color: '#eb2f96', fontSize: 20 }} />
+                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                    <Award size={18} color="#eb2f96" />
+                  </div>
+                  <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>TB Điểm GV</Text>
                 </div>
-              </Card>
-            </Col>
-            <Col xs={12} sm={8} md={6} lg={3}>
-              <Card 
-                size="small" 
-                style={{ 
-                  background: 'linear-gradient(135deg, #f9f0ff 0%, #e8d0ff 100%)', 
-                  border: 'none', 
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                }}
-              >
+                <Text style={{ fontSize: '24px', fontWeight: 400, color: '#eb2f96' }}>{(displayStats.avgGV || 0).toFixed(2)}</Text>
+              </div>
+            </Card>
+
+            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #f9f0ff 0%, #e8d0ff 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <BrainCircuit size={20} color="#722ed1" />
-                  <Statistic title="TB Điểm AI" value={displayStats.avgAI || 0} precision={2} valueStyle={{ color: '#722ed1', fontSize: 20 }} />
+                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                    <BrainCircuit size={18} color="#722ed1" />
+                  </div>
+                  <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>TB Điểm AI</Text>
                 </div>
-              </Card>
-            </Col>
-            <Col xs={12} sm={8} md={6} lg={3}>
-              <Card 
-                size="small" 
-                style={{ 
-                  background: 'linear-gradient(135deg, #fffbe6 0%, #ffe58f 100%)', 
-                  border: 'none', 
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                }}
-              >
+                <Text style={{ fontSize: '24px', fontWeight: 400, color: '#722ed1' }}>{(displayStats.avgAI || 0).toFixed(2)}</Text>
+              </div>
+            </Card>
+
+            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #fffbe6 0%, #ffe58f 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <TrendingUp size={20} color="#faad14" />
-                  <Statistic title="TB Chênh Lệch" value={displayStats.avgAbsDiff || 0} precision={2} valueStyle={{ color: '#d48806', fontSize: 20 }} />
+                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                    <TrendingUp size={18} color="#faad14" />
+                  </div>
+                  <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>TB Chênh Lệch</Text>
                 </div>
-              </Card>
-            </Col>
-            <Col xs={12} sm={8} md={6} lg={4}>
-              <Card 
-                size="small" 
-                style={{ 
-                  background: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)', 
-                  border: 'none', 
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                }}
-              >
+                <Text style={{ fontSize: '24px', fontWeight: 400, color: '#d48806' }}>{(displayStats.avgAbsDiff || 0).toFixed(2)}</Text>
+              </div>
+            </Card>
+
+            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <ShieldCheck size={20} color="#52c41a" />
-                  <Statistic title="Khớp (±0.5)" value={displayStats.matchCount || 0} suffix={`/ ${displayStats.totalGraded || 0}`} valueStyle={{ color: '#52c41a', fontSize: 18 }} />
+                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                    <ShieldCheck size={18} color="#52c41a" />
+                  </div>
+                  <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>Khớp (±0.5)</Text>
                 </div>
-              </Card>
-            </Col>
-            <Col xs={12} sm={8} md={6} lg={4}>
-              <Card 
-                size="small" 
-                style={{ 
-                  background: 'linear-gradient(135deg, #fff2e8 0%, #ffbb96 100%)', 
-                  border: 'none', 
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                }}
-              >
+                <div>
+                  <Text style={{ fontSize: '24px', fontWeight: 400, color: '#52c41a' }}>{displayStats.matchCount || 0}</Text>
+                  <Text style={{ fontSize: '14px', color: '#52c41a', marginLeft: 4 }}>/ {displayStats.totalGraded || 0}</Text>
+                </div>
+              </div>
+            </Card>
+
+            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #fff2e8 0%, #ffbb96 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <TrendingUp size={20} color="#fa541c" />
-                  <Statistic title="GV cao hơn" value={displayStats.gvHigherCount || 0} valueStyle={{ color: '#fa541c', fontSize: 18 }} />
+                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                    <TrendingUp size={18} color="#fa541c" />
+                  </div>
+                  <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>GV cao hơn</Text>
                 </div>
-              </Card>
-            </Col>
-            <Col xs={24} sm={8} md={6} lg={4}>
-              <Card 
-                size="small" 
-                style={{ 
-                  background: 'linear-gradient(135deg, #f0f5ff 0%, #adc6ff 100%)', 
-                  border: 'none', 
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                }}
-              >
+                <Text style={{ fontSize: '24px', fontWeight: 400, color: '#fa541c' }}>{displayStats.gvHigherCount || 0}</Text>
+              </div>
+            </Card>
+
+            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #f0f5ff 0%, #adc6ff 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <TrendingDown size={20} color="#2f54eb" />
-                  <Statistic title="AI cao hơn" value={displayStats.aiHigherCount || 0} valueStyle={{ color: '#2f54eb', fontSize: 18 }} />
+                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                    <TrendingDown size={18} color="#2f54eb" />
+                  </div>
+                  <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>AI cao hơn</Text>
                 </div>
-              </Card>
-            </Col>
-          </Row>
+                <Text style={{ fontSize: '24px', fontWeight: 400, color: '#2f54eb' }}>{displayStats.aiHigherCount || 0}</Text>
+              </div>
+            </Card>
+          </div>
 
           {/* Biểu đồ tròn */}
           <Row gutter={[16, 16]}>

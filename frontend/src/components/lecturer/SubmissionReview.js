@@ -6,6 +6,7 @@ import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import { useLecturerClassContext } from '../../contexts/LecturerClassContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ExclamationCircleFilled, CheckCircleFilled } from '@ant-design/icons';
 import DeadlineBadge from '../common/DeadlineBadge';
 import { getEffectiveDeadline } from '../../utils/deadlineUtils';
 import dayjs from 'dayjs';
@@ -121,6 +122,9 @@ const SubmissionReview = () => {
   const [weeklyModalVisible, setWeeklyModalVisible] = useState(false);
   const [activeProgressStudentId, setActiveProgressStudentId] = useState(null);
   const [progressLoading, setProgressLoading] = useState(false);
+  const [alertProgressClosed, setAlertProgressClosed] = useState(false);
+  const [alertPdfClosed, setAlertPdfClosed] = useState(false);
+  const [alertSecurityClosed, setAlertSecurityClosed] = useState(false);
 
   // Cache kết quả AI theo submissionId — tránh gọi lại API khi đóng/mở modal
   const aiCacheRef = useRef({});
@@ -238,6 +242,9 @@ const SubmissionReview = () => {
     setRubricsResult([]);
     setGvRubricsScores([]);
     setProgressSummary(null);
+    setAlertProgressClosed(false);
+    setAlertPdfClosed(false);
+    setAlertSecurityClosed(false);
 
     // === 1. Nếu đã chấm điểm → khôi phục từ grade, không gọi AI ===
     const alreadyGraded = record.status === 'DaCham' && record.grade;
@@ -248,9 +255,21 @@ const SubmissionReview = () => {
         setRubricsResult(record.grade.RubricsResult);
         setGvRubricsScores(record.grade.RubricsResult);
       }
+      const aiScore = record.grade.AI_Score ?? record.grade.Diem ?? 0;
+      let storedFeedback = record.grade.AI_Feedback || record.grade.NhanXet || '';
+      // Nếu feedback cũ là dạng generic không có giá trị → sinh feedback dựa trên điểm thực tế
+      const isStale = !storedFeedback 
+        || /^Phân tích \d+ tiêu chí qua \d+ phần nội dung/.test(storedFeedback)
+        || (aiScore < 6 && storedFeedback.includes('xuất sắc'));
+      if (isStale) {
+        if (aiScore < 5) storedFeedback = `Báo cáo chưa đạt yêu cầu (${aiScore}/10). Cần bổ sung và cải thiện nội dung.`;
+        else if (aiScore < 7) storedFeedback = `Báo cáo đạt mức trung bình (${aiScore}/10). Có thể nâng cao chất lượng nội dung thêm.`;
+        else if (aiScore < 8.5) storedFeedback = `Báo cáo khá tốt (${aiScore}/10), đáp ứng phần lớn tiêu chí.`;
+        else storedFeedback = `Báo cáo tốt (${aiScore}/10), đáp ứng đầy đủ các tiêu chí Rubrics.`;
+      }
       setAiAnalysis({
-        score: record.grade.AI_Score ?? record.grade.Diem ?? 0,
-        feedback: record.grade.AI_Feedback || record.grade.NhanXet || '',
+        score: aiScore,
+        feedback: storedFeedback,
         issues: [],
         model: 'vinai/phobert-base',
       });
@@ -943,18 +962,19 @@ const SubmissionReview = () => {
   }, [filteredSubmissions]);
 
   return (
-    <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-      <Title level={3} style={{ marginBottom: 24 }}>Duyệt Báo Cáo & Chấm Điểm</Title>
+    <div>
+      <Title level={2} style={{ marginBottom: 24 }}>Duyệt Báo Cáo & Chấm Điểm</Title>
       <Paragraph type="secondary">
         Sử dụng MetaMask để xác thực danh tính Giảng Viên trước khi chốt điểm. Mọi thay đổi sẽ được Audit công khai trên Mạng Blockchain Ethereum.
       </Paragraph>
 
-      <Table
+      <Card bordered={false}>
+        <Table
         columns={columns}
         dataSource={groupedSubmissions}
         rowKey="_id"
         loading={loading}
-        locale={{ emptyText: <Empty description="Chưa có nhóm nào được duyệt đề tài. Hãy duyệt đề tài ở trang Quản Lý Đề Tài trước." /> }}
+        locale={{ emptyText: <Empty description="Chưa có nhóm nào được duyệt đề tài. Hãy duyệt đề tài ở trang Đề Tài trước." /> }}
         scroll={{ x: 'max-content' }}
         expandable={{
           expandedRowRender: (record) => (
@@ -973,6 +993,7 @@ const SubmissionReview = () => {
           rowExpandable: (record) => record.members && record.members.length > 1,
         }}
       />
+      </Card>
 
       <Drawer
         title={
@@ -1038,23 +1059,58 @@ const SubmissionReview = () => {
                       />
                     ) : (
                       <Space direction="vertical" style={{ width: '100%' }}>
-                        <Alert
-                          type="success"
-                          message={`Đã đọc thành công báo cáo PDF (${method === 'ocr' ? 'OCR quét ảnh' : 'văn bản native'})`}
-                          description={`Hệ thống đã đọc ${pageCount || '?'} trang bài làm thực tế của sinh viên. Đã sẵn sàng phân tích.`}
-                          showIcon
-                        />
-                        {warnings.length > 0 && (
+                        {alertPdfClosed ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: warnings.length > 0 ? 8 : 0 }}>
+                            <CheckCircleFilled
+                              style={{ color: '#52c41a', fontSize: 16, cursor: 'pointer' }}
+                              onClick={() => setAlertPdfClosed(false)}
+                              title="Xem lại thông báo đọc PDF"
+                            />
+                            <Text type="secondary" style={{ fontSize: 12 }}>Đã đọc PDF thành công</Text>
+                          </div>
+                        ) : (
                           <Alert
-                            type="warning"
-                            message="Phát hiện cảnh báo bảo mật/nội dung"
-                            description={
-                              <ul style={{ margin: 0, paddingLeft: 16 }}>
-                                {warnings.map((w, i) => <li key={i}>{w}</li>)}
-                              </ul>
-                            }
+                            type="success"
+                            message={`Đã đọc thành công báo cáo PDF (${method === 'ocr' ? 'OCR quét ảnh' : 'văn bản native'})`}
+                            description={`Hệ thống đã đọc ${pageCount || '?'} trang bài làm thực tế của sinh viên. Đã sẵn sàng phân tích.`}
                             showIcon
+                            closable
+                            onClose={() => setAlertPdfClosed(true)}
+                            style={{ marginBottom: warnings.length > 0 ? 8 : 0 }}
                           />
+                        )}
+
+                        {warnings.length > 0 && (
+                          alertSecurityClosed ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                              <ExclamationCircleFilled
+                                style={{ color: '#faad14', fontSize: 16, cursor: 'pointer' }}
+                                onClick={() => setAlertSecurityClosed(false)}
+                                title="Xem lại cảnh báo bảo mật"
+                              />
+                              <Text type="secondary" style={{ fontSize: 12 }}>Có cảnh báo nội dung PDF</Text>
+                            </div>
+                          ) : (
+                            <Alert
+                              type="warning"
+                              message="Phát hiện cảnh báo bảo mật/nội dung"
+                              description={
+                                <ul style={{ margin: 0, paddingLeft: 16 }}>
+                                  {warnings.map((w, i) => {
+                                    let text = w;
+                                    if (text.toLowerCase().includes("prompt injection")) {
+                                      text = "Phát hiện nội dung bất thường/ẩn có thể gây nhiễu hệ thống chấm điểm tự động.";
+                                    }
+                                    return <li key={i}>{text}</li>;
+                                  })}
+                                </ul>
+                              }
+                              showIcon
+                              closable
+                              onClose={() => setAlertSecurityClosed(true)}
+                              style={{ marginTop: 8 }}
+                            />
+                          )
                         )}
                       </Space>
                     )}
@@ -1131,18 +1187,31 @@ const SubmissionReview = () => {
 
                 {progressSummary.warnings?.length > 0 ? (
                   <div style={{ marginBottom: 12 }}>
-                    <Alert
-                      type="error"
-                      showIcon
-                      message="Cảnh báo tiến độ"
-                      description={
-                        <ul style={{ margin: 0, paddingLeft: 16 }}>
-                          {progressSummary.warnings.map((warn, idx) => (
-                            <li key={idx}><Text>{formatWarningLabel(warn)}</Text></li>
-                          ))}
-                        </ul>
-                      }
-                    />
+                    {alertProgressClosed ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <ExclamationCircleFilled
+                          style={{ color: '#ff4d4f', fontSize: 16, cursor: 'pointer' }}
+                          onClick={() => setAlertProgressClosed(false)}
+                          title="Hiển thị lại cảnh báo tiến độ"
+                        />
+                        <Text type="danger" style={{ fontSize: 13 }}>{progressSummary.warnings.length}</Text>
+                      </div>
+                    ) : (
+                      <Alert
+                        type="error"
+                        showIcon
+                        closable
+                        onClose={() => setAlertProgressClosed(true)}
+                        message="Cảnh báo tiến độ"
+                        description={
+                          <ul style={{ margin: 0, paddingLeft: 16 }}>
+                            {progressSummary.warnings.map((warn, idx) => (
+                              <li key={idx}><Text>{formatWarningLabel(warn)}</Text></li>
+                            ))}
+                          </ul>
+                        }
+                      />
+                    )}
                   </div>
                 ) : (
                   <Alert

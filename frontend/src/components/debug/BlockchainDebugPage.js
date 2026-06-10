@@ -17,6 +17,7 @@ import {
   Typography,
   message
 } from 'antd';
+import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Database, FileSearch, RefreshCw, Search, History } from 'lucide-react';
 
 const { Title, Text, Paragraph, Link } = Typography;
@@ -42,13 +43,13 @@ const isMockTx = (hash) => typeof hash === 'string' && hash.startsWith('0xMock')
 // Bỏ tiền tố "Báo cáo" lặp trong tiêu đề báo cáo (tránh "Báo cáo: Báo cáo ...")
 const stripReportLabel = (text) => (text || '').replace(/^\s*báo\s*cáo\b\s*:?\s*/i, '');
 
-// Hiển thị địa chỉ hợp đồng: link Etherscan bấm được + copy đầy đủ
 const renderAddress = (addr) => {
   if (!addr) return <Text type="secondary">-</Text>;
   return (
-    <Text copyable={{ text: addr }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
       <Link href={etherscanAddressUrl(addr)} target="_blank" rel="noopener noreferrer">{addr}</Link>
-    </Text>
+      <Text copyable={{ text: addr }} />
+    </div>
   );
 };
 
@@ -57,11 +58,14 @@ const renderTx = (hash) => {
   if (!hash) return <Text type="secondary">-</Text>;
   if (isMockTx(hash)) return <Text type="secondary" italic>Đồng bộ từ chain (không có tx thật)</Text>;
   return (
-    <Text type="secondary" copyable={{ text: hash }}>
-      <Link href={etherscanTxUrl(hash)} target="_blank" rel="noopener noreferrer">
-        {shortenHash(hash)}
-      </Link>
-    </Text>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+      <Text type="secondary">
+        <Link href={etherscanTxUrl(hash)} target="_blank" rel="noopener noreferrer">
+          {shortenHash(hash)}
+        </Link>
+      </Text>
+      <Text copyable={{ text: hash }} />
+    </div>
   );
 };
 
@@ -94,6 +98,7 @@ const BlockchainDebugPage = () => {
   const [dbRecordsLoading, setDbRecordsLoading] = useState(false);
   const [dbRecordsError, setDbRecordsError] = useState('');
   const [backfilling, setBackfilling] = useState(false);
+  const [alertClosed, setAlertClosed] = useState(false);
 
   const fetchContracts = async () => {
     setContractsLoading(true);
@@ -240,10 +245,11 @@ const BlockchainDebugPage = () => {
     {
       title: 'Đề tài / báo cáo',
       key: 'topic',
+      width: 280,
       render: (_, record) => (
-        <Space direction="vertical" size={2}>
-          <Text strong>{record.topic?.title || '-'}</Text>
-          <Text type="secondary"><Text strong>Báo cáo:</Text> {stripReportLabel(record.report?.title) || '-'}</Text>
+        <Space direction="vertical" size={2} style={{ width: '100%' }}>
+          <Paragraph ellipsis={{ rows: 2, tooltip: true }} strong style={{ margin: 0 }}>{record.topic?.title || '-'}</Paragraph>
+          <Paragraph ellipsis={{ rows: 2, tooltip: true }} type="secondary" style={{ margin: 0 }}><Text strong>Báo cáo:</Text> {stripReportLabel(record.report?.title) || '-'}</Paragraph>
           <Text copyable={{ text: record.report?.ipfsCID }} type="secondary"><Text strong>CID:</Text> {shortenHash(record.report?.ipfsCID)}</Text>
         </Space>
       )
@@ -300,7 +306,6 @@ const BlockchainDebugPage = () => {
     {
       title: 'Giá trị ghi nhận',
       key: 'values',
-      width: 360,
       render: (_, record) => {
         const data = record.chain?.data || [];
         if (!data.length) return <Text type="secondary">Chưa có dữ liệu on-chain</Text>;
@@ -340,7 +345,14 @@ const BlockchainDebugPage = () => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f4f6f8', padding: 28 }}>
+    <div style={{ minHeight: '100vh' }}>
+      <style>{`
+        .custom-inner-table .ant-table {
+          margin-inline: 0 !important;
+          margin-block: 0 !important;
+          border-top: 1px solid #f0f0f0 !important;
+        }
+      `}</style>
       <div style={{ maxWidth: 1180, margin: '0 auto' }}>
         <Space direction="vertical" size={22} style={{ width: '100%' }}>
           <div>
@@ -353,7 +365,7 @@ const BlockchainDebugPage = () => {
           <Card
             title={
               <Space>
-                <Database size={18} />
+                <Database size={18} style={{ display: "flex", alignItems: "center" }} />
                 <span>Contract hệ thống</span>
               </Space>
             }
@@ -372,13 +384,15 @@ const BlockchainDebugPage = () => {
                       {contracts.network?.name} ({contracts.network?.chainId})
                     </Descriptions.Item>
                     <Descriptions.Item label="Thesis contract">
-                      <Space wrap>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
                         {renderAddress(contracts.contracts?.thesis?.address)}
-                        <Tag color="blue">{contracts.contracts?.thesis?.version}</Tag>
-                        <Tag color={contracts.contracts?.thesis?.hasCode ? 'green' : 'red'}>
-                          {contracts.contracts?.thesis?.hasCode ? 'Có bytecode' : 'Không có bytecode'}
-                        </Tag>
-                      </Space>
+                        <Space>
+                          <Tag color="blue">{contracts.contracts?.thesis?.version}</Tag>
+                          <Tag color={contracts.contracts?.thesis?.hasCode ? 'green' : 'red'}>
+                            {contracts.contracts?.thesis?.hasCode ? 'Có bytecode' : 'Không có bytecode'}
+                          </Tag>
+                        </Space>
+                      </div>
                     </Descriptions.Item>
                     <Descriptions.Item label="HR Payroll">
                       {renderAddress(contracts.contracts?.hrPayroll?.address)}
@@ -397,7 +411,7 @@ const BlockchainDebugPage = () => {
               <Card
                 title={
                   <Space>
-                    <FileSearch size={18} />
+                    <FileSearch style={{ display: "flex", alignItems: "center" }} size={18} />
                     <span>Tra cứu đề tài</span>
                   </Space>
                 }
@@ -447,7 +461,7 @@ const BlockchainDebugPage = () => {
               <Card
                 title={
                   <Space>
-                    <Search size={18} />
+                    <Search style={{ display: "flex", alignItems: "center" }} size={18} />
                     <span>Lịch sử nộp và chấm</span>
                   </Space>
                 }
@@ -507,16 +521,16 @@ const BlockchainDebugPage = () => {
           <Card
             title={
               <Space>
-                <Database size={18} />
+                <Database style={{ display: "flex", alignItems: "center" }} size={18} />
                 <span>Dữ liệu DB đã đối chiếu Blockchain</span>
               </Space>
             }
             extra={
               <Space>
-                <Button icon={<History size={16} />} onClick={handleBackfillTx} loading={backfilling}>
+                <Button icon={<History style={{ verticalAlign: 'middle' }} size={16} />} onClick={handleBackfillTx} loading={backfilling}>
                   Truy hồi tx thật
                 </Button>
-                <Button icon={<RefreshCw size={16} />} onClick={fetchDbRecords} loading={dbRecordsLoading}>
+                <Button icon={<RefreshCw style={{ verticalAlign: 'middle' }} size={16} />} onClick={fetchDbRecords} loading={dbRecordsLoading}>
                   Tải lại
                 </Button>
               </Space>
@@ -531,16 +545,26 @@ const BlockchainDebugPage = () => {
                   <Space wrap>
                     <Tag color="blue">{dbRecords.contract?.version}</Tag>
                     <Tag color="green">{dbRecords.count} bản ghi từ DB</Tag>
+                    {alertClosed && dbRecords.records?.filter((r) => r.chain?.matchedByCid).length !== dbRecords.records?.length && (
+                      <ExclamationCircleFilled 
+                        style={{ color: '#faad14', fontSize: 16, cursor: 'pointer' }} 
+                        onClick={() => setAlertClosed(false)}
+                        title="Hiển thị lại thông báo"
+                      />
+                    )}
                   </Space>
                   {(() => {
                     const recs = dbRecords.records || [];
                     const total = recs.length;
                     const matched = recs.filter((r) => r.chain?.matchedByCid).length;
                     const allOk = total > 0 && matched === total;
+                    if (alertClosed) return null;
                     return (
                       <Alert
                         type={allOk ? 'success' : 'warning'}
                         showIcon
+                        closable
+                        onClose={() => setAlertClosed(true)}
                         message={
                           allOk
                             ? `Tất cả ${total} bản ghi đều khớp dữ liệu trên Blockchain — không phát hiện sai lệch.`
@@ -555,22 +579,33 @@ const BlockchainDebugPage = () => {
                     dataSource={dbRecords.records || []}
                     pagination={{ pageSize: 8 }}
                     size="small"
-                    scroll={{ x: 1100 }}
                     expandable={{
                       expandedRowRender: (record) => (
                         <Space direction="vertical" size={10} style={{ width: '100%' }}>
                           <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
                             <Descriptions.Item label="Student ID">
-                              <Text copyable>{record.student?.id}</Text>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text>{record.student?.id}</Text>
+                                <Text copyable={{ text: record.student?.id }} />
+                              </div>
                             </Descriptions.Item>
                             <Descriptions.Item label="Topic ID">
-                              <Text copyable>{record.topic?.id}</Text>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text>{record.topic?.id}</Text>
+                                <Text copyable={{ text: record.topic?.id }} />
+                              </div>
                             </Descriptions.Item>
                             <Descriptions.Item label="Report ID">
-                              <Text copyable>{record.report?.id}</Text>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text>{record.report?.id}</Text>
+                                <Text copyable={{ text: record.report?.id }} />
+                              </div>
                             </Descriptions.Item>
                             <Descriptions.Item label="Grade ID">
-                              <Text copyable>{record.grade?.id || '-'}</Text>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Text>{record.grade?.id || '-'}</Text>
+                                {record.grade?.id && <Text copyable={{ text: record.grade?.id }} />}
+                              </div>
                             </Descriptions.Item>
                             <Descriptions.Item label="Submit tx">
                               {renderTx(record.report?.submitTxHash)}
@@ -586,6 +621,9 @@ const BlockchainDebugPage = () => {
                             pagination={false}
                             size="small"
                             scroll={{ x: 900 }}
+                            bordered
+                            className="custom-inner-table"
+                            style={{ margin: 0, marginTop: 12 }}
                           />
                         </Space>
                       )

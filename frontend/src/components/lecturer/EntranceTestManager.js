@@ -248,7 +248,10 @@ const EntranceTestManager = () => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}><Space><ListChecks style={{ verticalAlign: 'middle' }} size={24} /> Quản Lý Bài Test Cạnh Tranh</Space></Title>
+        <Title level={3} style={{ margin: 0 }}><Space><ListChecks style={{
+          display: 'flex', alignItems: 'center', marginTop: '3px'
+          , verticalAlign: 'middle'
+        }} size={24} /> Bài Test Cạnh Tranh</Space></Title>
         <Button icon={<ArrowLeft size={14} />} onClick={() => navigate('/lecturer/topics')}>Quay về Đề Tài</Button>
       </div>
       {topic && (

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, InputNumber, Divider, Badge, Empty, Alert, Popconfirm } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, Typography, message, Tooltip, InputNumber, Divider, Badge, Empty, Alert, Popconfirm, Card } from 'antd';
 import { Plus, Edit2, Trash2, Star, Lock, Eye, Copy } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
 import { useIsMobile } from '../../hooks/useResponsive';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { InfoCircleFilled } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -13,6 +14,7 @@ const RubricsManagement = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [tieuChiList, setTieuChiList] = useState([{ TenTieuChi: '', MoTa: '', TrongSo: 0, DiemToiDa: 10, GoiYChoAI: [] }]);
+  const [alertInfoClosed, setAlertInfoClosed] = useState(false);
   const [form] = Form.useForm();
 
   const user = authService.getCurrentUser();
@@ -217,10 +219,21 @@ const RubricsManagement = () => {
   ];
 
   return (
-    <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+    <div>
+      <style>
+        {`
+          .spaced-tags-dropdown .ant-select-item {
+            margin-bottom: 4px;
+            border-radius: 6px;
+          }
+          .spaced-tags-dropdown .ant-select-item:last-child {
+            margin-bottom: 0;
+          }
+        `}
+      </style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <Title level={3} style={{ margin: 0 }}>Quản Lý Rubrics Template</Title>
+          <Title level={2} style={{ margin: 0 }}>Rubrics Template</Title>
           <Text type="secondary">Tạo bộ tiêu chí chấm điểm mẫu để tái sử dụng cho nhiều đề tài</Text>
         </div>
         <Button type="primary" icon={<Plus size={18} />} size="large" onClick={openCreateModal}>
@@ -228,16 +241,29 @@ const RubricsManagement = () => {
         </Button>
       </div>
 
-      <Alert
-        message="Lưu ý về tính bất biến"
-        description="Sau khi template đã được áp dụng vào đề tài, bạn sẽ KHÔNG THỂ sửa hoặc xóa template gốc. Nếu muốn thay đổi tiêu chí, hãy sửa trực tiếp trên Rubrics của Đề tài cụ thể."
-        type="info"
-        showIcon
-        closable
-        style={{ marginBottom: 16 }}
-      />
+      {alertInfoClosed ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <InfoCircleFilled
+            style={{ color: '#1677ff', fontSize: 16, cursor: 'pointer' }}
+            onClick={() => setAlertInfoClosed(false)}
+            title="Xem lại lưu ý"
+          />
+          <Text type="secondary" style={{ fontSize: 13 }}>Lưu ý về tính bất biến của Template</Text>
+        </div>
+      ) : (
+        <Alert
+          message="Lưu ý về tính bất biến"
+          description="Sau khi template đã được áp dụng vào đề tài, bạn sẽ KHÔNG THỂ sửa hoặc xóa template gốc. Nếu muốn thay đổi tiêu chí, hãy sửa trực tiếp trên Rubrics của Đề tài cụ thể."
+          type="info"
+          showIcon
+          closable
+          onClose={() => setAlertInfoClosed(true)}
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
-      <Table
+      <Card bordered={false}>
+        <Table
         columns={columns}
         dataSource={templates}
         rowKey="_id"
@@ -284,6 +310,7 @@ const RubricsManagement = () => {
           ),
         }}
       />
+      </Card>
 
       {/* Modal Tạo/Sửa Template */}
       <Modal
@@ -364,6 +391,8 @@ const RubricsManagement = () => {
                 onChange={v => updateTieuChi(index, 'GoiYChoAI', v)}
                 placeholder="Gợi ý từ khóa cho AI (nhấn Enter để thêm)"
                 style={{ width: '100%' }}
+                tokenSeparators={[',']}
+                popupClassName="spaced-tags-dropdown"
               />
             </div>
           ))}

@@ -42,7 +42,7 @@ const LecturerDashboard = () => {
         <Col xs={24} sm={12} lg={8}>
           <Card bordered={false}>
             <Statistic
-              title="Tổng Đề Tài Quản Lý"
+              title="Tổng Đề Tài"
               value={stats.topics}
               prefix={<BookOpen size={20} style={{ marginRight: 8, color: '#1677ff' }} />}
             />
