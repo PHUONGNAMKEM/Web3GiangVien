@@ -233,7 +233,7 @@ const RubricsManagement = () => {
       </style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
-          <Title level={2} style={{ margin: 0 }}>Rubrics Template</Title>
+          <Title level={2} style={{ margin: 0 }}>Quản Lý Rubrics Template</Title>
           <Text type="secondary">Tạo bộ tiêu chí chấm điểm mẫu để tái sử dụng cho nhiều đề tài</Text>
         </div>
         <Button type="primary" icon={<Plus size={18} />} size="large" onClick={openCreateModal}>
@@ -264,52 +264,52 @@ const RubricsManagement = () => {
 
       <Card bordered={false}>
         <Table
-        columns={columns}
-        dataSource={templates}
-        rowKey="_id"
-        loading={loading}
-        pagination={{ pageSize: 8 }}
-        locale={{ emptyText: <Empty description="Chưa có Rubrics Template nào. Hãy tạo mẫu đầu tiên!" /> }}
-        scroll={{ x: 'max-content' }}
-        expandable={{
-          expandedRowRender: record => (
-            <div style={{ padding: '8px 24px', background: '#fafafa', borderRadius: 8 }}>
-              {record.MoTaMau && <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>{record.MoTaMau}</Text>}
-              <div style={{ overflowX: 'auto' }}>
-                <Table
-                  size="small"
-                  dataSource={record.TieuChi}
-                  pagination={false}
-                  rowKey={(_, idx) => idx}
-                  scroll={{ x: 'max-content' }}
-                  columns={[
-                    { title: 'Tiêu chí', dataIndex: 'TenTieuChi', key: 'ten', render: t => <strong>{t}</strong> },
-                    { title: 'Mô tả', dataIndex: 'MoTa', key: 'mota', ellipsis: true },
-                    { title: 'Trọng số', dataIndex: 'TrongSo', key: 'ts', width: 80, render: v => <Tag color="blue">{v}%</Tag> },
-                    { title: 'Điểm tối đa', dataIndex: 'DiemToiDa', key: 'dtd', width: 90, render: v => v || 10 },
-                    {
-                      title: 'Gợi ý AI', dataIndex: 'GoiYChoAI', key: 'ai', width: 200,
-                      render: tags => {
-                        const validTags = tags || [];
-                        if (validTags.length === 0) return '—';
-                        if (validTags.length <= 2) return validTags.map((t, i) => <Tag key={i} color="geekblue">{t}</Tag>);
-                        return (
-                          <Tooltip title={validTags.join(', ')}>
-                            <Space size={2} wrap>
-                              {validTags.slice(0, 2).map((t, i) => <Tag key={i} color="geekblue">{t}</Tag>)}
-                              <Tag color="purple">+{validTags.length - 2}</Tag>
-                            </Space>
-                          </Tooltip>
-                        );
-                      }
-                    },
-                  ]}
-                />
+          columns={columns}
+          dataSource={templates}
+          rowKey="_id"
+          loading={loading}
+          pagination={{ pageSize: 8 }}
+          locale={{ emptyText: <Empty description="Chưa có Rubrics Template nào. Hãy tạo mẫu đầu tiên!" /> }}
+          scroll={{ x: 'max-content' }}
+          expandable={{
+            expandedRowRender: record => (
+              <div style={{ padding: '8px 24px', background: '#fafafa', borderRadius: 8 }}>
+                {record.MoTaMau && <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>{record.MoTaMau}</Text>}
+                <div style={{ overflowX: 'auto' }}>
+                  <Table
+                    size="small"
+                    dataSource={record.TieuChi}
+                    pagination={false}
+                    rowKey={(_, idx) => idx}
+                    scroll={{ x: 'max-content' }}
+                    columns={[
+                      { title: 'Tiêu chí', dataIndex: 'TenTieuChi', key: 'ten', render: t => <strong>{t}</strong> },
+                      { title: 'Mô tả', dataIndex: 'MoTa', key: 'mota', ellipsis: true },
+                      { title: 'Trọng số', dataIndex: 'TrongSo', key: 'ts', width: 80, render: v => <Tag color="blue">{v}%</Tag> },
+                      { title: 'Điểm tối đa', dataIndex: 'DiemToiDa', key: 'dtd', width: 90, render: v => v || 10 },
+                      {
+                        title: 'Gợi ý AI', dataIndex: 'GoiYChoAI', key: 'ai', width: 200,
+                        render: tags => {
+                          const validTags = tags || [];
+                          if (validTags.length === 0) return '—';
+                          if (validTags.length <= 2) return validTags.map((t, i) => <Tag key={i} color="geekblue">{t}</Tag>);
+                          return (
+                            <Tooltip title={validTags.join(', ')}>
+                              <Space size={2} wrap>
+                                {validTags.slice(0, 2).map((t, i) => <Tag key={i} color="geekblue">{t}</Tag>)}
+                                <Tag color="purple">+{validTags.length - 2}</Tag>
+                              </Space>
+                            </Tooltip>
+                          );
+                        }
+                      },
+                    ]}
+                  />
+                </div>
               </div>
-            </div>
-          ),
-        }}
-      />
+            ),
+          }}
+        />
       </Card>
 
       {/* Modal Tạo/Sửa Template */}

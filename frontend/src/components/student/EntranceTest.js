@@ -33,11 +33,16 @@ const EntranceTest = () => {
   const [competitionStopped, setCompetitionStopped] = useState(false); // Bị dừng do nhóm khác thắng
   const socketRef = useRef(null);
   const submittedRef = useRef(false);
+  const myNhomRef = useRef(null);
   const retryingRef = useRef(false); // Flag để tránh cache cũ ghi đè state khi đang retry
 
   useEffect(() => {
     submittedRef.current = submitted;
   }, [submitted]);
+
+  useEffect(() => {
+    myNhomRef.current = myNhom;
+  }, [myNhom]);
 
   const { data: testData, isLoading: loading } = useQuery({
     queryKey: ['entrance-test', deTaiId, user?.id],
@@ -109,7 +114,8 @@ const EntranceTest = () => {
 
     // Nhận thông báo có nhóm thắng
     socket.on('competition:winner', ({ winnerNhomId, winnerName }) => {
-      const isMyTeam = myNhom && String(winnerNhomId) === String(myNhom._id);
+      // Dùng ref để check vì closure có thể capture giá trị cũ
+      const isMyTeam = myNhomRef.current && String(winnerNhomId) === String(myNhomRef.current._id);
       if (isMyTeam) {
         // Nhóm mình thắng!
         setCompetitionResult('winner');
@@ -190,6 +196,8 @@ const EntranceTest = () => {
         thoiGianBatDau: startTime?.toISOString()
       });
 
+      // Cập nhật ref ngay lập tức trước khi state update để socket handler nhận đúng
+      submittedRef.current = true;
       setSubmitted(true);
       setCompetitionResult(res.competitionResult || res.autoResult);
       setResult({
@@ -205,6 +213,8 @@ const EntranceTest = () => {
 
       if (res.competitionResult === 'winner') {
         message.success({ key: 'win_topic_toast', content: '🏆 Chúc mừng! Nhóm bạn giành được đề tài!', duration: 10 });
+        // Xóa cache đăng ký đề tài để trang /student/register hiển thị đúng trạng thái
+        queryClient.invalidateQueries({ queryKey: ['topic-registration'] });
       } else if (res.competitionResult === 'waiting') {
         message.info('⏳ Đạt ngưỡng! Đang chờ kết quả nhóm submit trước...');
       } else if (res.competitionResult === 'lost') {

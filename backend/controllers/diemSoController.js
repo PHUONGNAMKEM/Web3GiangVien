@@ -7,10 +7,10 @@ const logger = require('../config/logger');
 const AILog = require('../models/AILog');
 const crypto = require('crypto');
 
-const parseBlockchainError = (error, walletAddress = '0xD6aB1D7521A6cd96317bd2d04d89d431b888a7F0') => {
+const parseBlockchainError = (error, walletAddress = '0x3081F8965F007A78C1502b51DAC0bD54E6f6dBBF') => {
     const errorStr = String(error.message || error);
     if (errorStr.includes('insufficient funds') || error.code === 'INSUFFICIENT_FUNDS') {
-        return `Tài khoản ví hệ thống không đủ phí gas Sepolia để thực hiện giao dịch ghi điểm. Địa chỉ ví hệ thống: ${walletAddress}. Vui lòng nạp thêm ETH Sepolia để tiếp tục.`;
+        return `Tài khoản ví hệ thống không đủ phí gas Sepolia để thực hiện giao dịch ghi điểm. Địa chỉ ví hệ thống: ${walletAddress}. Vui lòng nạp thêm ETH Sepolia (khuyến nghị ít nhất 0.1 ETH để đảm bảo đủ gas cho các giao dịch liên tiếp) để tiếp tục.`;
     }
     if (errorStr.includes('already graded') || errorStr.includes('Submission already graded')) {
         return 'Điểm số này đã được khóa và ghi nhận an toàn trên Smart Contract Blockchain từ trước.';
@@ -18,7 +18,7 @@ const parseBlockchainError = (error, walletAddress = '0xD6aB1D7521A6cd96317bd2d0
     if (errorStr.includes('user rejected action') || errorStr.includes('ACTION_REJECTED')) {
         return 'Giao dịch bị từ chối ký trên ví MetaMask.';
     }
-    
+
     const match = errorStr.match(/execution reverted: "([^"]+)"/) || errorStr.match(/reason="([^"]+)"/);
     if (match && match[1]) {
         return `Lỗi Smart Contract: ${match[1]}`;
@@ -461,9 +461,9 @@ exports.retryBlockchain = async (req, res) => {
                         grade.TxHash = '0xMockSyncedOnChain';
                     }
                     await grade.save();
-                    
+
                     logger.info(`[GRADE] Pre-check sync successful (Self-healed without transaction). Score synced: ${onChainGrade}`);
-                    
+
                     return res.json({
                         message: 'Dữ liệu đã được cập nhật lại theo bản ghi đã có trên Blockchain để đồng nhất dữ liệu và đảm bảo tính bảo mật.',
                         data: grade,

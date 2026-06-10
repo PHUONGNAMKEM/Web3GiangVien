@@ -865,32 +865,85 @@ const TopicManagement = () => {
             </Form.Item>
 
             <Form.Item name="deadline" label="Deadline (chung)" style={{ flex: 1 }}>
-              <DatePicker style={{ width: '100%' }} size="large" placeholder="Chọn deadline" />
+              <DatePicker
+                style={{ width: '100%' }}
+                size="large"
+                placeholder="Chọn deadline"
+                onChange={() => {
+                  // Re-validate sub-deadlines when deadline changes
+                  form.validateFields(['hanDangKy', 'hanNopBaoCao', 'hanCapNhatTienDo']).catch(() => {});
+                }}
+              />
             </Form.Item>
           </div>
 
           <div style={{ display: 'flex', gap: 16 }}>
             <Form.Item name="hanDangKy" label="Hạn đăng ký" style={{ flex: 1 }}
-              tooltip="Sau mốc này SV không thể đăng ký. Bỏ trống = dùng Deadline chung.">
-              <DatePicker showTime style={{ width: '100%' }} size="large" placeholder="Hạn chót đăng ký" />
-            </Form.Item>
-
-            <Form.Item name="hanNopBaoCao" label="Hạn nộp báo cáo" style={{ flex: 1 }}
-              tooltip="Sau mốc này SV không thể nộp báo cáo. Bỏ trống = dùng Deadline chung.">
-              <DatePicker 
-                showTime 
-                style={{ width: '100%' }} 
-                size="large" 
-                placeholder="Hạn chót nộp báo cáo" 
-                onChange={(date) => {
-                  form.setFieldsValue({ hanCapNhatTienDo: date });
+              tooltip="Sau mốc này SV không thể đăng ký. Bỏ trống = dùng Deadline chung."
+              rules={[{
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const deadline = form.getFieldValue('deadline');
+                  if (deadline && value.isAfter(deadline)) {
+                    return Promise.reject('Hạn đăng ký phải trước Deadline chung');
+                  }
+                  return Promise.resolve();
+                }
+              }]}>
+              <DatePicker showTime style={{ width: '100%' }} size="large" placeholder="Hạn chót đăng ký"
+                disabledDate={(current) => {
+                  const deadline = form.getFieldValue('deadline');
+                  return deadline ? current && current.isAfter(deadline, 'day') : false;
                 }}
               />
             </Form.Item>
-            
+
+            <Form.Item name="hanNopBaoCao" label="Hạn nộp báo cáo" style={{ flex: 1 }}
+              tooltip="Sau mốc này SV không thể nộp báo cáo. Bỏ trống = dùng Deadline chung."
+              rules={[{
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const deadline = form.getFieldValue('deadline');
+                  if (deadline && value.isAfter(deadline)) {
+                    return Promise.reject('Hạn nộp báo cáo phải trước hoặc bằng Deadline chung');
+                  }
+                  return Promise.resolve();
+                }
+              }]}>
+              <DatePicker
+                showTime
+                style={{ width: '100%' }}
+                size="large"
+                placeholder="Hạn chót nộp báo cáo"
+                disabledDate={(current) => {
+                  const deadline = form.getFieldValue('deadline');
+                  return deadline ? current && current.isAfter(deadline, 'day') : false;
+                }}
+                onChange={(date) => {
+                  form.setFieldsValue({ hanCapNhatTienDo: date });
+                  form.validateFields(['hanCapNhatTienDo']).catch(() => {});
+                }}
+              />
+            </Form.Item>
+
             <Form.Item name="hanCapNhatTienDo" label="Hạn cập nhật tiến độ" style={{ flex: 1 }}
-              tooltip="Sau mốc này SV không thể cập nhật nhật ký tiến độ. Bỏ trống = dùng Hạn nộp báo cáo.">
-              <DatePicker showTime style={{ width: '100%' }} size="large" placeholder="Hạn chót cập nhật tiến độ" />
+              tooltip="Sau mốc này SV không thể cập nhật nhật ký tiến độ. Bỏ trống = dùng Hạn nộp báo cáo."
+              rules={[{
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  const deadline = form.getFieldValue('deadline');
+                  if (deadline && value.isAfter(deadline)) {
+                    return Promise.reject('Hạn cập nhật tiến độ phải trước hoặc bằng Deadline chung');
+                  }
+                  return Promise.resolve();
+                }
+              }]}>
+              <DatePicker showTime style={{ width: '100%' }} size="large" placeholder="Hạn chót cập nhật tiến độ"
+                disabledDate={(current) => {
+                  const deadline = form.getFieldValue('deadline');
+                  return deadline ? current && current.isAfter(deadline, 'day') : false;
+                }}
+              />
             </Form.Item>
           </div>
 

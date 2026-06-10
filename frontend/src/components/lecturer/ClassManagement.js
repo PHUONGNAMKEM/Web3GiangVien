@@ -6,6 +6,7 @@ import {
 import { Plus, Pencil, Trash2, School, Eye, UserPlus, UserMinus, Users, Clock, XCircle, CheckCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import authService from '../../services/authService';
 import managementService from '../../services/managementService';
+import { useLecturerClassContext } from '../../contexts/LecturerClassContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text } = Typography;
@@ -32,6 +33,8 @@ const ClassManagement = () => {
   const [rejectedInvites, setRejectedInvites] = useState([]);
   const [showRejected, setShowRejected] = useState(false);
   const [invitesLoading, setInvitesLoading] = useState(false);
+
+  const { refreshClasses } = useLecturerClassContext();
 
   const { data: { lopHocs = [], monHocs = [] } = {}, isLoading: loading } = useQuery({
     queryKey: ['classes', currentUser?.id],
@@ -84,6 +87,7 @@ const ClassManagement = () => {
       form.resetFields();
       setEditingItem(null);
       queryClient.invalidateQueries({ queryKey: ['classes'] });
+      refreshClasses();
     } catch (err) {
       const errMsg = err?.response?.data?.message || 'Lỗi thao tác';
       message.error(errMsg);
@@ -96,6 +100,7 @@ const ClassManagement = () => {
       if (res.success) {
         message.success('Đã xóa lớp học');
         queryClient.invalidateQueries({ queryKey: ['classes'] });
+        refreshClasses();
       }
     } catch (err) {
       message.error(err?.response?.data?.message || 'Lỗi xóa lớp học');

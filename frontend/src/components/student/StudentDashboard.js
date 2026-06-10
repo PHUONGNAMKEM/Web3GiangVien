@@ -15,7 +15,7 @@ const { Title, Paragraph, Text } = Typography;
 
 const StudentDashboard = () => {
   const isMobile = useIsMobile();
-  const { myClasses, selectedClassId } = useClassContext();
+  const { myClasses, selectedClassId, refreshClasses } = useClassContext();
   const [editingProfile, setEditingProfile] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [form] = Form.useForm();
@@ -172,6 +172,7 @@ const StudentDashboard = () => {
       await managementService.respondClassInvite(inviteId, accept);
       message.success(accept ? 'Đã chấp nhận lời mời. Bạn đã được thêm vào lớp!' : 'Đã từ chối lời mời lớp học.');
       queryClient.invalidateQueries({ queryKey: ['student-dashboard'] });
+      if (accept) refreshClasses();
     } catch (e) {
       message.error(e.response?.data?.message || 'Thao tác thất bại');
     }

@@ -110,6 +110,8 @@ const SubmissionReview = () => {
       };
     },
     enabled: !!user?.id,
+    refetchInterval: 20000,
+    refetchOnWindowFocus: true,
   });
 
   const [drawerVisible, setDrawerVisible] = useState(false);

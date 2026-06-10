@@ -39,6 +39,9 @@ exports.create = async (req, res) => {
         invalidateSvCache();
         res.status(201).json(newSV);
     } catch (err) {
+        if (err.code === 11000) {
+            return res.status(409).json({ error: 'Dữ liệu sinh viên đã tồn tại (trùng mã sinh viên, email hoặc ví liên kết).' });
+        }
         res.status(500).json({ error: err.message });
     }
 };
@@ -49,6 +52,9 @@ exports.update = async (req, res) => {
         invalidateSvCache();
         res.json(updated);
     } catch (err) {
+        if (err.code === 11000) {
+            return res.status(409).json({ error: 'Dữ liệu sinh viên đã tồn tại (trùng mã sinh viên, email hoặc ví liên kết).' });
+        }
         res.status(500).json({ error: err.message });
     }
 };

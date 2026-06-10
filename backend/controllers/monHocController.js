@@ -60,7 +60,7 @@ exports.getByGiangVien = async (req, res) => {
     res.json({ success: true, data: result });
   } catch (error) {
     logger.error(`[MonHoc] getByGiangVien error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi lấy danh sách môn học' });
+    res.status(500).json({ success: false, message: 'Lỗi lấy danh sách môn học: ' + error.message });
   }
 };
 
@@ -86,7 +86,10 @@ exports.create = async (req, res) => {
     res.status(201).json({ success: true, data: monHoc });
   } catch (error) {
     logger.error(`[MonHoc] create error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi tạo môn học' });
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Mã môn học này đã tồn tại trong hệ thống. Vui lòng nhập mã khác.' });
+    }
+    res.status(500).json({ success: false, message: 'Lỗi tạo môn học: ' + error.message });
   }
 };
 
@@ -111,7 +114,10 @@ exports.update = async (req, res) => {
     res.json({ success: true, data: monHoc });
   } catch (error) {
     logger.error(`[MonHoc] update error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi cập nhật môn học' });
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Mã môn học này đã tồn tại trong hệ thống. Vui lòng nhập mã khác.' });
+    }
+    res.status(500).json({ success: false, message: 'Lỗi cập nhật môn học: ' + error.message });
   }
 };
 
@@ -140,6 +146,6 @@ exports.delete = async (req, res) => {
     res.json({ success: true, message: 'Đã xóa môn học' });
   } catch (error) {
     logger.error(`[MonHoc] delete error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi xóa môn học' });
+    res.status(500).json({ success: false, message: 'Lỗi xóa môn học: ' + error.message });
   }
 };

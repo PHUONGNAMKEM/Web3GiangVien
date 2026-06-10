@@ -126,7 +126,10 @@ exports.create = async (req, res) => {
     res.status(201).json({ success: true, data: { ...populated.toObject(), siSo: 0 } });
   } catch (error) {
     logger.error(`[LopHoc] create error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi tạo lớp học' });
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Mã lớp học này đã tồn tại trong hệ thống. Vui lòng nhập mã khác.' });
+    }
+    res.status(500).json({ success: false, message: 'Lỗi tạo lớp học: ' + error.message });
   }
 };
 
@@ -152,7 +155,10 @@ exports.update = async (req, res) => {
     res.json({ success: true, data: lopHoc });
   } catch (error) {
     logger.error(`[LopHoc] update error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi cập nhật lớp học' });
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: 'Mã lớp học này đã tồn tại trong hệ thống. Vui lòng nhập mã khác.' });
+    }
+    res.status(500).json({ success: false, message: 'Lỗi cập nhật lớp học: ' + error.message });
   }
 };
 
@@ -199,7 +205,7 @@ exports.addSinhVien = async (req, res) => {
     res.json({ success: true, data: updated });
   } catch (error) {
     logger.error(`[LopHoc] addSinhVien error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi thêm sinh viên vào lớp' });
+    res.status(500).json({ success: false, message: 'Lỗi thêm sinh viên vào lớp: ' + error.message });
   }
 };
 
@@ -221,7 +227,7 @@ exports.removeSinhVien = async (req, res) => {
     res.json({ success: true, message: 'Đã xóa sinh viên khỏi lớp' });
   } catch (error) {
     logger.error(`[LopHoc] removeSinhVien error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi xóa sinh viên khỏi lớp' });
+    res.status(500).json({ success: false, message: 'Lỗi xóa sinh viên khỏi lớp: ' + error.message });
   }
 };
 
@@ -240,7 +246,7 @@ exports.delete = async (req, res) => {
     res.json({ success: true, message: 'Đã xóa lớp học' });
   } catch (error) {
     logger.error(`[LopHoc] delete error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi xóa lớp học' });
+    res.status(500).json({ success: false, message: 'Lỗi xóa lớp học: ' + error.message });
   }
 };
 
@@ -295,7 +301,7 @@ exports.importSinhVien = async (req, res) => {
     });
   } catch (error) {
     logger.error(`[LopHoc] importSinhVien error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi import sinh viên' });
+    res.status(500).json({ success: false, message: 'Lỗi import sinh viên: ' + error.message });
   }
 };
 
@@ -316,7 +322,7 @@ exports.getBySinhVien = async (req, res) => {
     res.json({ success: true, data: result });
   } catch (error) {
     logger.error(`[LopHoc] getBySinhVien error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi lấy lớp học của sinh viên' });
+    res.status(500).json({ success: false, message: 'Lỗi lấy lớp học của sinh viên: ' + error.message });
   }
 };
 
@@ -349,7 +355,7 @@ exports.getSinhVienByGiangVien = async (req, res) => {
     res.json({ success: true, data: flatList });
   } catch (error) {
     logger.error(`[LopHoc] getSinhVienByGiangVien error: ${error.message}`);
-    res.status(500).json({ success: false, message: 'Lỗi lấy danh sách sinh viên theo giảng viên' });
+    res.status(500).json({ success: false, message: 'Lỗi lấy danh sách sinh viên theo giảng viên: ' + error.message });
   }
 };
 
