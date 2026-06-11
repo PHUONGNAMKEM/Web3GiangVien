@@ -5,6 +5,10 @@ const DiemSo = require('../models/DiemSo');
 const ipfsService = require('../services/ipfsService');
 const logger = require('../config/logger');
 const fs = require('fs');
+const crypto = require('crypto');
+
+// Hash nội dung đã phân tích để vô hiệu hóa AICache khi bài thay đổi
+const hashText = (text) => text ? crypto.createHash('sha256').update(text).digest('hex') : null;
 
 const cleanupTempFile = (filePath) => {
     if (!filePath) return;
@@ -405,7 +409,7 @@ exports.getBaoCaoByLecturer = async (req, res) => {
 exports.getExtractedText = async (req, res) => {
     try {
         const bc = await BaoCao.findById(req.params.id)
-            .select('DeTai SinhVien ExtractedText ExtractionMethod ExtractionWarnings PageCount ExtractedAt')
+            .select('DeTai SinhVien ExtractedText ExtractionMethod ExtractionWarnings PageCount ExtractedAt AICache')
             .populate('DeTai', 'GiangVienHuongDan');
 
         if (!bc) {
@@ -420,14 +424,65 @@ exports.getExtractedText = async (req, res) => {
             return res.status(403).json({ error: 'Khong co quyen xem bao cao nay', code: 'KHONG_CO_QUYEN' });
         }
 
+        // Chỉ trả AICache nếu hash khớp nội dung hiện tại (bài chưa nộp lại) — tránh dùng cache cũ
+        let aiCache = null;
+        if (bc.AICache && bc.AICache.textHash && bc.AICache.textHash === hashText(bc.ExtractedText)) {
+            aiCache = bc.AICache;
+        }
+
         res.json({
             ExtractedText: bc.ExtractedText,
             ExtractionMethod: bc.ExtractionMethod,
             ExtractionWarnings: bc.ExtractionWarnings,
             PageCount: bc.PageCount,
-            ExtractedAt: bc.ExtractedAt
+            ExtractedAt: bc.ExtractedAt,
+            aiCache
         });
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Lưu cache kết quả AI cho bài CHƯA chấm → reload/mở lại không gọi lại AI (chỉ GV phụ trách).
+// Frontend gửi toàn bộ state phân tích hiện tại; backend gắn textHash theo ExtractedText hiện tại.
+exports.saveAiCache = async (req, res) => {
+    try {
+        const bc = await BaoCao.findById(req.params.id).populate('DeTai', 'GiangVienHuongDan');
+        if (!bc) {
+            return res.status(404).json({ error: 'Bao cao khong ton tai', code: 'BAOCAO_KHONG_TON_TAI' });
+        }
+
+        const userId = req.user?.id;
+        if (!userId || String(bc.DeTai?.GiangVienHuongDan) !== String(userId)) {
+            return res.status(403).json({ error: 'Khong co quyen', code: 'KHONG_CO_QUYEN' });
+        }
+
+        // Chỉ cache khi có ExtractedText (nội dung thật) — fallback metadata không đáng cache
+        if (!bc.ExtractedText) {
+            return res.json({ success: false, reason: 'NO_EXTRACTED_TEXT' });
+        }
+
+        const { score, feedback, issues, rubricsResult, securityFlags, repetitionRate, model, isRubrics, llmFeedback, llmProvider } = req.body;
+
+        bc.AICache = {
+            textHash: hashText(bc.ExtractedText),
+            isRubrics: Boolean(isRubrics),
+            score: score ?? null,
+            feedback: feedback ?? null,
+            issues: issues || undefined,
+            rubricsResult: rubricsResult || undefined,
+            securityFlags: securityFlags || undefined,
+            repetitionRate: repetitionRate ?? null,
+            model: model || null,
+            llmFeedback: llmFeedback ?? null,
+            llmProvider: llmProvider ?? null,
+            updatedAt: new Date()
+        };
+        await bc.save();
+
+        res.json({ success: true });
+    } catch (err) {
+        logger.error(`[AICACHE] saveAiCache failed: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 };

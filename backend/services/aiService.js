@@ -7,7 +7,7 @@ const FASTAPI_ENDPOINT = `${ML_SERVICE_URL}/analyze-report`;
 const RUBRICS_ENDPOINT = `${ML_SERVICE_URL}/analyze-with-rubrics`;
 
 // Gọi sang local FastAPI ML Service (chạy PhoBERT)
-exports.analyzeReport = async (text, topicRequirements) => {
+exports.analyzeReport = async (text, topicRequirements, jobId = null) => {
     try {
         logger.info(`[AI] Calling FastAPI /analyze-report | textLength=${text.length}`);
         const startTime = Date.now();
@@ -16,7 +16,8 @@ exports.analyzeReport = async (text, topicRequirements) => {
             FASTAPI_ENDPOINT,
             {
                 text: text,
-                topic_requirements: topicRequirements || []
+                topic_requirements: topicRequirements || [],
+                job_id: jobId || undefined
             },
             {
                 headers: {
@@ -47,14 +48,14 @@ exports.analyzeReport = async (text, topicRequirements) => {
 };
 
 // Gọi PhoBERT phân tích theo Rubrics (có chunking)
-exports.analyzeWithRubrics = async (text, rubrics) => {
+exports.analyzeWithRubrics = async (text, rubrics, jobId = null) => {
     try {
         logger.info(`[AI] Calling FastAPI /analyze-with-rubrics | criteria=${rubrics.length} | textLength=${text.length}`);
         const startTime = Date.now();
 
         const response = await axios.post(
             RUBRICS_ENDPOINT,
-            { text, rubrics },
+            { text, rubrics, job_id: jobId || undefined },
             {
                 headers: {
                     'Content-Type': 'application/json',
@@ -70,6 +71,20 @@ exports.analyzeWithRubrics = async (text, rubrics) => {
     } catch (error) {
         logger.error(`[AI] Rubrics analysis error: ${error.response?.data ? JSON.stringify(error.response.data) : error.message}`);
         throw error;
+    }
+};
+
+// Lấy tiến độ phân tích PhoBERT theo job_id (cho thanh % thật ở frontend)
+exports.getAnalyzeProgress = async (jobId) => {
+    try {
+        const response = await axios.get(`${ML_SERVICE_URL}/analyze-progress/${encodeURIComponent(jobId)}`, {
+            headers: { 'X-Internal-Token': process.env.INTERNAL_TOKEN || '' },
+            timeout: 5000
+        });
+        return response.data;
+    } catch (error) {
+        // Không chặn luồng nếu ML chưa có job (đang khởi tạo) — trả trạng thái unknown
+        return { status: 'unknown', percent: 0, current: 0, total: 1, chunks: 0, stage: 'unknown' };
     }
 };
 

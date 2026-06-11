@@ -16,7 +16,24 @@ const baoCaoSchema = new mongoose.Schema({
       enum: ['native', 'ocr', 'failed', null], 
       default: null 
   },
-  ExtractionWarnings: { type: [String], default: [] }
+  ExtractionWarnings: { type: [String], default: [] },
+  // Cache kết quả phân tích AI (PhoBERT + LLM) cho bài CHƯA chấm.
+  // textHash để vô hiệu hóa cache nếu nội dung bài thay đổi (nộp lại).
+  // Mở lại / reload trang → đọc cache thay vì gọi lại AI (tiết kiệm compute + chi phí Gemini).
+  AICache: {
+    textHash: { type: String, default: null },
+    isRubrics: { type: Boolean, default: false },
+    score: { type: Number, default: null },
+    feedback: { type: String, default: null },
+    issues: { type: [String], default: undefined },
+    rubricsResult: { type: mongoose.Schema.Types.Mixed, default: undefined },
+    securityFlags: { type: [String], default: undefined },
+    repetitionRate: { type: Number, default: null },
+    model: { type: String, default: null },
+    llmFeedback: { type: String, default: null },
+    llmProvider: { type: String, default: null },
+    updatedAt: { type: Date, default: null }
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('BaoCao', baoCaoSchema);

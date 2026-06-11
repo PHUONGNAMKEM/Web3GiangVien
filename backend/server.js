@@ -250,6 +250,7 @@ app.get('/api/baocao/sinhvien/:svId', baoCaoController.getMyBaoCao);
 app.delete('/api/baocao/:id', ...requireStudent, baoCaoController.deleteBaoCao);
 app.get('/api/baocao/giangvien/:gvId', ...requireLecturer, baoCaoController.getBaoCaoByLecturer);
 app.get('/api/baocao/:id/extracted', ...requireAuth, baoCaoController.getExtractedText);
+app.post('/api/baocao/:id/ai-cache', ...requireLecturer, baoCaoController.saveAiCache);
 
 // 7. Điểm Số
 app.post('/api/diemso', ...requireLecturer, aiLimiter, diemSoController.chamDiem);
@@ -280,6 +281,8 @@ app.put('/api/tiendo/:id/nhanxet', ...requireLecturer, tienDoController.commentP
 // 9. AI / ML Services
 app.post('/api/ai/analyze-report', ...requireAuth, aiLimiter, aiController.analyzeReport);
 app.post('/api/ai/analyze-rubrics', ...requireAuth, aiLimiter, aiController.analyzeReportWithRubrics);
+app.post('/api/ai/llm-feedback', ...requireAuth, aiLimiter, aiController.llmFeedback);
+app.get('/api/ai/analyze-progress/:jobId', ...requireAuth, aiController.analyzeProgress);
 app.post('/api/ai/match-student', ...requireStudent, aiLimiter, aiController.matchStudent);
 
 // 10. Rubrics Template

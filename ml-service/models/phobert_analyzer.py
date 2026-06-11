@@ -1,11 +1,11 @@
 import time
 import logging
-import numpy as np
 import torch
 import torch.nn.functional as F
 from transformers import AutoModel, AutoTokenizer
 from utils.text_preprocessing import extract_requirement_hits, normalize_text
 from utils.pdf_chunker import chunk_text
+from utils.progress import init_job, update_job, finish_job
 
 logger = logging.getLogger('ml-service')
 
@@ -33,15 +33,41 @@ class PhoBertAnalyzer:
         unique = set(s.lower() for s in sentences)
         return 1.0 - (len(unique) / len(sentences))
 
-    def _get_embedding(self, text: str):
-        # Tokenize with max length for PhoBERT
-        inputs = self.tokenizer(text, return_tensors='pt', padding=True, truncation=True, max_length=256).to(self.device)
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-        # Using [CLS] token embedding for sentence summary
-        return outputs.last_hidden_state[:, 0, :]
+    # PhoBERT-base giới hạn cứng 256 token/forward. Để đọc HẾT chunk dài,
+    # ta trượt cửa sổ 254 token (chừa 2 token đặc biệt <s>/</s>) rồi mean-pool.
+    MAX_TOKENS = 256
+    MAX_WINDOWS = 12  # trần số cửa sổ/chunk — chống chunk khổng lồ làm chậm
 
-    def analyze(self, text: str, topic_requirements: list[str] | None = None) -> dict:
+    def _get_embedding(self, text: str):
+        """
+        Trả về embedding [1, hidden]. Nếu text vượt 256 token → trượt cửa sổ,
+        embed từng cửa sổ và lấy trung bình → KHÔNG bỏ sót phần sau của chunk.
+        """
+        bos = self.tokenizer.bos_token_id if self.tokenizer.bos_token_id is not None else self.tokenizer.cls_token_id
+        eos = self.tokenizer.eos_token_id if self.tokenizer.eos_token_id is not None else self.tokenizer.sep_token_id
+
+        ids = self.tokenizer.encode(text or "", add_special_tokens=False)
+        if not ids:
+            ids = [self.tokenizer.unk_token_id or 3]
+
+        window = self.MAX_TOKENS - 2  # chừa chỗ cho <s> và </s>
+        embeddings = []
+        for start in range(0, len(ids), window):
+            if len(embeddings) >= self.MAX_WINDOWS:
+                logger.warning(f"[AI] _get_embedding: chunk >{self.MAX_WINDOWS} cửa sổ — cắt bớt phần dư")
+                break
+            piece = [bos] + ids[start:start + window] + [eos]
+            input_ids = torch.tensor([piece], device=self.device)
+            attn = torch.ones_like(input_ids)
+            with torch.no_grad():
+                outputs = self.model(input_ids=input_ids, attention_mask=attn)
+            # [CLS] token embedding của cửa sổ này
+            embeddings.append(outputs.last_hidden_state[:, 0, :])
+
+        # Mean-pool qua các cửa sổ → 1 vector đại diện toàn chunk
+        return torch.mean(torch.stack(embeddings, dim=0), dim=0)
+
+    def analyze(self, text: str, topic_requirements: list[str] | None = None, job_id: str | None = None) -> dict:
         start_time = time.time()
         topic_requirements = topic_requirements or []
         clean_text = normalize_text(text)
@@ -65,16 +91,17 @@ class PhoBertAnalyzer:
         issues = []
 
         if topic_requirements:
-            # Chunk toàn bộ text để đọc hết nội dung (không chỉ 256 tokens đầu)
-            chunks = chunk_text(clean_text)
+            # Chunk trên TEXT GỐC (giữ \n để detect heading); normalize + window-embed từng chunk
+            chunks = chunk_text(text)
+            init_job(job_id, total=len(chunks) + len(topic_requirements), chunks=len(chunks))
             chunk_embeddings = []
-            for chunk in chunks:
-                chunk_content = chunk.content[:2000] if len(chunk.content) > 2000 else chunk.content
-                emb = self._get_embedding(chunk_content)
+            for i, chunk in enumerate(chunks):
+                emb = self._get_embedding(normalize_text(chunk.content))
                 chunk_embeddings.append(emb)
+                update_job(job_id, current=i + 1, stage='embedding_chunks')
             logger.info(f"[AI] analyze() chunking | chunks={len(chunks)} | requirements={len(topic_requirements)}")
 
-            for req in topic_requirements:
+            for j, req in enumerate(topic_requirements):
                 req_norm = normalize_text(req)
                 req_emb = self._get_embedding(req_norm)
                 # Lấy MAX similarity across tất cả chunks
@@ -85,10 +112,12 @@ class PhoBertAnalyzer:
                 logger.debug(f"[AI] Requirement '{req[:30]}...' bestSimilarity={best_sim:.4f} (across {len(chunks)} chunks)")
                 if best_sim > 0.45:
                     semantic_hits += 1
+                update_job(job_id, current=len(chunks) + j + 1, stage='scoring')
 
             total_hits = max(hits, semantic_hits)
+            # Trần: base 5.0 + keyword 1.5 + semantic 2.5 = 9.0 (luồng không rubrics tối đa 9)
             keyword_density_score = (total_hits / len(topic_requirements)) * 1.5
-            semantic_bonus = 2.0 * min(1.0, (total_hits / len(topic_requirements)))
+            semantic_bonus = 2.5 * min(1.0, (total_hits / len(topic_requirements)))
 
             if total_hits == 0:
                 issues.append("Báo cáo thiếu các kiến thức chuyên môn cốt lõi của đề tài.")
@@ -112,6 +141,7 @@ class PhoBertAnalyzer:
 
         elapsed = int((time.time() - start_time) * 1000)
         logger.info(f"[AI] Report analysis completed | score={score} | requirements={len(topic_requirements)} | repetition={repetition_ratio:.2f} | textLength={len(clean_text)} | time={elapsed}ms")
+        finish_job(job_id)
 
         return {
             "score": score,
@@ -120,7 +150,7 @@ class PhoBertAnalyzer:
             "model": self.model_name,
         }
 
-    def analyze_with_rubrics(self, text: str, rubrics: list[dict]) -> dict:
+    def analyze_with_rubrics(self, text: str, rubrics: list[dict], job_id: str | None = None) -> dict:
         """
         Phân tích text theo từng tiêu chí Rubrics, SỬ DỤNG CHUNKING.
         
@@ -144,23 +174,23 @@ class PhoBertAnalyzer:
                 "model": self.model_name
             }
 
-        # === BƯỚC 1: CHUNKING ===
-        chunks = chunk_text(clean_text)
+        # === BƯỚC 1: CHUNKING (trên TEXT GỐC giữ \n để detect heading) ===
+        chunks = chunk_text(text)
+        init_job(job_id, total=len(chunks) + len(rubrics), chunks=len(chunks))
         logger.info(f"[AI] Rubrics chunking | chunks={len(chunks)} | criteria={len(rubrics)} | textLength={len(clean_text)}")
 
-        # === BƯỚC 2: EMBED TẤT CẢ CHUNKS ===
+        # === BƯỚC 2: EMBED TẤT CẢ CHUNKS (normalize + window-embed, đọc hết chunk) ===
         chunk_embeddings = []
-        for chunk in chunks:
-            # Truncate nội dung chunk nếu quá dài (PhoBERT max 256 tokens)
-            chunk_content = chunk.content[:2000] if len(chunk.content) > 2000 else chunk.content
-            emb = self._get_embedding(chunk_content)
+        for i, chunk in enumerate(chunks):
+            emb = self._get_embedding(normalize_text(chunk.content))
             chunk_embeddings.append(emb)
+            update_job(job_id, current=i + 1, stage='embedding_chunks')
 
         # === BƯỚC 3+4+5: EMBED TIÊU CHÍ + SIMILARITY MATRIX + MAX ===
         results = []
         total_weighted_score = 0
 
-        for rubric in rubrics:
+        for ridx, rubric in enumerate(rubrics):
             # Tạo text đại diện cho tiêu chí (kết hợp GoiYChoAI)
             goi_y = rubric.get('GoiYChoAI', [])
             criteria_text = f"{rubric['TenTieuChi']} {rubric.get('MoTa', '')} {' '.join(goi_y)}"
@@ -189,9 +219,9 @@ class PhoBertAnalyzer:
             blended_sim = 0.7 * best_sim + 0.3 * keyword_hit_rate
             logger.info(f"[AI] Criteria '{rubric['TenTieuChi']}' | bestSim={best_sim:.4f} | keywordHitRate={keyword_hit_rate:.4f} | blended={blended_sim:.4f}")
 
-            # Chuyển blended_sim → điểm (scale + clamp)
+            # Chuyển blended_sim → điểm (scale 1.5 + clamp ≤ DiemToiDa, không tràn >10)
             diem_toi_da = rubric.get('DiemToiDa', 10)
-            raw_score = max(0, min(diem_toi_da, blended_sim * diem_toi_da * 1.3))
+            raw_score = max(0, min(diem_toi_da, blended_sim * diem_toi_da * 1.5))
             score = round(raw_score, 2)
 
             # Trọng số
@@ -199,17 +229,12 @@ class PhoBertAnalyzer:
             if diem_toi_da > 0:
                 total_weighted_score += score / diem_toi_da * trong_so
 
-            # === ADAPTIVE THRESHOLD dựa trên phân phối similarity của tiêu chí này ===
-            all_sims = [s for _, s in chunk_similarities]
-            mean_sim = float(np.mean(all_sims))
-            std_sim  = float(np.std(all_sims))
-            good_threshold = min(0.75, mean_sim + 0.5 * std_sim)
-            ok_threshold   = max(0.20, mean_sim - 0.5 * std_sim)
-
-            # Feedback cho tiêu chí (dẫn chiếu chunk cụ thể)
-            if best_sim >= good_threshold:
+            # === NHẬN XÉT BÁM ĐIỂM THỰC TẾ của tiêu chí (không dùng adaptive threshold —
+            # adaptive hỏng khi chỉ 1 chunk: std=0 → luôn "Tốt"). score_ratio ∈ [0,1] ===
+            score_ratio = (score / diem_toi_da) if diem_toi_da > 0 else 0.0
+            if score_ratio >= 0.7:
                 nhan_xet = f"Tốt: '{best_chunk.heading}' thể hiện rõ nội dung '{rubric['TenTieuChi']}'"
-            elif best_sim >= ok_threshold:
+            elif score_ratio >= 0.5:
                 nhan_xet = f"Khá: Có đề cập '{rubric['TenTieuChi']}' tại '{best_chunk.heading}' nhưng chưa sâu"
             else:
                 nhan_xet = f"Yếu: Thiếu nội dung liên quan đến '{rubric['TenTieuChi']}'"
@@ -217,7 +242,7 @@ class PhoBertAnalyzer:
             # Log top-3 chunks cho tiêu chí này để debug
             sorted_sims = sorted(chunk_similarities, key=lambda x: x[1], reverse=True)[:3]
             top3_str = ' | '.join([f"chunk{idx}='{chunks[idx].heading}'({sim:.4f})" for idx, sim in sorted_sims])
-            logger.info(f"[AI] Criteria '{rubric['TenTieuChi']}' | bestSim={best_sim:.4f} | blended={blended_sim:.4f} | score={score} | goodThr={good_threshold:.3f} | okThr={ok_threshold:.3f} | BEST='{best_chunk.heading}' | TOP3: {top3_str}")
+            logger.info(f"[AI] Criteria '{rubric['TenTieuChi']}' | bestSim={best_sim:.4f} | blended={blended_sim:.4f} | score={score} | ratio={score_ratio:.2f} | BEST='{best_chunk.heading}' | TOP3: {top3_str}")
 
             results.append({
                 "TenTieuChi": rubric['TenTieuChi'],
@@ -231,6 +256,7 @@ class PhoBertAnalyzer:
                     "heading": best_chunk.heading
                 }
             })
+            update_job(job_id, current=len(chunks) + ridx + 1, stage='scoring')
 
         # Tổng điểm trên thang 10
         final_score = round(total_weighted_score / 10, 2)
@@ -264,6 +290,8 @@ class PhoBertAnalyzer:
                 feedback_str = f"Báo cáo khá tốt ({final_score}/10), đáp ứng phần lớn tiêu chí."
         else:
             feedback_str = f"Báo cáo tốt ({final_score}/10), đáp ứng đầy đủ các tiêu chí Rubrics."
+
+        finish_job(job_id)
 
         return {
             "score": final_score,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Table, Button, Badge, Drawer, Alert, Typography, InputNumber, Space, message, Tag, Steps, Spin, Skeleton, Empty, Tooltip, Descriptions, List, Divider, Input, Modal, Select, Card } from 'antd';
+import { Table, Button, Badge, Drawer, Alert, Typography, InputNumber, Space, message, Tag, Steps, Spin, Skeleton, Empty, Tooltip, Descriptions, List, Divider, Input, Modal, Select, Card, Switch, Progress } from 'antd';
 import { CheckSquare, ShieldCheck, BrainCircuit, ScanSearch, Fingerprint, ExternalLink, Download, Clock, RefreshCw, Users, TrendingUp, ListChecks } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
@@ -223,6 +223,37 @@ const SubmissionReview = () => {
   const [rubricsResult, setRubricsResult] = useState([]);  // Array: per-criteria results
   const [gvRubricsScores, setGvRubricsScores] = useState([]); // GV overrides for each criteria
 
+  // === LLM FEEDBACK (Gemini) STATE ===
+  const [useLlmFeedback, setUseLlmFeedback] = useState(false); // toggle bật/tắt nhận xét LLM
+  const [llmFeedback, setLlmFeedback] = useState(null);        // nhận xét Gemini (cache trong phiên)
+  const [llmProvider, setLlmProvider] = useState(null);        // provider đã dùng
+  const [llmLoading, setLlmLoading] = useState(false);         // đang gọi Gemini
+
+  // === TIẾN ĐỘ PHÂN TÍCH PhoBERT (thanh % thật qua polling) ===
+  const [analyzeProgress, setAnalyzeProgress] = useState(null); // {percent,current,total,chunks,stage}
+  const progressTimerRef = useRef(null);
+
+  const stopProgressPolling = () => {
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current);
+      progressTimerRef.current = null;
+    }
+  };
+
+  const startProgressPolling = (jobId) => {
+    stopProgressPolling();
+    progressTimerRef.current = setInterval(async () => {
+      try {
+        const p = await aiApiService.getAnalyzeProgress(jobId);
+        if (p && p.status !== 'unknown') setAnalyzeProgress(p);
+        if (p && p.status === 'done') stopProgressPolling();
+      } catch (e) { /* bỏ qua lỗi poll lẻ */ }
+    }, 500);
+  };
+
+  // Dọn interval khi unmount
+  useEffect(() => () => stopProgressPolling(), []);
+
   // Tính tổng điểm từ GV scores theo trọng số
   const calcWeightedScore = (scores) => {
     if (!scores || scores.length === 0) return 0;
@@ -243,6 +274,12 @@ const SubmissionReview = () => {
     setExistingGrade(null);
     setRubricsResult([]);
     setGvRubricsScores([]);
+    setUseLlmFeedback(false);
+    setLlmFeedback(null);
+    setLlmProvider(null);
+    setLlmLoading(false);
+    setAnalyzeProgress(null);
+    stopProgressPolling();
     setProgressSummary(null);
     setAlertProgressClosed(false);
     setAlertPdfClosed(false);
@@ -275,6 +312,12 @@ const SubmissionReview = () => {
         issues: [],
         model: 'vinai/phobert-base',
       });
+      // Nhận xét LLM (nếu đã lưu khi chấm) — đọc thẳng từ DB, KHÔNG gọi lại Gemini
+      if (record.grade.AI_LLM_Feedback) {
+        setLlmFeedback(record.grade.AI_LLM_Feedback);
+        setLlmProvider(record.grade.AI_LLM_Provider || 'google-gemini');
+        setUseLlmFeedback(true); // đã có sẵn → mặc định hiển thị nhận xét LLM
+      }
       // Vẫn lấy tiến độ
       try {
         const progressRes = await aiApiService.getProgressBySinhVien(record.student?._id, record.topic?._id);
@@ -293,6 +336,10 @@ const SubmissionReview = () => {
       if (cached.rubricsResult) setRubricsResult(cached.rubricsResult);
       if (cached.gvRubricsScores) setGvRubricsScores(cached.gvRubricsScores);
       if (cached.workingRecord) setSelectedSubmission(cached.workingRecord);
+      // Khôi phục nhận xét LLM đã sinh trong phiên → toggle qua lại không gọi lại API
+      if (cached.llmFeedback !== undefined) setLlmFeedback(cached.llmFeedback);
+      if (cached.llmProvider !== undefined) setLlmProvider(cached.llmProvider);
+      if (cached.useLlmFeedback !== undefined) setUseLlmFeedback(cached.useLlmFeedback);
       // Lấy tiến độ
       try {
         const progressRes = await aiApiService.getProgressBySinhVien(record.student?._id, record.topic?._id);
@@ -303,13 +350,15 @@ const SubmissionReview = () => {
       return; // Dừng — dùng cache
     }
 
-    // === 3. Chưa có cache → gọi AI lần đầu ===
+    // === 3. Chưa có cache phiên → kiểm tra cache DB rồi mới gọi AI ===
     setAiAnalysis(null);
 
     let workingRecord = record;
+    let dbAiCache = null;
     if (submissionId) {
       try {
         const extractedData = await aiApiService.getExtractedText(submissionId);
+        dbAiCache = extractedData.aiCache || null;  // cache AI bền (đã validate hash ở backend)
         workingRecord = {
           ...record,
           submission: {
@@ -334,11 +383,64 @@ const SubmissionReview = () => {
       }
     }
 
+    // === 3a. Có cache AI bền trong DB → khôi phục, KHÔNG gọi lại PhoBERT/Gemini ===
+    if (dbAiCache && dbAiCache.score != null) {
+      const aiData = {
+        score: dbAiCache.score,
+        feedback: dbAiCache.feedback,
+        issues: dbAiCache.issues || [],
+        model: dbAiCache.model || 'vinai/phobert-base',
+        security_flags: dbAiCache.securityFlags || [],
+        repetition_rate: dbAiCache.repetitionRate ?? null,
+        chunks_info: [],
+      };
+      const rubricsData = dbAiCache.rubricsResult || [];
+      const gvScoresData = rubricsData.length > 0
+        ? rubricsData.map(r => ({ ...r, GV_DiemTieuChi: r.GV_DiemTieuChi ?? r.AI_DiemTieuChi }))
+        : [];
+      const scoreData = gvScoresData.length > 0 ? calcWeightedScore(gvScoresData) : dbAiCache.score;
+
+      setAiAnalysis(aiData);
+      if (rubricsData.length > 0) {
+        setRubricsResult(rubricsData);
+        setGvRubricsScores(gvScoresData);
+      }
+      setScore(scoreData);
+      if (dbAiCache.llmFeedback) {
+        setLlmFeedback(dbAiCache.llmFeedback);
+        setLlmProvider(dbAiCache.llmProvider || 'google-gemini');
+        setUseLlmFeedback(true);
+      }
+      if (submissionId) {
+        aiCacheRef.current[submissionId] = {
+          aiAnalysis: aiData,
+          score: scoreData,
+          rubricsResult: rubricsData,
+          gvRubricsScores: gvScoresData,
+          workingRecord,
+          llmFeedback: dbAiCache.llmFeedback || null,
+          llmProvider: dbAiCache.llmProvider || null,
+          useLlmFeedback: !!dbAiCache.llmFeedback,
+        };
+      }
+      try {
+        const progressRes = await aiApiService.getProgressBySinhVien(workingRecord.student?._id, workingRecord.topic?._id);
+        setProgressSummary(buildProgressSummary(progressRes.data || []));
+      } catch (err) {
+        console.error('Lỗi lấy tóm tắt tiến độ:', err);
+      }
+      return; // Dừng — dùng cache DB, không gọi AI
+    }
+
     if (workingRecord.submission) {
       const topic = workingRecord.topic;
       const hasSuDungRubrics = topic?.SuDungRubrics && topic?.Rubrics && topic.Rubrics.length > 0;
 
       setAnalyzing(true);
+      // jobId cho thanh tiến độ % thật; bắt đầu poll trước khi gọi AI
+      const jobId = (window.crypto?.randomUUID?.() || `job-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      setAnalyzeProgress({ percent: 0, current: 0, total: 1, chunks: 0, stage: 'embedding_chunks' });
+      startProgressPolling(jobId);
       try {
         const extractedText = workingRecord.submission.ExtractedText;
         const metadataFallback = [
@@ -354,7 +456,7 @@ const SubmissionReview = () => {
         let scoreData = 0;
 
         if (hasSuDungRubrics) {
-          const aiResult = await aiApiService.analyzeReportWithRubrics(textForAI, topic.Rubrics);
+          const aiResult = await aiApiService.analyzeReportWithRubrics(textForAI, topic.Rubrics, jobId);
           aiData = {
             score: aiResult.score,
             feedback: aiResult.feedback,
@@ -373,7 +475,7 @@ const SubmissionReview = () => {
           setScore(scoreData);
         } else {
           const topicReqs = topic?.YeuCau || [];
-          const aiResult = await aiApiService.analyzeReportAI(textForAI, topicReqs);
+          const aiResult = await aiApiService.analyzeReportAI(textForAI, topicReqs, jobId);
           aiData = {
             score: aiResult.score,
             feedback: aiResult.feedback,
@@ -388,7 +490,7 @@ const SubmissionReview = () => {
           setScore(scoreData);
         }
 
-        // Lưu cache
+        // Lưu cache phiên
         if (submissionId) {
           aiCacheRef.current[submissionId] = {
             aiAnalysis: aiData,
@@ -396,7 +498,21 @@ const SubmissionReview = () => {
             rubricsResult: rubricsData,
             gvRubricsScores: gvScoresData,
             workingRecord,
+            llmFeedback: null,      // chưa sinh nhận xét LLM
+            llmProvider: null,
+            useLlmFeedback: false,
           };
+          // Lưu cache bền DB → reload/mở lại không gọi lại PhoBERT (backend bỏ qua nếu không có ExtractedText)
+          aiApiService.saveAiCache(submissionId, {
+            isRubrics: hasSuDungRubrics,
+            score: aiData.score,
+            feedback: aiData.feedback,
+            issues: aiData.issues || [],
+            rubricsResult: rubricsData || undefined,
+            securityFlags: aiData.security_flags || [],
+            repetitionRate: aiData.repetition_rate ?? null,
+            model: aiData.model,
+          }).catch(e => console.warn('Lưu AICache thất bại:', e?.message));
         }
       } catch (err) {
         console.error('AI Analysis failed:', err);
@@ -408,6 +524,7 @@ const SubmissionReview = () => {
         });
         setScore(0);
       } finally {
+        stopProgressPolling();
         setAnalyzing(false);
       }
     }
@@ -417,6 +534,69 @@ const SubmissionReview = () => {
       setProgressSummary(buildProgressSummary(progressRes.data || []));
     } catch (err) {
       console.error('Lỗi lấy tóm tắt tiến độ:', err);
+    }
+  };
+
+  // Toggle nhận xét LLM (Gemini). Gọi API TỐI ĐA 1 lần/bài; sau đó toggle qua lại dùng state/cache.
+  const handleToggleLlm = async (checked) => {
+    setUseLlmFeedback(checked);
+    const submissionId = selectedSubmission?.submission?._id;
+    if (submissionId && aiCacheRef.current[submissionId]) {
+      aiCacheRef.current[submissionId].useLlmFeedback = checked;
+    }
+    // Tắt, hoặc đã có nhận xét LLM (từ DB/cache/lần gọi trước) → KHÔNG gọi lại API
+    if (!checked || llmFeedback) return;
+
+    if (!aiAnalysis) {
+      message.warning('Chưa có kết quả phân tích AI để sinh nhận xét.');
+      setUseLlmFeedback(false);
+      return;
+    }
+
+    try {
+      setLlmLoading(true);
+      const topic = selectedSubmission?.topic;
+      const isRubrics = !!(topic?.SuDungRubrics && rubricsResult.length > 0);
+      const res = await aiApiService.getLlmFeedback({
+        score: aiAnalysis.score,
+        isRubrics,
+        rubricsResult: isRubrics ? (gvRubricsScores.length > 0 ? gvRubricsScores : rubricsResult) : [],
+        issues: aiAnalysis.issues || [],
+        topicName: topic?.TenDeTai || '',
+        phobertFeedback: aiAnalysis.feedback || '',
+      });
+      setLlmFeedback(res.feedback);
+      setLlmProvider(res.provider);
+      if (!res.usedLLM) {
+        message.info('LLM chưa được cấu hình (thiếu API key) — đang hiển thị nhận xét PhoBERT.');
+      }
+      // Lưu cache phiên → đóng/mở lại hoặc toggle qua lại không gọi lại API
+      if (submissionId && aiCacheRef.current[submissionId]) {
+        aiCacheRef.current[submissionId].llmFeedback = res.feedback;
+        aiCacheRef.current[submissionId].llmProvider = res.provider;
+        aiCacheRef.current[submissionId].useLlmFeedback = true;
+      }
+      // Lưu cache bền DB (bài CHƯA chấm) → reload không gọi lại Gemini (tốn phí)
+      if (submissionId && !existingGrade && res.usedLLM) {
+        aiApiService.saveAiCache(submissionId, {
+          isRubrics,
+          score: aiAnalysis.score,
+          feedback: aiAnalysis.feedback,
+          issues: aiAnalysis.issues || [],
+          rubricsResult: (gvRubricsScores.length > 0 ? gvRubricsScores : rubricsResult) || undefined,
+          securityFlags: aiAnalysis.security_flags || [],
+          repetitionRate: aiAnalysis.repetition_rate ?? null,
+          model: aiAnalysis.model,
+          llmFeedback: res.feedback,
+          llmProvider: res.provider,
+        }).catch(e => console.warn('Lưu AICache (LLM) thất bại:', e?.message));
+      }
+    } catch (err) {
+      console.error('LLM feedback failed:', err);
+      message.error('Không sinh được nhận xét LLM. Giữ nhận xét PhoBERT.');
+      setUseLlmFeedback(false);
+    } finally {
+      setLlmLoading(false);
     }
   };
 
@@ -434,15 +614,20 @@ const SubmissionReview = () => {
           ? Number(selectedSubmission.submission?.submissionIndex)
           : null;
 
+      // Nhận xét chính thức = nhận xét LLM nếu GV bật toggle, ngược lại dùng PhoBERT
+      const effectiveFeedback = (useLlmFeedback && llmFeedback) ? llmFeedback : (aiAnalysis?.feedback || "");
+
       const payload = {
         baoCaoId: selectedSubmission.submission._id,
         deTaiId: selectedSubmission.topic._id,
         sinhVienId: selectedSubmission.student._id,
         giangVienId: user.id,
         diem: score,
-        nhanXet: aiAnalysis?.feedback || "",
+        nhanXet: effectiveFeedback,
         aiScore: aiAnalysis?.score || 0,
         aiFeedback: aiAnalysis?.feedback || "",
+        aiLlmFeedback: llmFeedback || undefined,        // cache bền: lưu để mở lại không gọi lại Gemini
+        aiLlmProvider: llmFeedback ? (llmProvider || 'google-gemini') : undefined,
         aiSecurityFlags: aiAnalysis?.security_flags || [],
         aiRepetitionRate: aiAnalysis?.repetition_rate ?? null,
         rubricsResult: gvRubricsScores.length > 0 ? gvRubricsScores : undefined,
@@ -1130,21 +1315,57 @@ const SubmissionReview = () => {
                   <Text strong>PhoBERT AI Phân Tích</Text>
                 </Space>
               }
+              extra={
+                <Tooltip title="Bật để sinh nhận xét tự nhiên bằng LLM (Gemini). Tắt để dùng nhận xét mặc định của PhoBERT.">
+                  <Space size={6}>
+                    <Text style={{ fontSize: 12 }} type="secondary">Nhận xét AI (Gemini)</Text>
+                    <Switch size="small" checked={useLlmFeedback} loading={llmLoading} onChange={handleToggleLlm} />
+                  </Space>
+                </Tooltip>
+              }
               style={{ marginBottom: 20, borderLeft: '3px solid #1677ff' }}
             >
               {analyzing ? (
                 <div style={{ padding: 16, textAlign: 'center' }}>
-                  <Spin size="large" />
-                  <br />
-                  <Text type="secondary" style={{ marginTop: 12, display: 'inline-block' }}>Đang gọi PhoBERT AI...</Text>
-                  <Skeleton active paragraph={{ rows: 2 }} />
+                  <Progress
+                    type="circle"
+                    percent={analyzeProgress?.percent ?? 0}
+                    size={96}
+                    status="active"
+                    strokeColor={{
+                      '0%': '#4285F4',   // Google xanh dương
+                      '33%': '#EA4335',  // đỏ
+                      '66%': '#FBBC05',  // vàng
+                      '100%': '#34A853', // xanh lá
+                    }}
+                  />
+                  <div style={{ marginTop: 12 }}>
+                    <Text type="secondary" style={{ display: 'block' }}>Đang phân tích bằng PhoBERT AI...</Text>
+                    {analyzeProgress?.chunks > 0 && (
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        {analyzeProgress.stage === 'scoring' ? 'Đang chấm tiêu chí' : 'Đang đọc nội dung'}:{' '}
+                        {analyzeProgress.current}/{analyzeProgress.total} phần
+                        {' • '}{analyzeProgress.chunks} chunk
+                        {selectedSubmission?.submission?.PageCount ? ` • ${selectedSubmission.submission.PageCount} trang` : ''}
+                      </Text>
+                    )}
+                  </div>
+                  <Skeleton active paragraph={{ rows: 1 }} style={{ marginTop: 12 }} />
                 </div>
               ) : aiAnalysis ? (
                 <Alert
                   message={`Điểm AI Đánh Giá (Kỹ thuật/Nội dung): ${aiAnalysis.score} / 10`}
                   description={
                     <ul style={{ paddingLeft: 20, margin: 0, marginTop: 8 }}>
-                      <li><Text type="success">Phản Hồi Trọng Tâm:</Text> {aiAnalysis.feedback}</li>
+                      <li>
+                        <Text type="success">Phản Hồi Trọng Tâm:</Text>{' '}
+                        {llmLoading && useLlmFeedback ? (
+                          <Spin size="small" />
+                        ) : (useLlmFeedback && llmFeedback ? llmFeedback : aiAnalysis.feedback)}
+                        {useLlmFeedback && llmFeedback && (
+                          <Tag color="purple" style={{ marginLeft: 6 }}>Gemini</Tag>
+                        )}
+                      </li>
                       {aiAnalysis.issues && aiAnalysis.issues.map((iss, idx) => (
                         <li key={idx}><Text type="danger">Vấn đề rủi ro:</Text> {iss}</li>
                       ))}

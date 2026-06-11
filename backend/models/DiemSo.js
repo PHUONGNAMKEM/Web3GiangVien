@@ -12,7 +12,9 @@ const diemSoSchema = new mongoose.Schema({
   Diem: { type: Number, required: true, min: 0, max: 10 },
   NhanXet: { type: String },
   AI_Score: { type: Number },      // Điểm đánh giá dự kiến từ AI
-  AI_Feedback: { type: String },   // Feedback từ mô hình AI
+  AI_Feedback: { type: String },   // Feedback hard-code từ PhoBERT
+  AI_LLM_Feedback: { type: String },   // Nhận xét sinh bởi LLM (Gemini) — cache bền, mở lại không gọi lại API
+  AI_LLM_Provider: { type: String },   // Nhà cung cấp LLM đã dùng (vd: google-gemini)
   RubricsResult: [{
     TenTieuChi: { type: String },
     TrongSo: { type: Number },

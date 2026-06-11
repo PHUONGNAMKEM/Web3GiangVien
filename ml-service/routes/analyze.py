@@ -6,6 +6,7 @@ from slowapi.util import get_remote_address
 
 from models.phobert_analyzer import PhoBertAnalyzer
 from utils.text_security import scan_injection, check_repetition, check_type_token_ratio
+from utils.progress import get_job
 
 logger = logging.getLogger('ml-service')
 
@@ -17,6 +18,7 @@ limiter = Limiter(key_func=get_remote_address)
 class AnalyzeRequest(BaseModel):
     text: str = Field(..., min_length=10, max_length=300_000)
     topic_requirements: list[str] = Field(default_factory=list, max_items=20)
+    job_id: str | None = Field(default=None, max_length=100)
 
 
 class RubricItem(BaseModel):
@@ -30,6 +32,7 @@ class RubricItem(BaseModel):
 class AnalyzeRubricsRequest(BaseModel):
     text: str = Field(..., min_length=10, max_length=300_000)
     rubrics: list[RubricItem] = Field(..., max_items=20)
+    job_id: str | None = Field(default=None, max_length=100)
 
 
 @router.post("/analyze-report")
@@ -55,7 +58,7 @@ def analyze_report(request: Request, payload: AnalyzeRequest):
         security_flags.append('Từ vựng nghèo, nghi ngờ keyword stuffing')
         
     # Gọi PhoBERT chấm điểm
-    result = analyzer.analyze(payload.text, payload.topic_requirements)
+    result = analyzer.analyze(payload.text, payload.topic_requirements, job_id=payload.job_id)
     
     # Trả thêm thông tin bảo mật
     result['security_flags'] = security_flags
@@ -90,7 +93,7 @@ def analyze_with_rubrics(request: Request, payload: AnalyzeRubricsRequest):
         
     # Gọi PhoBERT chấm điểm
     rubrics_dicts = [r.model_dump() for r in payload.rubrics]
-    result = analyzer.analyze_with_rubrics(payload.text, rubrics_dicts)
+    result = analyzer.analyze_with_rubrics(payload.text, rubrics_dicts, job_id=payload.job_id)
     
     # Trả thêm thông tin bảo mật
     result['security_flags'] = security_flags
@@ -99,3 +102,9 @@ def analyze_with_rubrics(request: Request, payload: AnalyzeRubricsRequest):
     
     logger.info(f"[AI] /analyze-with-rubrics response | score={result.get('score')} | criteria={len(payload.rubrics)} | security_flags={len(security_flags)}")
     return result
+
+
+@router.get("/analyze-progress/{job_id}")
+def analyze_progress(job_id: str):
+    """Trả tiến độ phân tích theo job_id để frontend vẽ thanh % thật. KHÔNG rate-limit (poll liên tục)."""
+    return get_job(job_id)

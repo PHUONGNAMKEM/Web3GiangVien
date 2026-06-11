@@ -183,6 +183,8 @@ const EntranceTest = () => {
       return;
     }
     setSubmitting(true);
+    // Set trước await để socket competition:winner (do server emit trước khi response trả về) không trigger modal sai
+    submittedRef.current = true;
     try {
       const traLoi = [];
       for (let i = 0; i < baiTest.CauHoi.length; i++) {
@@ -196,8 +198,6 @@ const EntranceTest = () => {
         thoiGianBatDau: startTime?.toISOString()
       });
 
-      // Cập nhật ref ngay lập tức trước khi state update để socket handler nhận đúng
-      submittedRef.current = true;
       setSubmitted(true);
       setCompetitionResult(res.competitionResult || res.autoResult);
       setResult({
@@ -213,8 +213,8 @@ const EntranceTest = () => {
 
       if (res.competitionResult === 'winner') {
         message.success({ key: 'win_topic_toast', content: '🏆 Chúc mừng! Nhóm bạn giành được đề tài!', duration: 10 });
-        // Xóa cache đăng ký đề tài để trang /student/register hiển thị đúng trạng thái
-        queryClient.invalidateQueries({ queryKey: ['topic-registration'] });
+        // Xóa hẳn cache để trang /student/register fetch mới hoàn toàn (không dùng invalidate vì sẽ render stale data trước)
+        queryClient.removeQueries({ queryKey: ['topic-registration'] });
       } else if (res.competitionResult === 'waiting') {
         message.info('⏳ Đạt ngưỡng! Đang chờ kết quả nhóm submit trước...');
       } else if (res.competitionResult === 'lost') {
@@ -224,6 +224,7 @@ const EntranceTest = () => {
       }
       queryClient.invalidateQueries({ queryKey: ['entrance-test'] });
     } catch (e) {
+      submittedRef.current = false; // Reset nếu submit thất bại
       message.error(e.response?.data?.error || 'Lỗi nộp bài');
     } finally {
       setSubmitting(false);
@@ -297,7 +298,10 @@ const EntranceTest = () => {
           ))}
 
           <div style={{ display: 'flex', gap: 16, marginTop: 16 }}>
-            <Button type="primary" onClick={() => navigate('/student/register')}>
+            <Button type="primary" onClick={() => {
+              queryClient.removeQueries({ queryKey: ['topic-registration'] });
+              navigate('/student/register');
+            }}>
               Quay lại Đăng Ký Đề Tài
             </Button>
             {result.canRetake && !isDat && (

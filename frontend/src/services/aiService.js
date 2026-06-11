@@ -31,11 +31,18 @@ const aiApiService = {
     },
 
     // Gọi PhoBERT analyze
-    analyzeReportAI: async (text, topicRequirements) => {
+    analyzeReportAI: async (text, topicRequirements, jobId = null) => {
         const response = await axios.post(`${API_URL}/ai/analyze-report`, {
             text,
-            topicRequirements
+            topicRequirements,
+            jobId
         }, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // Lấy tiến độ phân tích PhoBERT theo jobId (thanh % thật)
+    getAnalyzeProgress: async (jobId) => {
+        const response = await axios.get(`${API_URL}/ai/analyze-progress/${jobId}`, { headers: getAuthHeaders() });
         return response.data;
     },
 
@@ -145,6 +152,12 @@ const aiApiService = {
 
     getExtractedText: async (baoCaoId) => {
         const response = await axios.get(`${API_URL}/baocao/${baoCaoId}/extracted`, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // Lưu cache kết quả AI (PhoBERT + LLM) cho bài chưa chấm → reload không gọi lại AI
+    saveAiCache: async (baoCaoId, data) => {
+        const response = await axios.post(`${API_URL}/baocao/${baoCaoId}/ai-cache`, data, { headers: getAuthHeaders() });
         return response.data;
     },
 
@@ -264,8 +277,17 @@ const aiApiService = {
 
     // === AI ANALYZE WITH RUBRICS ===
 
-    analyzeReportWithRubrics: async (text, rubrics) => {
-        const response = await axios.post(`${API_URL}/ai/analyze-rubrics`, { text, rubrics }, { headers: getAuthHeaders() });
+    analyzeReportWithRubrics: async (text, rubrics, jobId = null) => {
+        const response = await axios.post(`${API_URL}/ai/analyze-rubrics`, { text, rubrics, jobId }, { headers: getAuthHeaders() });
+        return response.data;
+    },
+
+    // Sinh nhận xét tự nhiên bằng LLM (Gemini) từ kết quả chấm PhoBERT.
+    // Có fallback về phobertFeedback nếu backend chưa cấu hình key / LLM lỗi.
+    getLlmFeedback: async ({ score, isRubrics, rubricsResult, issues, topicName, phobertFeedback }) => {
+        const response = await axios.post(`${API_URL}/ai/llm-feedback`, {
+            score, isRubrics, rubricsResult, issues, topicName, phobertFeedback
+        }, { headers: getAuthHeaders() });
         return response.data;
     },
 

@@ -30,7 +30,7 @@ const parseBlockchainError = (error, walletAddress = '0x3081F8965F007A78C1502b51
 };
 
 // Tạo 1 bản ghi điểm cho 1 báo cáo + ghi blockchain (best-effort). Bỏ qua nếu đã chấm.
-const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, nhomId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs }) => {
+const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, nhomId, diem, nhanXet, aiScore, aiFeedback, aiLlmFeedback, aiLlmProvider, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs }) => {
     const sinhVienId = baoCao.SinhVien;
     const existing = await DiemSo.findOne({ BaoCao: baoCao._id });
     if (existing) {
@@ -54,6 +54,8 @@ const createGradeForReport = async ({ baoCao, deTaiId, giangVienId, nhomId, diem
         NhanXet: nhanXet,
         AI_Score: aiScore,
         AI_Feedback: aiFeedback,
+        AI_LLM_Feedback: aiLlmFeedback || undefined,
+        AI_LLM_Provider: aiLlmProvider || undefined,
         RubricsResult: rubricsResult || [],
         SubmissionIndex: submissionIndex,
         TrangThaiBlockchain: 'Pending'
@@ -246,7 +248,7 @@ const assertGiangVienOwnsDeTai = async (deTaiId, giangVienId) => {
 
 exports.chamDiem = async (req, res) => {
     try {
-        const { baoCaoId, deTaiId, sinhVienId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs } = req.body;
+        const { baoCaoId, deTaiId, sinhVienId, diem, nhanXet, aiScore, aiFeedback, aiLlmFeedback, aiLlmProvider, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs } = req.body;
         // Danh tính GV chấm lấy từ token (an toàn), không tin body
         const giangVienId = req.user?.id || req.body.giangVienId;
 
@@ -302,7 +304,7 @@ exports.chamDiem = async (req, res) => {
             ]
         });
         const nhomId = dangKy?.Nhom;
-        const gradePayload = { deTaiId, giangVienId, nhomId, diem, nhanXet, aiScore, aiFeedback, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs };
+        const gradePayload = { deTaiId, giangVienId, nhomId, diem, nhanXet, aiScore, aiFeedback, aiLlmFeedback, aiLlmProvider, rubricsResult, aiSecurityFlags, aiRepetitionRate, aiTimeTakenMs };
 
         // Chấm cho báo cáo chính (của thành viên được chọn)
         const primary = await createGradeForReport({ baoCao, ...gradePayload });

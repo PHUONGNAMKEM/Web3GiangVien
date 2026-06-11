@@ -131,6 +131,14 @@ const ClassManagement = () => {
     }
   };
 
+  // Làm mới chi tiết lớp: refetch danh sách SV trong modal + cập nhật badge Sĩ Số ở bảng ngoài
+  const handleRefreshDetail = async () => {
+    if (!detailData?.lopHoc?._id) return;
+    await handleViewDetail({ _id: detailData.lopHoc._id });
+    queryClient.invalidateQueries({ queryKey: ['classes'] });
+    refreshClasses();
+  };
+
   // Mở modal thêm SV → gửi lời mời thay vì add trực tiếp
   const handleOpenAddSv = async () => {
     try {
@@ -508,7 +516,7 @@ const ClassManagement = () => {
                         <Button
                           type="text"
                           icon={<RefreshCw size={14} />}
-                          onClick={() => handleViewDetail({ _id: detailData.lopHoc._id })}
+                          onClick={handleRefreshDetail}
                           loading={detailLoading}
                         >
                           Làm mới

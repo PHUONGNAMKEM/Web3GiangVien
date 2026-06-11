@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Button, Typography, Tag, Badge, message, Row, Col, Modal, Skeleton, Alert, Input, Space, List, Divider, Tooltip, Select } from 'antd';
-import { CheckCircle, Code, Zap, Lock, ListChecks, Users } from 'lucide-react';
+import { CheckCircle, Code, Zap, Lock, ListChecks, Users, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import aiApiService from '../../services/aiService';
 import nhomService from '../../services/nhomService';
@@ -21,7 +21,7 @@ const TopicRegistration = () => {
   const user = authService.getCurrentUser();
   const queryClient = useQueryClient();
 
-  const { data = {}, isLoading: loading } = useQuery({
+  const { data = {}, isLoading: loading, refetch, isFetching } = useQuery({
     queryKey: ['topic-registration', user?.id, selectedClassId],
     queryFn: async () => {
       let result = {
@@ -128,6 +128,8 @@ const TopicRegistration = () => {
       return result;
     },
     enabled: !!(user?.id),
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
   });
 
   const {
@@ -349,12 +351,24 @@ const TopicRegistration = () => {
           }
         `}
       </style>
-      <Typography>
-        <Title level={2}>Đăng Ký Đề Tài</Title>
-        <Paragraph>
-          Hệ thống AI NLP SBERT (Local FastAPI) phân tích hồ sơ chuyên môn của bạn để đối chiếu với yêu cầu kỹ thuật của từng Đề tài, từ đó xếp hạng Topic phù hợp nhất!
-        </Paragraph>
-      </Typography>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+        <Typography>
+          <Title level={2}>Đăng Ký Đề Tài</Title>
+          <Paragraph>
+            Hệ thống AI NLP SBERT (Local FastAPI) phân tích hồ sơ chuyên môn của bạn để đối chiếu với yêu cầu kỹ thuật của từng Đề tài, từ đó xếp hạng Topic phù hợp nhất!
+          </Paragraph>
+        </Typography>
+        <Button
+          icon={<RefreshCw size={16} />}
+          loading={isFetching}
+          onClick={async () => {
+            await refetch();
+            message.success('Đã làm mới danh sách đề tài');
+          }}
+        >
+          Làm mới
+        </Button>
+      </div>
 
       {/* Alert khi chưa có nhóm hoặc nhóm chưa chốt */}
       {!hasAnyRegistration && (!myNhom || !myNhom.DaChot) && (
