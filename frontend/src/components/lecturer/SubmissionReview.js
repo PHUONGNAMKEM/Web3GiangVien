@@ -127,9 +127,31 @@ const SubmissionReview = () => {
   const [alertProgressClosed, setAlertProgressClosed] = useState(false);
   const [alertPdfClosed, setAlertPdfClosed] = useState(false);
   const [alertSecurityClosed, setAlertSecurityClosed] = useState(false);
+  const [readProgressKeys, setReadProgressKeys] = useState(new Set());
+  const [dismissedDrawerWarnings, setDismissedDrawerWarnings] = useState(new Set());
 
   // Cache kết quả AI theo submissionId — tránh gọi lại API khi đóng/mở modal
   const aiCacheRef = useRef({});
+
+  // Track previous pending counts to detect NEW progress → reset read status so dot reappears
+  const prevPendingMapRef = useRef({});
+  useEffect(() => {
+    const prev = prevPendingMapRef.current;
+    const keysToReset = [];
+    for (const key of Object.keys(progressPendingMap)) {
+      if ((progressPendingMap[key] || 0) > (prev[key] || 0)) {
+        keysToReset.push(key);
+      }
+    }
+    if (keysToReset.length > 0) {
+      setReadProgressKeys(prevSet => {
+        const next = new Set(prevSet);
+        keysToReset.forEach(k => next.delete(k));
+        return next;
+      });
+    }
+    prevPendingMapRef.current = { ...progressPendingMap };
+  }, [progressPendingMap]);
 
 
 
@@ -188,6 +210,17 @@ const SubmissionReview = () => {
     const defaultSvId = record.student?._id;
     setActiveProgressStudentId(defaultSvId);
     setProgressDrawerVisible(true);
+    setDismissedDrawerWarnings(new Set());
+    // Mark as read so badge dot disappears
+    const recordKey = getSubmissionKey(record);
+    setReadProgressKeys(prev => new Set(prev).add(recordKey));
+    if (record.members) {
+      setReadProgressKeys(prev => {
+        const next = new Set(prev);
+        record.members.forEach(m => next.add(getSubmissionKey(m)));
+        return next;
+      });
+    }
     await fetchStudentProgress(defaultSvId, record.topic?._id, record);
   };
 
@@ -1002,11 +1035,13 @@ const SubmissionReview = () => {
       width: 260,
       render: (_, record) => {
         const hasPendingProgress = record.members?.some(m => (progressPendingMap[getSubmissionKey(m)] || 0) > 0);
+        const allRead = record.members?.every(m => readProgressKeys.has(getSubmissionKey(m)));
+        const showDot = hasPendingProgress && !allRead;
 
         return (
           <Space size={[8, 8]} wrap>
             <Tooltip title={hasPendingProgress ? 'Có tiến độ chưa đánh giá' : 'Xem tiến độ'}>
-              <Badge dot={hasPendingProgress} offset={[-2, 2]}>
+              <Badge dot={showDot} offset={[-2, 2]}>
                 <Button type="default" icon={<Clock size={16} />} onClick={() => viewProgress(record)}>
                   Tiến Độ
                 </Button>
@@ -1756,13 +1791,32 @@ const SubmissionReview = () => {
                     )}
 
                     {item.CanhBaoTienDo?.length > 0 && (
-                      <div style={{ marginTop: 8, padding: 10, background: '#fff1f0', borderRadius: 6, border: '1px solid #ffccc7' }}>
-                        <Text strong style={{ color: '#a8071a' }}>Cảnh báo:</Text>
-                        <ul style={{ margin: '6px 0 0 18px' }}>
-                          {item.CanhBaoTienDo.map((warn, idx) => (
-                            <li key={idx}><Text>{formatWarningLabel(warn)}</Text></li>
-                          ))}
-                        </ul>
+                      <div style={{ marginTop: 8 }}>
+                        {dismissedDrawerWarnings.has(item._id) ? (
+                          <div
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                            onClick={() => setDismissedDrawerWarnings(prev => { const next = new Set(prev); next.delete(item._id); return next; })}
+                            title="Hiển thị lại cảnh báo"
+                          >
+                            <ExclamationCircleFilled style={{ color: '#ff4d4f', fontSize: 16 }} />
+                            <Text type="danger" style={{ fontSize: 12 }}>Cảnh báo ({item.CanhBaoTienDo.length})</Text>
+                          </div>
+                        ) : (
+                          <Alert
+                            type="error"
+                            showIcon
+                            closable
+                            onClose={() => setDismissedDrawerWarnings(prev => new Set(prev).add(item._id))}
+                            message="Cảnh báo"
+                            description={
+                              <ul style={{ margin: 0, paddingLeft: 16 }}>
+                                {item.CanhBaoTienDo.map((warn, idx) => (
+                                  <li key={idx}><Text>{formatWarningLabel(warn)}</Text></li>
+                                ))}
+                              </ul>
+                            }
+                          />
+                        )}
                       </div>
                     )}
 

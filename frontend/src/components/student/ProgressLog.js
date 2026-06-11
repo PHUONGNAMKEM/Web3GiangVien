@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Typography, List, Tag, Button, Spin, Modal, Form, Input, InputNumber, message, AutoComplete, DatePicker, Collapse, Alert, Divider, Space } from 'antd';
+import { ExclamationCircleFilled } from '@ant-design/icons';
 import { PlusCircle, Clock, CheckCircle } from 'lucide-react';
 import aiApiService from '../../services/aiService';
 import authService from '../../services/authService';
@@ -31,6 +32,7 @@ const ProgressLog = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [editingLog, setEditingLog] = useState(null);
+    const [dismissedWarnings, setDismissedWarnings] = useState(new Set());
     const [form] = Form.useForm();
 
     const user = authService.getCurrentUser();
@@ -382,13 +384,27 @@ const ProgressLog = () => {
                         )}
 
                         {Array.isArray(item.CanhBaoTienDo) && item.CanhBaoTienDo.length > 0 && (
-                            <Alert
-                                style={{ marginTop: 12 }}
-                                type="warning"
-                                showIcon
-                                message="Cảnh báo tiến độ"
-                                description={item.CanhBaoTienDo.map(formatWarningLabel).join(', ')}
-                            />
+                            <div style={{ marginTop: 12 }}>
+                                {dismissedWarnings.has(item._id) ? (
+                                    <div
+                                        style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
+                                        onClick={() => setDismissedWarnings(prev => { const next = new Set(prev); next.delete(item._id); return next; })}
+                                        title="Hiển thị lại cảnh báo tiến độ"
+                                    >
+                                        <ExclamationCircleFilled style={{ color: '#faad14', fontSize: 16 }} />
+                                        <span style={{ color: '#d48806', fontSize: 12 }}>Cảnh báo tiến độ ({item.CanhBaoTienDo.length})</span>
+                                    </div>
+                                ) : (
+                                    <Alert
+                                        type="warning"
+                                        showIcon
+                                        closable
+                                        onClose={() => setDismissedWarnings(prev => new Set(prev).add(item._id))}
+                                        message="Cảnh báo tiến độ"
+                                        description={item.CanhBaoTienDo.map(formatWarningLabel).join(', ')}
+                                    />
+                                )}
+                            </div>
                         )}
 
                         {Array.isArray(item.RubricsTuan) && item.RubricsTuan.length > 0 && (

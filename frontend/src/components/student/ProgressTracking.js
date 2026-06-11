@@ -37,7 +37,10 @@ const ProgressTracking = () => {
             try {
               const diemRes = await aiApiService.getDiemBySinhVien(user.id);
               if (diemRes && diemRes.length > 0) {
-                const topicGrade = diemRes.find(g => (g.DeTai?._id || g.DeTai).toString() === deTaiId.toString());
+                const topicGrade = diemRes.find(g => {
+                  const gDeTaiId = g.DeTai?._id || g.DeTai;
+                  return gDeTaiId && deTaiId && String(gDeTaiId) === String(deTaiId);
+                });
                 if (topicGrade) {
                   result.finalGrade = topicGrade;
                 }
