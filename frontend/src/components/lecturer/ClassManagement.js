@@ -231,7 +231,7 @@ const ClassManagement = () => {
         handleViewDetail({ _id: detailData.lopHoc._id });
       }
     } catch (err) {
-      message.error('Lỗi hủy lời mời');
+      message.error(err?.response?.data?.message || 'Lỗi hủy lời mời');
     }
   };
 
@@ -259,7 +259,9 @@ const ClassManagement = () => {
         queryClient.invalidateQueries({ queryKey: ['classes'] });
       }
     } catch (err) {
-      message.error('Lỗi xóa sinh viên khỏi lớp');
+      // Hiển thị rõ lý do bị chặn (đã đăng ký đề tài / đã có điểm)
+      const msg = err?.response?.data?.message || 'Lỗi xóa sinh viên khỏi lớp';
+      message.error(msg, 6);
     }
   };
 

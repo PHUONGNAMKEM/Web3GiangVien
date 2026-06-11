@@ -3,6 +3,7 @@ const SinhVien = require('../models/SinhVien');
 const DangKyDeTai = require('../models/DangKyDeTai');
 const DeTai = require('../models/DeTai');
 const Nhom = require('../models/Nhom');
+const DiemSo = require('../models/DiemSo');
 const logger = require('../config/logger');
 
 const _lopHocCache = new Map();
@@ -217,6 +218,44 @@ exports.removeSinhVien = async (req, res) => {
     const lopHoc = await LopHoc.findById(id);
     if (!lopHoc) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy lớp học' });
+    }
+
+    // === Hướng 2: CHẶN xóa nếu SV đã vướng ràng buộc trong môn học của lớp này ===
+    // Lấy danh sách đề tài thuộc lớp (fallback theo môn học cho dữ liệu cũ)
+    let classTopics = await DeTai.find({ LopHoc: id }).select('_id');
+    if (classTopics.length === 0) {
+      classTopics = await DeTai.find({ MonHoc: lopHoc.MonHoc }).select('_id');
+    }
+    const topicIds = classTopics.map(t => t._id);
+
+    if (topicIds.length > 0) {
+      // 1) Đã đăng ký / tham gia / làm bài test đề tài (mọi trạng thái)
+      const dangKy = await DangKyDeTai.findOne({
+        DeTai: { $in: topicIds },
+        $or: [
+          { SinhVien: svId },
+          { TruongNhom: svId },
+          { 'ThanhVien.SinhVien': svId },
+        ],
+      }).populate('DeTai', 'TenDeTai');
+
+      if (dangKy) {
+        return res.status(409).json({
+          success: false,
+          code: 'SV_DA_DANG_KY_DETAI',
+          message: `Không thể xóa sinh viên: đã đăng ký/tham gia đề tài "${dangKy.DeTai?.TenDeTai || ''}" trong môn học của lớp này. Vui lòng hủy đăng ký đề tài của sinh viên trước, rồi mới xóa khỏi lớp.`,
+        });
+      }
+
+      // 2) Đã có điểm (đã/đang ghi trên blockchain — không được xóa)
+      const diem = await DiemSo.findOne({ DeTai: { $in: topicIds }, SinhVien: svId });
+      if (diem) {
+        return res.status(409).json({
+          success: false,
+          code: 'SV_DA_CO_DIEM',
+          message: 'Không thể xóa sinh viên: đã được chấm điểm trong môn học của lớp này. Dữ liệu điểm đã/đang lưu trên blockchain nên không thể xóa khỏi lớp.',
+        });
+      }
     }
 
     lopHoc.SinhVien = lopHoc.SinhVien.filter(s => !s.equals(svId));
