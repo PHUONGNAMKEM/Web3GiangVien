@@ -392,7 +392,7 @@ const TopicRegistration = () => {
       )}
 
       {selectedClassId === 'KHOA_LUAN' && activeRegistrations.length > 0 && !registeredTopicId && (
-        <Card title="🏆 Các đề tài khóa luận bạn đang cạnh tranh" style={{ marginBottom: 24, border: '1px solid #1677ff', background: '#f0f5ff' }}>
+        <Card title="🏆 Các đề tài khóa luận bạn đang cạnh tranh" style={{ marginBottom: 24, border: '1px solid #1677ff', background: 'var(--bg-primary-tint-2)' }}>
           <List
             dataSource={activeRegistrations}
             renderItem={reg => (
@@ -449,7 +449,7 @@ const TopicRegistration = () => {
       )}
 
       {hasAnyRegistration && fullRegistration && (
-        <Card style={{ marginBottom: 24, border: '1px solid #91caff', background: '#e6f4ff' }}>
+        <Card style={{ marginBottom: 24, border: '1px solid var(--border-primary)', background: 'var(--bg-primary-tint)' }}>
           <Space direction="vertical" style={{ width: '100%' }}>
             <Alert
               message={registrationStatus === 'DaDuyet' ? 'Đề tài đã được Giảng viên Duyệt!' : 'Bạn đã đăng ký đề tài'}
@@ -491,7 +491,7 @@ const TopicRegistration = () => {
 
             {/* Thông tin nhóm sinh viên */}
             {fullRegistration.DeTai?.SoLuongSinhVien > 1 && (
-              <div style={{ marginTop: 16, background: '#fff', padding: 16, borderRadius: 8 }}>
+              <div style={{ marginTop: 16, background: 'var(--bg-container)', padding: 16, borderRadius: 8 }}>
                 <Title level={5}>Thành Viên Nhóm ({fullRegistration.ThanhVien?.length || 1} / {fullRegistration.DeTai.SoLuongSinhVien})</Title>
                 <List
                   itemLayout="horizontal"
@@ -610,7 +610,7 @@ const TopicRegistration = () => {
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  border: thisRegistered ? '2px solid #52c41a' : (topic.isRecommended ? '2px solid #1677ff' : '1px solid #f0f0f0'),
+                  border: thisRegistered ? '2px solid #52c41a' : (topic.isRecommended ? '2px solid #1677ff' : '1px solid var(--border-subtle)'),
                   boxShadow: thisRegistered ? '0 4px 12px rgba(82, 196, 26, 0.2)' : (topic.isRecommended ? '0 4px 12px rgba(22, 119, 255, 0.15)' : 'none'),
                   opacity: (disabled && !thisRegistered) || sizeMismatch ? 0.6 : 1
                 }}
@@ -691,7 +691,7 @@ const TopicRegistration = () => {
                     ))}
                   </div>
                 </div>
-                <div style={{ marginTop: 16, borderTop: '1px solid #f0f0f0', paddingTop: 12 }}>
+                <div style={{ marginTop: 16, borderTop: '1px solid var(--border-subtle)', paddingTop: 12 }}>
                   <Text strong>
                     Độ Tương Thích (AI SBERT Match):
                     <Tag color={topic.isRecommended ? 'success' : 'warning'} style={{ marginLeft: 8 }}>

@@ -300,8 +300,8 @@ const EntranceTestManager = () => {
                           return (
                             <div key={cIdx} style={{
                               padding: '4px 8px', marginBottom: 2, borderRadius: 4,
-                              background: isCorrect ? '#f6ffed' : 'transparent',
-                              border: isCorrect ? '1px solid #b7eb8f' : '1px solid #f0f0f0'
+                              background: isCorrect ? 'var(--bg-success-tint)' : 'transparent',
+                              border: isCorrect ? '1px solid var(--border-subtle)' : '1px solid var(--border-subtle)'
                             }}>
                               <Tag color={isCorrect ? 'green' : 'default'}>{letter}</Tag>
                               {lc}

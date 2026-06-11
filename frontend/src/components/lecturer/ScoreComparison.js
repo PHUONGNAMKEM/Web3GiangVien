@@ -250,9 +250,9 @@ const ScoreComparison = () => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <Card size="small" style={{ border: '1px solid #d9d9d9', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
+        <Card size="small" style={{ border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
           <div style={{ fontWeight: 'bold', marginBottom: 4 }}>{data.fullName}</div>
-          <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>MSSV: {data.maSV}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>MSSV: {data.maSV}</div>
           <div style={{ fontSize: 12, marginBottom: 4 }}>
             Đề tài: <span style={{ color: '#555' }}>{data.topicName}</span>
           </div>
@@ -273,9 +273,9 @@ const ScoreComparison = () => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <Card size="small" style={{ border: '1px solid #e8e8e8', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <Card size="small" style={{ border: '1px solid var(--border-subtle)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
           <div style={{ fontWeight: 'bold' }}>{data.fullName}</div>
-          <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>Sản lượng: {data.count} sinh viên</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>Sản lượng: {data.count} sinh viên</div>
           <div style={{ fontSize: 13, color: '#eb2f96', fontWeight: 'bold', marginTop: 4 }}>TB Điểm GV: {data.value}</div>
           <div style={{ fontSize: 11, color: '#1890ff', marginTop: 4 }}>Nhấp để lọc nhanh lớp này</div>
         </Card>
@@ -288,10 +288,10 @@ const ScoreComparison = () => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <Card size="small" style={{ border: '1px solid #e8e8e8', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <Card size="small" style={{ border: '1px solid var(--border-subtle)', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
           <div style={{ fontWeight: 'bold', color: data.color }}>{data.name}</div>
           <div style={{ fontSize: 13, fontWeight: 'bold', marginTop: 4 }}>Số lượng: {data.value} SV</div>
-          <div style={{ fontSize: 12, color: '#666' }}>Tỷ lệ: {Math.round((data.value / (displayStats.totalGraded || 1)) * 100)}%</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Tỷ lệ: {Math.round((data.value / (displayStats.totalGraded || 1)) * 100)}%</div>
         </Card>
       );
     }
@@ -424,22 +424,22 @@ const ScoreComparison = () => {
             gap: '12px', 
             marginBottom: '24px' 
           }}>
-            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+            <Card bordered={false} style={{ height: '100%', background: 'var(--grad-blue)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                  <div style={{ padding: '6px', background: 'var(--bg-glass)', borderRadius: '8px', display: 'flex' }}>
                     <Users size={18} color="#1677ff" />
                   </div>
                   <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>Sinh viên</Text>
                 </div>
-                <Text style={{ fontSize: '24px', fontWeight: 400, color: '#000' }}>{displayStats.totalGraded || 0}</Text>
+                <Text style={{ fontSize: '24px', fontWeight: 400, color: 'var(--text)' }}>{displayStats.totalGraded || 0}</Text>
               </div>
             </Card>
 
-            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #fff0f6 0%, #ffd6e7 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+            <Card bordered={false} style={{ height: '100%', background: 'var(--grad-pink)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                  <div style={{ padding: '6px', background: 'var(--bg-glass)', borderRadius: '8px', display: 'flex' }}>
                     <Award size={18} color="#eb2f96" />
                   </div>
                   <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>TB Điểm GV</Text>
@@ -448,10 +448,10 @@ const ScoreComparison = () => {
               </div>
             </Card>
 
-            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #f9f0ff 0%, #e8d0ff 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+            <Card bordered={false} style={{ height: '100%', background: 'var(--grad-purple)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                  <div style={{ padding: '6px', background: 'var(--bg-glass)', borderRadius: '8px', display: 'flex' }}>
                     <BrainCircuit size={18} color="#722ed1" />
                   </div>
                   <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>TB Điểm AI</Text>
@@ -460,10 +460,10 @@ const ScoreComparison = () => {
               </div>
             </Card>
 
-            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #fffbe6 0%, #ffe58f 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+            <Card bordered={false} style={{ height: '100%', background: 'var(--grad-gold)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                  <div style={{ padding: '6px', background: 'var(--bg-glass)', borderRadius: '8px', display: 'flex' }}>
                     <TrendingUp size={18} color="#faad14" />
                   </div>
                   <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>TB Chênh Lệch</Text>
@@ -472,10 +472,10 @@ const ScoreComparison = () => {
               </div>
             </Card>
 
-            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+            <Card bordered={false} style={{ height: '100%', background: 'var(--grad-green)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                  <div style={{ padding: '6px', background: 'var(--bg-glass)', borderRadius: '8px', display: 'flex' }}>
                     <ShieldCheck size={18} color="#52c41a" />
                   </div>
                   <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>Khớp (±0.5)</Text>
@@ -487,10 +487,10 @@ const ScoreComparison = () => {
               </div>
             </Card>
 
-            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #fff2e8 0%, #ffbb96 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+            <Card bordered={false} style={{ height: '100%', background: 'var(--grad-orange)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                  <div style={{ padding: '6px', background: 'var(--bg-glass)', borderRadius: '8px', display: 'flex' }}>
                     <TrendingUp size={18} color="#fa541c" />
                   </div>
                   <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>GV cao hơn</Text>
@@ -499,10 +499,10 @@ const ScoreComparison = () => {
               </div>
             </Card>
 
-            <Card bordered={false} style={{ height: '100%', background: 'linear-gradient(135deg, #f0f5ff 0%, #adc6ff 100%)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
+            <Card bordered={false} style={{ height: '100%', background: 'var(--grad-geekblue)', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }} bodyStyle={{ padding: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ padding: '6px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', display: 'flex' }}>
+                  <div style={{ padding: '6px', background: 'var(--bg-glass)', borderRadius: '8px', display: 'flex' }}>
                     <TrendingDown size={18} color="#2f54eb" />
                   </div>
                   <Text type="secondary" style={{ fontSize: '13px', fontWeight: 500, lineHeight: 1.2 }}>AI cao hơn</Text>
@@ -781,7 +781,7 @@ const ScoreComparison = () => {
             {selectedRecord.rubricsDetail?.length > 0 && (
               <Card size="small" title={`Rubrics Chi Tiết (${selectedRecord.rubricsDetail.length} tiêu chí)`} style={{ borderRadius: '8px' }}>
                 {selectedRecord.rubricsDetail.map((r, idx) => (
-                  <div key={idx} style={{ padding: '8px 0', borderBottom: idx < selectedRecord.rubricsDetail.length - 1 ? '1px solid #f0f0f0' : 'none' }}>
+                  <div key={idx} style={{ padding: '8px 0', borderBottom: idx < selectedRecord.rubricsDetail.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                       <Space>
                         <Text strong>{r.criteria}</Text>

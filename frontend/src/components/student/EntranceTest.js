@@ -287,7 +287,7 @@ const EntranceTest = () => {
 
           <Title level={5} style={{ marginTop: 16 }}>Chi tiết từng câu</Title>
           {(result.TraLoi || []).map((tl, i) => (
-            <div key={i} style={{ padding: '8px 12px', marginBottom: 4, background: tl.DungSai ? '#f6ffed' : (tl.AI_Similarity >= 0.65 ? '#e6f7ff' : '#fff2f0'), borderRadius: 6, border: '1px solid #f0f0f0' }}>
+            <div key={i} style={{ padding: '8px 12px', marginBottom: 4, background: tl.DungSai ? '#f6ffed' : (tl.AI_Similarity >= 0.65 ? '#e6f7ff' : '#fff2f0'), borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
               <Space>
                 <Tag color={tl.LoaiCauHoi === 'TracNghiem' ? 'blue' : 'purple'}>{tl.LoaiCauHoi}</Tag>
                 <Text>Câu {i + 1}:</Text>
@@ -408,7 +408,7 @@ const EntranceTest = () => {
               <Space direction="vertical">
                 {(q.LuaChon || []).map((choice, cIdx) => (
                   <Radio key={cIdx} value={String.fromCharCode(65 + cIdx)}
-                    style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #f0f0f0', width: '100%' }}>
+                    style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border-subtle)', width: '100%' }}>
                     {choice || `Lựa chọn ${String.fromCharCode(65 + cIdx)}`}
                   </Radio>
                 ))}

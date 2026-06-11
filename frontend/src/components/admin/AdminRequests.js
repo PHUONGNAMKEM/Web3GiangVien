@@ -324,7 +324,7 @@ const AdminRequests = () => {
         </span>
       ),
       children: (
-        <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div style={{ background: 'var(--bg-container)', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
           <Title level={5} style={{ marginBottom: 16 }}>
             Yêu cầu cấp quyền Giảng viên đang chờ duyệt ({requests.length})
           </Title>
@@ -351,7 +351,7 @@ const AdminRequests = () => {
         </span>
       ),
       children: (
-        <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div style={{ background: 'var(--bg-container)', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
             <Title level={5} style={{ margin: 0 }}>
               Lịch sử yêu cầu đã xử lý ({historyPagination.total})

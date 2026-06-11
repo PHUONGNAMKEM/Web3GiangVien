@@ -199,7 +199,7 @@ const CourseManagement = () => {
             expandedRowRender: (record) => {
               const subjectTopics = getTopicsForMonHoc(record._id);
               return (
-                <div style={{ padding: '12px 24px', background: '#fafafa', borderRadius: 8 }}>
+                <div style={{ padding: '12px 24px', background: 'var(--bg-subtle)', borderRadius: 8 }}>
                   <Typography.Title level={5} style={{ margin: '0 0 12px 0', color: '#1677ff', fontSize: '14px' }}>
                     Danh Sách Đề Tài Thuộc Môn Học ({subjectTopics.length})
                   </Typography.Title>
@@ -239,7 +239,7 @@ const CourseManagement = () => {
                           width: 180,
                           render: (_, topicRecord) => {
                             const gv = topicRecord.GiangVienHuongDan;
-                            return <Text strong style={{ color: '#595959' }}>{gv?.HoTen || 'N/A'}</Text>;
+                            return <Text strong style={{ color: 'var(--text-secondary)' }}>{gv?.HoTen || 'N/A'}</Text>;
                           }
                         },
                         {

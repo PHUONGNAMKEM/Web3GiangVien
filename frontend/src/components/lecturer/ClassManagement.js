@@ -319,7 +319,7 @@ const ClassManagement = () => {
       key: 'GiangVien',
       render: (gv) => {
         if (!gv) return '—';
-        return <Text strong style={{ color: '#595959' }}>{gv.HoTen || gv.MaGV || '—'}</Text>;
+        return <Text strong style={{ color: 'var(--text-secondary)' }}>{gv.HoTen || gv.MaGV || '—'}</Text>;
       },
     },
     {

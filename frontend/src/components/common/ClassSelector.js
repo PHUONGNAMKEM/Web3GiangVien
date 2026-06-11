@@ -7,24 +7,23 @@ import { useLecturerClassContext } from '../../contexts/LecturerClassContext';
 
 const { Option } = Select;
 
-// Định nghĩa CSS styles premium riêng cho Khóa Luận - Tông màu trắng đen đồng nhất
+// Style nổi bật cho Option Khóa Luận trong dropdown — theo light/dark qua CSS variables
 const customStyles = `
-  /* Style nổi bật, premium cho Option Khóa Luận trong danh sách dropdown */
   .ant-select-dropdown .khoa-luan-option {
     font-weight: normal !important;
-    color: #000000 !important;
-    background-color: #ffffff !important;
-    border-top: 1.5px dashed #d9d9d9 !important;
-    border-bottom: 1.5px dashed #d9d9d9 !important;
+    color: var(--text) !important;
+    background-color: var(--bg-container) !important;
+    border-top: 1.5px dashed var(--border) !important;
+    border-bottom: 1.5px dashed var(--border) !important;
     padding-top: 8px !important;
     padding-bottom: 8px !important;
     margin-bottom: 4px !important;
     transition: all 0.2s ease !important;
   }
-  
+
   .ant-select-dropdown .khoa-luan-option:hover {
-    background-color: #f5f5f5 !important;
-    color: #000000 !important;
+    background-color: var(--bg-subtle) !important;
+    color: var(--text) !important;
   }
 `;
 

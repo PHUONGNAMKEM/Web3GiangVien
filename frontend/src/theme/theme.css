@@ -1,0 +1,90 @@
+/*
+ * CSS variables cho light/dark mode.
+ * Giá trị dark bám theo bảng token chuẩn của antd darkAlgorithm
+ * (colorBgContainer #141414, colorPrimaryBg #111a2c, colorSuccessBg #162312, ...).
+ * Inline style trong component dùng var(--xxx) nên tự đổi khi data-theme thay đổi.
+ */
+:root {
+  /* Nền */
+  --bg-container: #ffffff;
+  --bg-subtle: #fafafa;
+  --bg-glass: rgba(255, 255, 255, 0.6);
+
+  /* Nền nhuốm màu trạng thái (tint) */
+  --bg-primary-tint: #e6f4ff;
+  --bg-primary-tint-2: #f0f5ff;
+  --bg-success-tint: #f6ffed;
+  --bg-warning-tint: #fffbe6;
+  --bg-error-tint: #fff1f0;
+  --bg-purple-tint: #f9f0ff;
+
+  /* Viền */
+  --border-subtle: #f0f0f0;
+  --border: #d9d9d9;
+  --border-primary: #91caff;
+  --border-purple: #d3adf7;
+  --border-error: #ffccc7;
+
+  /* Chữ */
+  --text: rgba(0, 0, 0, 0.88);
+  --text-secondary: #595959;
+  --text-tertiary: #8c8c8c;
+
+  /* Gradient pastel cho stat card */
+  --grad-blue: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+  --grad-geekblue: linear-gradient(135deg, #f0f5ff 0%, #adc6ff 100%);
+  --grad-green: linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%);
+  --grad-gold: linear-gradient(135deg, #fffbe6 0%, #ffe58f 100%);
+  --grad-orange: linear-gradient(135deg, #fff2e8 0%, #ffbb96 100%);
+  --grad-pink: linear-gradient(135deg, #fff0f6 0%, #ffd6e7 100%);
+  --grad-purple: linear-gradient(135deg, #f9f0ff 0%, #e8d0ff 100%);
+}
+
+[data-theme='dark'] {
+  /* Nền */
+  --bg-container: #141414;
+  --bg-subtle: #1f1f1f;
+  --bg-glass: rgba(255, 255, 255, 0.08);
+
+  /* Nền nhuốm màu trạng thái */
+  --bg-primary-tint: #111a2c;
+  --bg-primary-tint-2: #131629;
+  --bg-success-tint: #162312;
+  --bg-warning-tint: #2b2611;
+  --bg-error-tint: #2c1618;
+  --bg-purple-tint: #1a1325;
+
+  /* Viền */
+  --border-subtle: #303030;
+  --border: #424242;
+  --border-primary: #15395b;
+  --border-purple: #3e2069;
+  --border-error: #58181c;
+
+  /* Chữ */
+  --text: rgba(255, 255, 255, 0.85);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-tertiary: rgba(255, 255, 255, 0.45);
+
+  /* Gradient tối tương ứng */
+  --grad-blue: linear-gradient(135deg, #111d2c 0%, #112a45 100%);
+  --grad-geekblue: linear-gradient(135deg, #131629 0%, #161d40 100%);
+  --grad-green: linear-gradient(135deg, #162312 0%, #1d3712 100%);
+  --grad-gold: linear-gradient(135deg, #2b2611 0%, #443b11 100%);
+  --grad-orange: linear-gradient(135deg, #2b1d11 0%, #442a11 100%);
+  --grad-pink: linear-gradient(135deg, #291321 0%, #40162f 100%);
+  --grad-purple: linear-gradient(135deg, #1a1325 0%, #301c4d 100%);
+}
+
+/* Logo PNG chữ xanh đậm — trong dark mode đổi thành trắng để đọc được trên sidebar tối
+   (không dùng nền trắng vì trông chói). brightness(0) → đen, invert(1) → trắng. */
+[data-theme='dark'] .app-logo-box img {
+  filter: brightness(0) invert(1);
+}
+
+/* Bỏ đường viền phải mặc định của antd inline Menu — nó bắt đầu từ dưới logo nên
+   tạo vạch 1px lệch ở cạnh sidebar (thấy rõ ở cả light & dark). Sider tự lo cạnh. */
+.ant-menu-inline,
+.ant-menu-vertical {
+  border-inline-end: none !important;
+}

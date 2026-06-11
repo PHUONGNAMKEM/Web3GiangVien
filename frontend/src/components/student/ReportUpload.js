@@ -193,7 +193,7 @@ const ReportUpload = () => {
       </Typography>
 
       {registration ? (
-        <Card style={{ marginBottom: 16, borderLeft: isApproved ? '4px solid #52c41a' : '4px solid #faad14', background: isApproved ? '#f6ffed' : '#fffbe6' }}>
+        <Card style={{ marginBottom: 16, borderLeft: isApproved ? '4px solid #52c41a' : '4px solid #faad14', background: isApproved ? 'var(--bg-success-tint)' : 'var(--bg-warning-tint)' }}>
           <Space direction="vertical" size={4}>
             <Space style={{ display: 'flex', alignItems: 'center' }}>
               <BookOpen style={{ verticalAlign: 'middle' }} size={18} color={isApproved ? '#52c41a' : '#faad14'} />
@@ -279,7 +279,7 @@ const ReportUpload = () => {
               {isBaoCaoExpired && (
                 <Alert message="Đã quá hạn nộp báo cáo" description="Thời gian nộp báo cáo đã kết thúc, bạn không thể nộp thêm." type="error" showIcon style={{ marginBottom: 16 }} />
               )}
-              <Dragger {...props} height={isMobile ? 180 : 250} style={{ padding: isMobile ? 12 : 24, background: '#fafafa' }} disabled={!isApproved || isBaoCaoExpired}>
+              <Dragger {...props} height={isMobile ? 180 : 250} style={{ padding: isMobile ? 12 : 24, background: 'var(--bg-subtle)' }} disabled={!isApproved || isBaoCaoExpired}>
                 <p className="ant-upload-drag-icon" style={{ marginBottom: 16 }}>
                   <UploadCloud size={64} color={isApproved && !isBaoCaoExpired ? "#1677ff" : "#d9d9d9"} style={{ opacity: 0.8 }} />
                 </p>

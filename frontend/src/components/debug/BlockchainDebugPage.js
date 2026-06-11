@@ -315,10 +315,10 @@ const BlockchainDebugPage = () => {
               <div
                 key={`${item.timestamp}-${index}`}
                 style={{
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: 6,
                   padding: 10,
-                  background: '#fafafa'
+                  background: 'var(--bg-subtle)'
                 }}
               >
                 <Space direction="vertical" size={4} style={{ width: '100%' }}>
@@ -350,7 +350,7 @@ const BlockchainDebugPage = () => {
         .custom-inner-table .ant-table {
           margin-inline: 0 !important;
           margin-block: 0 !important;
-          border-top: 1px solid #f0f0f0 !important;
+          border-top: 1px solid var(--border-subtle) !important;
         }
       `}</style>
       <div style={{ maxWidth: 1180, margin: '0 auto' }}>

@@ -2,9 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { ConfigProvider, theme as antdTheme } from 'antd';
 import App from './App';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { AppThemeProvider, useAppTheme } from './contexts/ThemeContext';
+import './theme/theme.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -255,13 +258,31 @@ const web3Theme = createTheme({
   },
 });
 
+// Bọc antd ConfigProvider theo light/dark từ ThemeContext.
+// MUI ThemeProvider (web3Theme) giữ nguyên — trang Login là thiết kế dark aurora cố định.
+const ThemedApp = () => {
+  const { isDark } = useAppTheme();
+  return (
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: { colorPrimary: '#1677ff' },
+      }}
+    >
+      <App />
+    </ConfigProvider>
+  );
+};
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={web3Theme}>
         <CssBaseline />
-        <App />
+        <AppThemeProvider>
+          <ThemedApp />
+        </AppThemeProvider>
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
     </QueryClientProvider>

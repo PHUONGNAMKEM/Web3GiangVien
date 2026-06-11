@@ -110,8 +110,8 @@ function QrAuthentication({ user }) {
   }
 
   return (
-    <Card 
-      style={{ height: '100%', borderRadius: 8, border: '1px solid #f0f0f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
+    <Card
+      style={{ height: '100%', borderRadius: 8, border: '1px solid var(--border-subtle)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
       bodyStyle={{ padding: 24 }}
     >
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
@@ -137,9 +137,9 @@ function QrAuthentication({ user }) {
             alignItems: 'center',
             justifyContent: 'center',
             padding: 16,
-            border: '1px dashed #d9d9d9',
+            border: '1px dashed var(--border)',
             borderRadius: 8,
-            backgroundColor: '#fafafa',
+            backgroundColor: 'var(--bg-subtle)',
             position: 'relative'
           }}>
             {generating ? (

@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Layout, Menu, Button, Avatar, theme, Dropdown, Badge, message } from 'antd';
-import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award, ClipboardList, BarChart2, School, Users, GraduationCap, Bell, ShieldCheck } from 'lucide-react';
+import { BookOpen, LogOut, FileText, User as UserIcon, Monitor, CheckCircle, Award, ClipboardList, BarChart2, School, Users, GraduationCap, Bell, ShieldCheck, Moon, Sun } from 'lucide-react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import authService from '../../services/authService';
+import { useAppTheme } from '../../contexts/ThemeContext';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { useIsMobile } from '../../hooks/useResponsive';
@@ -13,6 +14,7 @@ const { Header, Content, Sider } = Layout;
 
 const MainLayout = () => {
   const isMobile = useIsMobile();
+  const { isDark, toggleTheme } = useAppTheme();
   const { token: { colorBgContainer, borderRadiusLG } } = theme.useToken();
   const navigate = useNavigate();
   const location = useLocation();
@@ -174,20 +176,19 @@ const MainLayout = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider 
-        collapsible 
-        collapsed={collapsed} 
-        onCollapse={(value) => setCollapsed(value)} 
-        theme="light"
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={(value) => setCollapsed(value)}
+        theme={isDark ? 'dark' : 'light'}
         style={{ overflow: 'auto', height: '100vh', position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100 }}
       >
-        <div style={{ 
-          height: 136, 
-          padding: '16px 8px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          borderInlineEnd: '1px solid rgba(5, 5, 5, 0.06)'
+        <div className="app-logo-box" style={{
+          height: 136,
+          padding: '16px 8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}>
           <img
             src="/LOGOWeb3GiangVien.png"
@@ -201,7 +202,7 @@ const MainLayout = () => {
           />
         </div>
         <Menu
-          theme="light"
+          theme={isDark ? 'dark' : 'light'}
           mode="inline"
           selectedKeys={[location.pathname]}
           items={menuItems}
@@ -213,6 +214,14 @@ const MainLayout = () => {
           <div style={{ display: 'flex', alignItems: 'center' }}>
             {!isAdmin && <ClassSelector />}
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Button
+            type="text"
+            onClick={toggleTheme}
+            title={isDark ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
+            icon={isDark ? <Sun size={18} /> : <Moon size={18} />}
+            style={{ height: 48, width: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+          />
           <Dropdown menu={{
             items: [
               { key: 'wallet', label: `Ví: ${currentUser?.walletAddress?.substring(0, 6)}...` },
@@ -227,6 +236,7 @@ const MainLayout = () => {
               {!collapsed && <span>{currentUser?.name || 'Tài khoản'}</span>}
             </Button>
           </Dropdown>
+          </div>
         </Header>
         <Content style={{ margin: isMobile ? '12px 8px' : '24px 16px', padding: isMobile ? 12 : 24, minHeight: 280, background: colorBgContainer, borderRadius: borderRadiusLG }}>
           {/* Output nested routes here */}

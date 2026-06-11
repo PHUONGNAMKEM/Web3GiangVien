@@ -232,7 +232,7 @@ const StudentManagement = () => {
       <Card bordered={false}>
         <div style={{ marginBottom: 16 }}>
           <Input
-            prefix={<Search size={16} style={{ color: '#bfbfbf' }} />}
+            prefix={<Search size={16} style={{ color: 'var(--text-tertiary)' }} />}
             placeholder="Tìm kiếm theo Mã SV, Họ tên, Email, Chuyên ngành, Lớp, Môn, Ví..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}

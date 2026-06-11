@@ -223,7 +223,7 @@ const StudentDashboard = () => {
           description={`Trưởng nhóm: ${inv.SinhVien?.HoTen} (${inv.SinhVien?.MaSV}). Bạn có muốn tham gia không?`}
           type="info"
           showIcon
-          style={{ marginBottom: 24, border: '1px solid #1677ff', background: '#e6f4ff' }}
+          style={{ marginBottom: 24, border: '1px solid #1677ff', background: 'var(--bg-primary-tint)' }}
           action={
             <Space direction="vertical">
               <Button size="small" type="primary" style={{ minWidth: 90 }} onClick={() => handleRespondInvitation(inv._id, true)}>
@@ -250,7 +250,7 @@ const StudentDashboard = () => {
           description={`Môn học: ${inv.LopHoc?.MonHoc?.TenMonHoc || '—'} | Giảng viên: ${inv.GiangVien?.HoTen || '—'}`}
           type="warning"
           showIcon
-          style={{ marginBottom: 24, border: '1px solid #faad14', background: '#fffbe6' }}
+          style={{ marginBottom: 24, border: '1px solid #faad14', background: 'var(--bg-warning-tint)' }}
           action={
             <Space direction="vertical">
               <Button size="small" type="primary" style={{ minWidth: 90 }} onClick={() => handleRespondClassInvite(inv._id, true)}>
@@ -360,7 +360,7 @@ const StudentDashboard = () => {
                 )}
 
                 {grade.NhanXet && (
-                  <div style={{ marginTop: 8, padding: 8, background: '#f6ffed', borderRadius: 6, borderLeft: '3px solid #52c41a' }}>
+                  <div style={{ marginTop: 8, padding: 8, background: 'var(--bg-success-tint)', borderRadius: 6, borderLeft: '3px solid #52c41a' }}>
                     <Text type="secondary" style={{ fontSize: 12 }}>Nhận xét GV: </Text>
                     <Text style={{ fontSize: 12 }}>{grade.NhanXet}</Text>
                   </div>
@@ -388,7 +388,7 @@ const StudentDashboard = () => {
               </div>
             ) : registration?.TrangThai === 'DaDuyet' ? (
               <div>
-                <Statistic title="Điểm Số On-chain" value="Chưa Tích Lũy" valueStyle={{ fontSize: 16, color: '#8c8c8c' }} />
+                <Statistic title="Điểm Số On-chain" value="Chưa Tích Lũy" valueStyle={{ fontSize: 16, color: 'var(--text-tertiary)' }} />
                 <Paragraph style={{ marginTop: 8 }}><Text type="warning">Đang thực hiện đồ án</Text></Paragraph>
                 {progressCount > 0 && progressAverage != null && (
                   <Paragraph style={{ marginTop: 8 }}>
@@ -423,11 +423,11 @@ const StudentDashboard = () => {
                       <Tag color="purple">{lop.siSo || 0} SV</Tag>
                     </div>
                     <div style={{ fontSize: 13, marginTop: 4 }}>
-                      <span style={{ color: '#8c8c8c' }}>Môn học: </span>
+                      <span style={{ color: 'var(--text-tertiary)' }}>Môn học: </span>
                       <Text>{lop.MonHoc?.TenMonHoc || '—'}</Text>
                     </div>
                     <div style={{ fontSize: 13, marginTop: 2 }}>
-                      <span style={{ color: '#8c8c8c' }}>Giảng viên: </span>
+                      <span style={{ color: 'var(--text-tertiary)' }}>Giảng viên: </span>
                       <Text>{lop.GiangVien?.HoTen || '—'}</Text>
                     </div>
                     {idx < myClasses.length - 1 && <Divider style={{ margin: '10px 0' }} />}
@@ -435,7 +435,7 @@ const StudentDashboard = () => {
                 ))}
               </div>
             ) : (
-              <div style={{ textAlign: 'center', padding: '24px 0', color: '#8c8c8c' }}>
+              <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-tertiary)' }}>
                 Chưa tham gia lớp học nào.
               </div>
             )}
@@ -541,7 +541,7 @@ const StudentDashboard = () => {
               const kyNangList = getFieldValue('KyNang') || [];
               if (kyNangList.length === 0) return null;
               return (
-                <div style={{ marginTop: 16, marginBottom: 24, padding: 16, background: '#f5f5f5', borderRadius: 8 }}>
+                <div style={{ marginTop: 16, marginBottom: 24, padding: 16, background: 'var(--bg-subtle)', borderRadius: 8 }}>
                   <div style={{ marginBottom: 12, fontWeight: 500 }}>Nhập điểm cho từng kỹ năng:</div>
                   {kyNangList.map(skill => (
                     <Space key={skill} style={{ display: 'flex', marginBottom: 8 }} align="baseline">

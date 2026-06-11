@@ -273,7 +273,7 @@ const RubricsManagement = () => {
           scroll={{ x: 'max-content' }}
           expandable={{
             expandedRowRender: record => (
-              <div style={{ padding: '8px 24px', background: '#fafafa', borderRadius: 8 }}>
+              <div style={{ padding: '8px 24px', background: 'var(--bg-subtle)', borderRadius: 8 }}>
                 {record.MoTaMau && <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>{record.MoTaMau}</Text>}
                 <div style={{ overflowX: 'auto' }}>
                   <Table
@@ -343,7 +343,7 @@ const RubricsManagement = () => {
 
           {tieuChiList.map((tc, index) => (
             <div key={index} style={{
-              padding: 12, marginBottom: 12, border: '1px solid #f0f0f0', borderRadius: 8, background: '#fafafa'
+              padding: 12, marginBottom: 12, border: '1px solid var(--border-subtle)', borderRadius: 8, background: 'var(--bg-subtle)'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <Text strong>Tiêu chí {index + 1}</Text>

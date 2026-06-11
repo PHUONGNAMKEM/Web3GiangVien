@@ -254,7 +254,7 @@ const GroupManagement = () => {
       {!nhom && (
         <Card style={{ textAlign: 'center', padding: 40 }}>
           <Empty
-            image={<Users size={64} style={{ color: '#bfbfbf' }} />}
+            image={<Users size={64} style={{ color: 'var(--text-tertiary)' }} />}
             description={<Text type="secondary">Bạn chưa có nhóm nào</Text>}
           >
             <Button type="primary" size="large" icon={<UserPlus size={18} />}
@@ -430,7 +430,7 @@ const GroupManagement = () => {
           </div>
           <div>
             <Text strong>Lớp học áp dụng:</Text>
-            <div style={{ marginTop: 8, padding: '8px 12px', background: '#f5f5f5', borderRadius: 4, border: '1px solid #d9d9d9' }}>
+            <div style={{ marginTop: 8, padding: '8px 12px', background: 'var(--bg-subtle)', borderRadius: 4, border: '1px solid var(--border)' }}>
               <Text strong style={{ color: '#722ed1' }}>
                 {selectedClass ? `${selectedClass.MaLopHoc} - ${selectedClass.TenLopHoc}` : 'Chưa chọn lớp học'}
               </Text>

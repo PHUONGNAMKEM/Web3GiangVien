@@ -301,13 +301,13 @@ const ProgressLog = () => {
             )}
 
             {hasBaoCao && (
-                <Card style={{ marginBottom: 24, borderLeft: '4px solid #1677ff', background: '#e6f4ff' }}>
+                <Card style={{ marginBottom: 24, borderLeft: '4px solid #1677ff', background: 'var(--bg-primary-tint)' }}>
                     <Text>Đã nộp báo cáo — không thể cập nhật tiến độ nữa. Nếu muốn cập nhật lại, hãy hủy nộp bài ở trang <strong>Nộp Báo Cáo</strong>.</Text>
                 </Card>
             )}
 
             {!isApproved && (
-                <Card style={{ marginBottom: 24, borderLeft: '4px solid #faad14', background: '#fffbe6' }}>
+                <Card style={{ marginBottom: 24, borderLeft: '4px solid #faad14', background: 'var(--bg-warning-tint)' }}>
                     <Text>Bạn chưa có đề tài được duyệt. Hãy đăng ký đề tài để bắt đầu cập nhật tiến độ.</Text>
                 </Card>
             )}
@@ -427,7 +427,7 @@ const ProgressLog = () => {
                         )}
 
                         {item.NhanXetGV && (
-                            <div style={{ marginTop: 16, padding: 12, background: '#f6ffed', borderRadius: 6, borderLeft: '4px solid #52c41a' }}>
+                            <div style={{ marginTop: 16, padding: 12, background: 'var(--bg-success-tint)', borderRadius: 6, borderLeft: '4px solid #52c41a' }}>
                                 <Text strong style={{ color: '#389e0d' }}>Giảng viên nhận xét:</Text>
                                 <Paragraph style={{ margin: '8px 0 0 0' }}>{item.NhanXetGV}</Paragraph>
                             </div>
@@ -480,7 +480,7 @@ const ProgressLog = () => {
                                 )}
 
                                 {item.NhanXetGV && (
-                                    <div style={{ marginTop: 16, padding: 12, background: '#f6ffed', borderRadius: 6, borderLeft: '4px solid #52c41a' }}>
+                                    <div style={{ marginTop: 16, padding: 12, background: 'var(--bg-success-tint)', borderRadius: 6, borderLeft: '4px solid #52c41a' }}>
                                         <Text strong style={{ color: '#389e0d' }}>Giảng viên nhận xét:</Text>
                                         <Paragraph style={{ margin: '8px 0 0 0' }}>{item.NhanXetGV}</Paragraph>
                                     </div>

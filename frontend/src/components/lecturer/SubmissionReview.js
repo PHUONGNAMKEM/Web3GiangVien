@@ -1200,7 +1200,7 @@ const SubmissionReview = () => {
         scroll={{ x: 'max-content' }}
         expandable={{
           expandedRowRender: (record) => (
-            <div style={{ padding: '8px 16px', background: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+            <div style={{ padding: '8px 16px', background: 'var(--bg-subtle)', borderRadius: 8, border: '1px solid var(--border-subtle)' }}>
               <Title level={5} style={{ marginBottom: 12, color: '#1677ff' }}>👥 Danh Sách Thành Viên Nhóm</Title>
               <Table
                 columns={memberColumns}
@@ -1246,7 +1246,7 @@ const SubmissionReview = () => {
 
             {/* Nút Download / Xem file IPFS */}
             {selectedSubmission.submission?.IPFS_CID && (
-              <div style={{ marginBottom: 16, padding: 12, background: '#fafafa', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+              <div style={{ marginBottom: 16, padding: 12, background: 'var(--bg-subtle)', borderRadius: 8, border: '1px solid var(--border-subtle)' }}>
                 <Space>
                   <Button
                     type="primary"
@@ -1428,7 +1428,7 @@ const SubmissionReview = () => {
                 }
                 style={{ marginBottom: 20, borderLeft: '3px solid #fa8c16' }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, background: '#fafafa', padding: 12, borderRadius: 6, marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, background: 'var(--bg-subtle)', padding: 12, borderRadius: 6, marginBottom: 12 }}>
                   <div>
                     <Text type="secondary">Tổng số tuần</Text>
                     <div><Text strong style={{ fontSize: 16 }}>{progressSummary.totalWeeks}</Text></div>
@@ -1501,8 +1501,8 @@ const SubmissionReview = () => {
               >
                 {gvRubricsScores.map((criteria, idx) => (
                   <div key={idx} style={{
-                    padding: 12, marginBottom: 8, background: '#fafafa', borderRadius: 6,
-                    border: '1px solid #f0f0f0'
+                    padding: 12, marginBottom: 8, background: 'var(--bg-subtle)', borderRadius: 6,
+                    border: '1px solid var(--border-subtle)'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                       <Space>
@@ -1543,7 +1543,7 @@ const SubmissionReview = () => {
                   </div>
                 ))}
 
-                <div style={{ textAlign: 'right', marginTop: 12, padding: 12, background: '#fafafa', borderRadius: 6, border: '1px solid #f0f0f0' }}>
+                <div style={{ textAlign: 'right', marginTop: 12, padding: 12, background: 'var(--bg-subtle)', borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
                   <Text strong style={{ color: '#722ed1', fontSize: 14 }}>
                     Tổng điểm (trọng số): <span style={{ fontSize: 16 }}>{score}</span> / 10
                   </Text>
@@ -1560,7 +1560,7 @@ const SubmissionReview = () => {
                 {
                   title: 'Nhập Điểm Chấm Thực Tế',
                   description: (
-                    <div style={{ marginTop: 12, padding: 16, border: '1px dashed #d9d9d9', borderRadius: 8, background: '#fff' }}>
+                    <div style={{ marginTop: 12, padding: 16, border: '1px dashed #d9d9d9', borderRadius: 8, background: 'var(--bg-container)' }}>
                       <Text strong style={{ marginRight: 16 }}>Điểm Số Ghi On-chain:</Text>
                       <InputNumber
                         min={0} max={10} step={0.1}
@@ -1624,7 +1624,7 @@ const SubmissionReview = () => {
 
                                 {/* MỚI: Section danh sách thành viên nhóm */}
                                 {isGroupTopic && groupMembers.length > 0 && (
-                                  <div style={{ padding: 12, background: '#fafafa', borderRadius: 8, marginBottom: 16, border: '1px solid #f0f0f0' }}>
+                                  <div style={{ padding: 12, background: 'var(--bg-subtle)', borderRadius: 8, marginBottom: 16, border: '1px solid var(--border-subtle)' }}>
                                     <Space style={{ marginBottom: 4 }}>
                                       <Users size={14} color="#52c41a" />
                                       <Text strong>Điểm các thành viên trong nhóm</Text>
@@ -1647,7 +1647,7 @@ const SubmissionReview = () => {
                                   </div>
                                 )}
 
-                                <Descriptions column={1} size="small" bordered style={{ background: '#fafafa', borderRadius: 8 }}>
+                                <Descriptions column={1} size="small" bordered style={{ background: 'var(--bg-subtle)', borderRadius: 8 }}>
                                   <Descriptions.Item label="Điểm GV chấm">
                                     <Text strong style={{ color: '#eb2f96', fontSize: 16 }}>{selectedSubmission.grade?.Diem || score}</Text>
                                   </Descriptions.Item>
@@ -1745,7 +1745,7 @@ const SubmissionReview = () => {
               <div style={{ marginBottom: 20 }}>
                 <Title level={5} style={{ marginBottom: 12 }}>Tiến độ theo tuần</Title>
                 {groupedProgressLogs.weekly.map(item => (
-                  <div key={item._id} style={{ marginBottom: 16, padding: '16px', border: '1px solid #e8e8e8', borderRadius: '8px' }}>
+                  <div key={item._id} style={{ marginBottom: 16, padding: '16px', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                       <Space size={[8, 6]} wrap>
                         <Tag color="geekblue">Tuần {item.TuanSo}</Tag>
@@ -1823,7 +1823,7 @@ const SubmissionReview = () => {
                     <Divider style={{ margin: '12px 0' }} />
                     <Space direction="vertical" style={{ width: '100%' }}>
                       {item.NhanXetGV ? (
-                        <div style={{ padding: 8, background: '#f6ffed', borderRadius: 4 }}>
+                        <div style={{ padding: 8, background: 'var(--bg-success-tint)', borderRadius: 4 }}>
                           <Text strong style={{ color: '#389e0d' }}>Nhận xét GV: </Text>
                           <Text>{item.NhanXetGV}</Text>
                         </div>
@@ -1841,7 +1841,7 @@ const SubmissionReview = () => {
               <div>
                 <Title level={5} style={{ marginBottom: 12 }}>Cập nhật khác</Title>
                 {groupedProgressLogs.legacy.map(item => (
-                  <div key={item._id} style={{ marginBottom: 16, padding: '16px', border: '1px solid #e8e8e8', borderRadius: '8px' }}>
+                  <div key={item._id} style={{ marginBottom: 16, padding: '16px', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
                       <Space size={[8, 6]} wrap>
                         <Tag color="cyan">{item.LoaiCapNhat}</Tag>
@@ -1863,7 +1863,7 @@ const SubmissionReview = () => {
                     <Divider style={{ margin: '12px 0' }} />
 
                     {item.NhanXetGV ? (
-                      <div style={{ padding: 8, background: '#f6ffed', borderRadius: 4 }}>
+                      <div style={{ padding: 8, background: 'var(--bg-success-tint)', borderRadius: 4 }}>
                         <Text strong style={{ color: '#389e0d' }}>Đã nhận xét: </Text>
                         <Text>{item.NhanXetGV}</Text>
                       </div>
@@ -1921,7 +1921,7 @@ const SubmissionReview = () => {
             {weeklyTarget.KeHoachTuanSau && <Paragraph><Text strong>Kế hoạch tuần sau:</Text> {weeklyTarget.KeHoachTuanSau}</Paragraph>}
 
             {weeklyWarnings?.length > 0 && (
-              <div style={{ marginBottom: 12, padding: 10, background: '#fff1f0', borderRadius: 6, border: '1px solid #ffccc7' }}>
+              <div style={{ marginBottom: 12, padding: 10, background: 'var(--bg-error-tint)', borderRadius: 6, border: '1px solid var(--border-error)' }}>
                 <Text strong style={{ color: '#a8071a' }}>Cảnh báo:</Text>
                 <ul style={{ margin: '6px 0 0 18px' }}>
                   {weeklyWarnings.map((warn, idx) => (
@@ -1971,7 +1971,7 @@ const SubmissionReview = () => {
               />
             )}
             {weeklyRubrics.map((criteria, idx) => (
-              <div key={idx} style={{ padding: 12, marginBottom: 8, background: '#fafafa', borderRadius: 6, border: '1px solid #f0f0f0' }}>
+              <div key={idx} style={{ padding: 12, marginBottom: 8, background: 'var(--bg-subtle)', borderRadius: 6, border: '1px solid var(--border-subtle)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <Space>
                     <Text strong>{criteria.TenTieuChi}</Text>
@@ -2011,7 +2011,7 @@ const SubmissionReview = () => {
                 />
               </div>
             ))}
-            <div style={{ textAlign: 'right', marginTop: 8, padding: 8, background: '#f0f5ff', borderRadius: 6 }}>
+            <div style={{ textAlign: 'right', marginTop: 8, padding: 8, background: 'var(--bg-primary-tint-2)', borderRadius: 6 }}>
               <Text strong style={{ color: '#1d39c4', fontSize: 14 }}>
                 Điểm tuần (rubrics): {weeklyScore} / 10
               </Text>

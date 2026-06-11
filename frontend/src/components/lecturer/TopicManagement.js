@@ -431,7 +431,7 @@ const TopicManagement = () => {
       render: (_, record) => {
         const gv = record.GiangVienHuongDan;
         if (!gv) return '—';
-        return <Text strong style={{ color: '#595959' }}>{gv.HoTen || 'N/A'}</Text>;
+        return <Text strong style={{ color: 'var(--text-secondary)' }}>{gv.HoTen || 'N/A'}</Text>;
       },
     },
     {
@@ -585,7 +585,7 @@ const TopicManagement = () => {
             const approvedReg = topicRegs.find(r => r.TrangThai === 'DaDuyet');
 
             return (
-              <div style={{ padding: '16px 24px', background: '#fafafa', borderRadius: 8, border: '1px solid #e8e8e8' }}>
+              <div style={{ padding: '16px 24px', background: 'var(--bg-subtle)', borderRadius: 8, border: '1px solid var(--border-subtle)' }}>
                 <Row gutter={[24, 24]}>
                   {/* Cột trái: Chi tiết đề tài */}
                   <Col xs={24} lg={12}>
@@ -605,7 +605,7 @@ const TopicManagement = () => {
                         </Button>
                       )}
                     </div>
-                    <Descriptions size="small" column={1} bordered style={{ background: '#fff' }}>
+                    <Descriptions size="small" column={1} bordered style={{ background: 'var(--bg-container)' }}>
                       <Descriptions.Item label={<strong>Mã đề tài</strong>}>
                         <Tag color="blue">{record.MaDeTai}</Tag>
                       </Descriptions.Item>
@@ -613,21 +613,21 @@ const TopicManagement = () => {
                         <Text strong style={{ color: '#1677ff' }}>{record.GiangVienHuongDan?.HoTen || '—'}</Text>
                       </Descriptions.Item>
                       <Descriptions.Item label={<strong>Mô tả cốt lõi</strong>}>
-                        {record.MoTa || <span style={{ color: '#aaa' }}>Không có</span>}
+                        {record.MoTa || <span style={{ color: 'var(--text-tertiary)' }}>Không có</span>}
                       </Descriptions.Item>
                       <Descriptions.Item label={<strong>Mô tả chi tiết</strong>}>
                         {record.MoTaChiTiet ? (
                           <Paragraph style={{ whiteSpace: 'pre-wrap', margin: 0, fontSize: 13 }}>
                             {record.MoTaChiTiet}
                           </Paragraph>
-                        ) : <span style={{ color: '#aaa' }}>Không có</span>}
+                        ) : <span style={{ color: 'var(--text-tertiary)' }}>Không có</span>}
                       </Descriptions.Item>
                       <Descriptions.Item label={<strong>Yêu cầu / Tech Stack</strong>}>
                         <Space wrap size={4}>
                           {(record.YeuCau || []).map(req => (
                             <Tag key={req} color="blue" style={{ margin: 0 }}>{req}</Tag>
                           ))}
-                          {(record.YeuCau || []).length === 0 && <span style={{ color: '#aaa' }}>Không có</span>}
+                          {(record.YeuCau || []).length === 0 && <span style={{ color: 'var(--text-tertiary)' }}>Không có</span>}
                         </Space>
                       </Descriptions.Item>
                       <Descriptions.Item label={<strong>Lớp học & Môn học</strong>}>
@@ -659,7 +659,7 @@ const TopicManagement = () => {
 
                     {/* Rubrics nếu có */}
                     {record.SuDungRubrics && record.Rubrics && record.Rubrics.length > 0 && (
-                      <div style={{ padding: 12, background: '#faf0ff', border: '1px solid #d3adf7', borderRadius: 8, marginTop: 16 }}>
+                      <div style={{ padding: 12, background: 'var(--bg-purple-tint)', border: '1px solid var(--border-purple)', borderRadius: 8, marginTop: 16 }}>
                         <Text strong style={{ color: '#722ed1', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                           <NotebookText size={16} /> Rubrics chấm điểm
                         </Text>
@@ -704,7 +704,7 @@ const TopicManagement = () => {
 
                     <List
                       dataSource={topicRegs}
-                      style={{ background: '#fff', padding: '0 16px', borderRadius: 8, border: '1px solid #e8e8e8' }}
+                      style={{ background: 'var(--bg-container)', padding: '0 16px', borderRadius: 8, border: '1px solid var(--border-subtle)' }}
                       renderItem={(reg) => {
                         const trangThaiColor = {
                           'ChoDuyet': 'orange', 'ChoTest': 'gold', 'DangLamTest': 'processing',
@@ -997,7 +997,7 @@ const TopicManagement = () => {
           </div>
 
           {suDungRubrics && (
-            <div style={{ padding: 16, border: '1px solid #d3adf7', borderRadius: 8, background: '#faf0ff' }}>
+            <div style={{ padding: 16, border: '1px solid var(--border-purple)', borderRadius: 8, background: 'var(--bg-purple-tint)' }}>
               {/* Chọn nguồn Rubrics */}
               <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
@@ -1055,8 +1055,8 @@ const TopicManagement = () => {
               {/* Danh sách tiêu chí */}
               {rubricsTieuChi.map((tc, index) => (
                 <div key={index} style={{
-                  padding: 10, marginBottom: 10, border: '1px solid #f0f0f0',
-                  borderRadius: 6, background: '#fff'
+                  padding: 10, marginBottom: 10, border: '1px solid var(--border-subtle)',
+                  borderRadius: 6, background: 'var(--bg-container)'
                 }}>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'center' }}>
                     <div style={{ flex: 2 }}>

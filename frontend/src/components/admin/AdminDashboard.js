@@ -115,7 +115,7 @@ const AdminDashboard = () => {
         </Col>
       </Row>
 
-      <div style={{ background: '#fff', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+      <div style={{ background: 'var(--bg-container)', padding: 24, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
         <Title level={5} style={{ marginBottom: 16 }}>
           Danh sách Giảng viên đã duyệt ({lecturers.length})
         </Title>
