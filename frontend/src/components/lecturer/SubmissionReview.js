@@ -127,16 +127,36 @@ const SubmissionReview = () => {
   const [alertProgressClosed, setAlertProgressClosed] = useState(false);
   const [alertPdfClosed, setAlertPdfClosed] = useState(false);
   const [alertSecurityClosed, setAlertSecurityClosed] = useState(false);
-  const [readProgressKeys, setReadProgressKeys] = useState(new Set());
+  // Đã đọc tiến độ → persist localStorage để icon đỏ KHÔNG hiện lại sau khi reload trang
+  const readProgressLSKey = `read-progress-${user?.id || 'anon'}`;
+  const [readProgressKeys, setReadProgressKeys] = useState(() => {
+    try {
+      const raw = localStorage.getItem(`read-progress-${authService.getCurrentUser()?.id || 'anon'}`);
+      return new Set(raw ? JSON.parse(raw) : []);
+    } catch {
+      return new Set();
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(readProgressLSKey, JSON.stringify([...readProgressKeys]));
+    } catch { /* ignore quota */ }
+  }, [readProgressKeys, readProgressLSKey]);
   const [dismissedDrawerWarnings, setDismissedDrawerWarnings] = useState(new Set());
 
   // Cache kết quả AI theo submissionId — tránh gọi lại API khi đóng/mở modal
   const aiCacheRef = useRef({});
 
-  // Track previous pending counts to detect NEW progress → reset read status so dot reappears
-  const prevPendingMapRef = useRef({});
+  // Track previous pending counts to detect NEW progress → reset read status so dot reappears.
+  // null = chưa có baseline; lần đầu có dữ liệu chỉ ghi baseline, KHÔNG reset (giữ trạng thái đã đọc từ localStorage).
+  const prevPendingMapRef = useRef(null);
   useEffect(() => {
     const prev = prevPendingMapRef.current;
+    const isEmpty = Object.keys(progressPendingMap).length === 0;
+    if (prev === null) {
+      if (!isEmpty) prevPendingMapRef.current = { ...progressPendingMap };
+      return; // không reset ở lần khởi tạo → tránh xóa nhầm trạng thái đã đọc đã lưu
+    }
     const keysToReset = [];
     for (const key of Object.keys(progressPendingMap)) {
       if ((progressPendingMap[key] || 0) > (prev[key] || 0)) {
@@ -680,8 +700,14 @@ const SubmissionReview = () => {
         TxHash: response?.data?.TxHash || null
       };
 
-      // Update state locally so the modal shows as "graded"
-      const updatedSubmission = { ...selectedSubmission, status: 'DaCham', grade: gradeData };
+      // Update state locally so the modal shows as "graded".
+      // Cập nhật luôn grade cho từng thành viên → "Điểm các thành viên trong nhóm" hiện ngay, không cần đóng/mở lại modal
+      const updatedMembers = (selectedSubmission.members || []).map(m => ({
+        ...m,
+        status: 'DaCham',
+        grade: { ...(m.grade || {}), ...gradeData, Diem: gradeData.Diem },
+      }));
+      const updatedSubmission = { ...selectedSubmission, status: 'DaCham', grade: gradeData, members: updatedMembers };
       setSelectedSubmission(updatedSubmission);
 
       // Cập nhật trạng thái chấm điểm đồng bộ cho tất cả thành viên trong nhóm
@@ -1647,7 +1673,7 @@ const SubmissionReview = () => {
                                   </div>
                                 )}
 
-                                <Descriptions column={1} size="small" bordered style={{ background: 'var(--bg-subtle)', borderRadius: 8 }}>
+                                <Descriptions className="grade-desc" column={1} size="small" bordered style={{ background: 'var(--bg-subtle)', borderRadius: 8 }}>
                                   <Descriptions.Item label="Điểm GV chấm">
                                     <Text strong style={{ color: '#eb2f96', fontSize: 16 }}>{selectedSubmission.grade?.Diem || score}</Text>
                                   </Descriptions.Item>

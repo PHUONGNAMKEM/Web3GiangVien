@@ -88,3 +88,12 @@
 .ant-menu-vertical {
   border-inline-end: none !important;
 }
+
+/* Bảng điểm trong modal chấm: cột nhãn cố định, không bị bóp 1 ký tự/dòng khi nhận xét dài */
+.grade-desc .ant-descriptions-item-label {
+  width: 150px;
+  white-space: nowrap;
+}
+.grade-desc .ant-descriptions-item-content {
+  word-break: break-word;
+}

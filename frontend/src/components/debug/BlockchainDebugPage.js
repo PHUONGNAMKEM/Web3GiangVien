@@ -334,7 +334,17 @@ const BlockchainDebugPage = () => {
                   <Text copyable={{ text: item.studentDID }} type="secondary"><Text strong>Student DID:</Text> {shortenHash(item.studentDID)}</Text>
                   <Text copyable={{ text: item.topicId }} type="secondary"><Text strong>Topic ID:</Text> {shortenHash(item.topicId)}</Text>
                   <Text copyable={{ text: item.ipfsCID }} type="secondary"><Text strong>IPFS CID:</Text> {shortenHash(item.ipfsCID)}</Text>
-                  <Text><Text strong>Feedback:</Text> {item.feedback || '-'}</Text>
+                  <div>
+                    <Text strong>Feedback: </Text>
+                    {item.feedback ? (
+                      <Paragraph
+                        style={{ margin: 0 }}
+                        ellipsis={{ rows: 2, expandable: true, symbol: 'xem thêm' }}
+                      >
+                        {item.feedback}
+                      </Paragraph>
+                    ) : <Text type="secondary">-</Text>}
+                  </div>
                 </Space>
               </div>
             ))}
