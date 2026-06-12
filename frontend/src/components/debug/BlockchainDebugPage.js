@@ -339,7 +339,11 @@ const BlockchainDebugPage = () => {
                     {item.feedback ? (
                       <Paragraph
                         style={{ margin: 0 }}
-                        ellipsis={{ rows: 2, expandable: true, symbol: 'xem thêm' }}
+                        ellipsis={{
+                          rows: 2,
+                          expandable: 'collapsible',
+                          symbol: (expanded) => (expanded ? 'Thu gọn' : 'Xem thêm'),
+                        }}
                       >
                         {item.feedback}
                       </Paragraph>
@@ -592,7 +596,7 @@ const BlockchainDebugPage = () => {
                     expandable={{
                       expandedRowRender: (record) => (
                         <Space direction="vertical" size={10} style={{ width: '100%' }}>
-                          <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
+                          <Descriptions bordered size="small" column={{ xs: 1, sm: 2, md: 3, lg: 3, xl: 3, xxl: 3 }}>
                             <Descriptions.Item label="Student ID">
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Text>{record.student?.id}</Text>
