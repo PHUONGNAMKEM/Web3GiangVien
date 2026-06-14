@@ -250,7 +250,7 @@ app.get('/api/baocao/sinhvien/:svId', baoCaoController.getMyBaoCao);
 app.delete('/api/baocao/:id', ...requireStudent, baoCaoController.deleteBaoCao);
 app.get('/api/baocao/giangvien/:gvId', ...requireLecturer, baoCaoController.getBaoCaoByLecturer);
 app.get('/api/baocao/:id/extracted', ...requireAuth, baoCaoController.getExtractedText);
-app.post('/api/baocao/:id/ai-cache', ...requireLecturer, baoCaoController.saveAiCache);
+app.post('/api/baocao/:id/ai-cache', ...requireAuth, baoCaoController.saveAiCache);
 
 // 7. Điểm Số
 app.post('/api/diemso', ...requireLecturer, aiLimiter, diemSoController.chamDiem);
@@ -266,6 +266,9 @@ app.get('/api/blockchain/thesis/db-records', ...requireLecturer, blockchainContr
 app.get('/api/blockchain/thesis/topic/:topicId', ...requireLecturer, blockchainController.getThesisTopic);
 app.get('/api/blockchain/thesis/submissions', ...requireLecturer, blockchainController.getThesisSubmissions);
 app.post('/api/blockchain/backfill-tx', ...requireLecturer, blockchainController.backfillTxHashes);
+
+// 7.2. Blockchain route cho SINH VIEN — chi tra ban ghi cua chinh minh (studentId tu JWT)
+app.get('/api/blockchain/my-records', ...requireStudent, blockchainController.getMyThesisRecords);
 
 // 8. Tiến Độ
 app.post('/api/tiendo', ...requireStudent, tienDoController.createProgressEntry);

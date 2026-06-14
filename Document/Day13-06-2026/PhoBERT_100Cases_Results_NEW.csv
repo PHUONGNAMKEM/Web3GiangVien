@@ -1,0 +1,120 @@
+﻿case,name,score,expected,predicted,result,response_ms,feedback,repetition_rate,security_flags
+Ca 1,Ca 1 - 1-nghien-cuu-li-luan-ve-he-thong-quan-li-hoc-tap-truc-tuyen-... (MATCH),6.0,MATCH (1),MATCH (1),True Positive (TP),11118.0,Nội dung đạt yêu cầu.,0.011,1
+Ca 2,Ca 2 - 2-do-an-2-he-thong-diem-danh-nhan-dien-khuon-mat-voi-rfid.pd... (MATCH),7.89,MATCH (1),MATCH (1),True Positive (TP),11313.6,Nội dung đạt yêu cầu.,0.031,1
+Ca 3,Ca 3 - 3-do-an-mon-nhap-mon-ung-dung-di-dong-quan-ly-chi-tieu-ca-nh... (MATCH),7.67,MATCH (1),MATCH (1),True Positive (TP),9354.1,Nội dung đạt yêu cầu.,0,0
+Ca 4,Ca 4 - 4-khoa-luan-tot-nghiep-xay-dung-phan-mem-quan-ly-nhan-su-sua... (MATCH),8.96,MATCH (1),MATCH (1),True Positive (TP),8485.9,Nội dung đạt yêu cầu.,0.044,0
+Ca 5,Ca 5 - 5-de-tai-nhap-mon-khoa-hoc-du-lieu-2024-phan-tich-du-lieu-ma... (MATCH),5.0,MATCH (1),MISMATCH (0),False Negative (FN),5923.9,Cần cải thiện: Báo cáo thiếu các kiến thức chuyên môn cốt lõi của đề tài.,0,0
+Ca 6,Ca 6 - 6-tong-hop-de-tai-khoa-luan-tot-nghiep-ve-an-toan-thong-tin-... (MATCH),5.35,MATCH (1),MATCH (1),True Positive (TP),9551.0,Cần cải thiện: Phát hiện nội dung lặp lại (33%) — kiểm tra copy-paste.,0.31,2
+Ca 7,Ca 7 - 7-luan-van-tot-nghiep-he-thong-giam-sat-nha-kinh-thong-minh-... (MATCH),7.52,MATCH (1),MATCH (1),True Positive (TP),10982.5,Nội dung đạt yêu cầu.,0.09,0
+Ca 8,Ca 8 - 8-do-an-tot-nghiep-k63-nghien-cuu-kien-truc-microservice-voi... (MATCH),7.49,MATCH (1),MATCH (1),True Positive (TP),11139.4,Nội dung đạt yêu cầu.,0.279,2
+Ca 9,Ca 9 - 9-bao-cao-chuyen-de-lap-trinh-blockchain-he-thong-dau-gia-we... (MATCH),9.0,MATCH (1),MATCH (1),True Positive (TP),13282.1,Nội dung đạt yêu cầu.,0.052,1
+Ca 10,Ca 10 - 10-ap-dung-ai-trong-du-doan-gia-co-phieu-hpg-k23ktb-2022-202... (MATCH),6.95,MATCH (1),MATCH (1),True Positive (TP),12175.9,Nội dung đạt yêu cầu.,0.029,1
+Ca 11,Ca 11 - 11-xay-dung-ung-dung-di-dong-doc-sach-de-tai-d17ht.pdf... (MISMATCH),7.67,MISMATCH (0),MATCH (1),False Positive (FP),10355.7,Nội dung đạt yêu cầu.,0.023,0
+Ca 12,Ca 12 - 12-tieu-luan-big-data-va-ung-dung-trong-phan-tich-hanh-vi-ng... (MISMATCH),7.64,MISMATCH (0),MATCH (1),False Positive (FP),10719.1,Nội dung đạt yêu cầu.,0.041,1
+Ca 13,Ca 13 - 13-tieu-luan-mon-khoa-hoc-du-lieu-hop-dong-thong-minh-ethere... (MISMATCH),6.33,MISMATCH (0),MATCH (1),False Positive (FP),10236.6,Nội dung đạt yêu cầu.,0.068,0
+Ca 14,Ca 14 - 14-do-an-cuoi-ky-mon-thuong-mai-dien-tu-website-ban-my-pham-... (MISMATCH),7.44,MISMATCH (0),MATCH (1),False Positive (FP),8426.2,Nội dung đạt yêu cầu.,0.087,0
+Ca 15,Ca 15 - 15-k44-khoa-luan-tot-nghiep-ke-toan-doanh-thu-va-chi-phi-tai... (MISMATCH),8.66,MISMATCH (0),MATCH (1),False Positive (FP),12020.6,Nội dung đạt yêu cầu.,0.189,1
+Ca 16,Ca 16 - 16-do-an-tot-nghiep-nhan-dang-bien-so-xe-nghien-cuu-he-thong... (MISMATCH),9.0,MISMATCH (0),MATCH (1),False Positive (FP),11647.3,Nội dung đạt yêu cầu.,0.081,2
+Ca 17,Ca 17 - 17-khoa-luan-tot-nghiep-thiet-ke-va-xay-dung-game-2d-1121091... (MISMATCH),8.92,MISMATCH (0),MATCH (1),False Positive (FP),11242.0,Nội dung đạt yêu cầu.,0.054,0
+Ca 18,Ca 18 - 18-de-tai-nen-tang-dat-va-giao-do-an-truc-tuyen-food-deliver... (MISMATCH),6.33,MISMATCH (0),MATCH (1),False Positive (FP),9950.2,Nội dung đạt yêu cầu.,0.014,0
+Ca 19,Ca 19 - 19-dinh-huong-va-dieu-khien-robot-di-dong-tren-co-so-gps-va-... (MISMATCH),5.0,MISMATCH (0),MISMATCH (0),True Negative (TN),14207.8,Cần cải thiện: Báo cáo thiếu các kiến thức chuyên môn cốt lõi của đề tài.,0.019,1
+Ca 20,Ca 20 - 10-du-doan-gia-co-phieu-bang-machine-learning-va-deep-learni... (MISMATCH),6.33,MISMATCH (0),MATCH (1),False Positive (FP),8543.1,Nội dung đạt yêu cầu.,0,0
+Ca 21,Ca 21 - 1-nghien-cuu-ve-phan-loai-viem-phoi-trong-hinh-anh-x-quang-n... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),10447.2,Nội dung đạt yêu cầu.,0.007,0
+Ca 22,Ca 22 - 2-nghien-cuu-ve-phan-loai-viem-phoi-trong-hinh-anh-x-quang-n... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),13407.4,Nội dung đạt yêu cầu.,0.112,0
+Ca 23,Ca 23 - 3-de-tai-bai-tap-lon-khai-pha-du-lieu-web-phan-tich-cam-xuc.... (MATCH),7.72,MATCH (1),MATCH (1),True Positive (TP),11882.8,Nội dung đạt yêu cầu.,0.132,2
+Ca 24,Ca 24 - 4-do-an-iii-ung-dung-he-thong-goi-y-trong-thuong-mai-dien-tu... (MATCH),8.91,MATCH (1),MATCH (1),True Positive (TP),12036.9,Nội dung đạt yêu cầu.,0.067,1
+Ca 25,Ca 25 - 5-do-an-iii-ung-dung-he-thong-goi-y-trong-thuong-mai-dien-tu... (MATCH),7.62,MATCH (1),MATCH (1),True Positive (TP),6622.6,Nội dung đạt yêu cầu.,0.103,0
+Ca 26,Ca 26 - 6-danh-gia-hieu-nang-he-thong-ai-chuyen-van-ban-thanh-giong-... (MATCH),8.97,MATCH (1),MATCH (1),True Positive (TP),11491.6,Nội dung đạt yêu cầu.,0.01,1
+Ca 27,Ca 27 - 7-do-an-cuoi-ky-tong-quan-ve-du-doan-luu-luong-giao-thong-th... (MISMATCH),5.0,MISMATCH (0),MISMATCH (0),True Negative (TN),10539.1,Cần cải thiện: Báo cáo thiếu các kiến thức chuyên môn cốt lõi của đề tài.,0,1
+Ca 28,Ca 28 - 8-do-an-tot-nghiep-ky-su-cntt-nhan-dang-sau-benh-cay-san-tre... (MATCH),7.97,MATCH (1),MATCH (1),True Positive (TP),11890.0,Nội dung đạt yêu cầu.,0.138,0
+Ca 29,Ca 29 - 9-do-an-tot-nghiep-phat-trien-he-thong-tom-tat-van-ban-tu-do... (MATCH),7.97,MATCH (1),MATCH (1),True Positive (TP),13436.4,Nội dung đạt yêu cầu.,0.097,0
+Ca 30,Ca 30 - 10-tieu-luan-nghien-cuu-khoa-hoc-ung-dung-mo-hinh-transforme... (MATCH),8.91,MATCH (1),MATCH (1),True Positive (TP),11140.9,Nội dung đạt yêu cầu.,0.107,0
+Ca 31,Ca 31 - 11-de-cuong-khoa-luan-tot-nghiep-xay-dung-website-quan-ly-ch... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),12254.7,Nội dung đạt yêu cầu.,0.07,1
+Ca 32,Ca 32 - 12-nghien-cuu-ung-dung-smart-contract-trong-giao-dich-dex-ta... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),12422.1,Nội dung đạt yêu cầu.,0.062,0
+Ca 33,Ca 33 - 13-thuc-tap-tot-nghiep-xay-dung-website-gay-quy-cong-dong-tr... (MATCH),7.94,MATCH (1),MATCH (1),True Positive (TP),12372.9,Nội dung đạt yêu cầu.,0.153,1
+Ca 34,Ca 34 - 14-nhan-thuc-ve-ung-dung-blockchain-trong-quan-ly-chuoi-cung... (MISMATCH),6.33,MISMATCH (0),MATCH (1),False Positive (FP),11700.6,Nội dung đạt yêu cầu.,0.026,1
+Ca 35,Ca 35 - 15-do-an-tot-nghiep-ct050119-ung-dung-vi-dien-tu-quan-ly-tai... (MATCH),7.89,MATCH (1),MATCH (1),True Positive (TP),13062.9,Nội dung đạt yêu cầu.,0.034,0
+Ca 36,Ca 36 - 16-bai-tap-nhom-1-tiem-nang-phat-trien-nft-tai-viet-nam-elc3... (MISMATCH),9.0,MISMATCH (0),MATCH (1),False Positive (FP),12247.5,Nội dung đạt yêu cầu.,0.036,1
+Ca 37,Ca 37 - 17-tieu-luan-phat-trien-ung-dung-iot-cho-bai-do-xe-thong-min... (MATCH),7.91,MATCH (1),MATCH (1),True Positive (TP),12504.7,Nội dung đạt yêu cầu.,0.096,1
+Ca 38,Ca 38 - 18-bao-cao-bai-tap-lon-mon-iot-he-thong-thung-rac-tu-dong-su... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),14346.8,Nội dung đạt yêu cầu.,0.058,0
+Ca 39,Ca 39 - 19-he-thong-aiot-quan-trac-va-du-bao-chat-luong-khong-khi-th... (MATCH),7.0,MATCH (1),MATCH (1),True Positive (TP),11067.6,Nội dung đạt yêu cầu.,0.011,1
+Ca 40,Ca 40 - 20-do-an-tot-nghiep-thiet-ke-he-thong-nha-thong-minh-dieu-kh... (MATCH),7.0,MATCH (1),MATCH (1),True Positive (TP),10798.7,Nội dung đạt yêu cầu.,0.087,0
+Ca 41,Ca 41 - 21-mgt496-n4-tieu-luan-nhom-vong-tay-du-bao-dong-kinh-cap-cu... (MISMATCH),9.0,MISMATCH (0),MATCH (1),False Positive (FP),12368.1,Nội dung đạt yêu cầu.,0.035,1
+Ca 42,Ca 42 - 22-de-tai-tieu-luan-mon-y-tuong-khoi-nghiep-ung-dung-gia-su-... (MISMATCH),7.67,MISMATCH (0),MATCH (1),False Positive (FP),11029.1,Nội dung đạt yêu cầu.,0.057,0
+Ca 43,Ca 43 - 23-do-an-tot-nghiep-xay-dung-website-chia-se-cong-thuc-nau-a... (MATCH),9.0,MATCH (1),MATCH (1),True Positive (TP),15699.6,Nội dung đạt yêu cầu.,0.246,1
+Ca 44,Ca 44 - 24-do-an-quan-ly-phong-kham-da-khoa-22dthqb03.pdf... (MATCH),9.0,MATCH (1),MATCH (1),True Positive (TP),11916.9,Nội dung đạt yêu cầu.,0.053,1
+Ca 45,Ca 45 - 25-bai-tap-nhom-nghien-cuu-thi-truong-phan-mem-quan-ly-kho-w... (MISMATCH),6.33,MISMATCH (0),MATCH (1),False Positive (FP),12345.6,Nội dung đạt yêu cầu.,0.004,1
+Ca 46,Ca 46 - 26-do-an-mon-hoc-lap-trinh-thiet-bi-di-dong-ung-dung-hoc-tie... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),12297.8,Nội dung đạt yêu cầu.,0.005,1
+Ca 47,Ca 47 - 27-bao-cao-quan-tri-du-an-cntt-he-thong-thu-vien-dien-tu.pdf... (MISMATCH),7.62,MISMATCH (0),MATCH (1),False Positive (FP),15094.7,Nội dung đạt yêu cầu.,0.056,1
+Ca 48,Ca 48 - 28-nghien-cuu-ve-giam-sat-thi-truc-tuyen-tac-dong-den-quyen-... (MISMATCH),5.0,MISMATCH (0),MISMATCH (0),True Negative (TN),15501.3,Cần cải thiện: Báo cáo thiếu các kiến thức chuyên môn cốt lõi của đề tài.,0.02,0
+Ca 49,Ca 49 - 29-bao-cao-du-an-to-chuc-su-kien-nho-nhom-sinh-vien.pdf... (MISMATCH),7.61,MISMATCH (0),MATCH (1),False Positive (FP),11668.2,Nội dung đạt yêu cầu.,0.023,1
+Ca 50,Ca 50 - 30-tieu-luan-nhom-31-nghien-cuu-cicd-cho-trien-khai-dich-vu-... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),10110.9,Nội dung đạt yêu cầu.,0.02,0
+Ca 51,Ca 51 - 31-bao-cao-thuc-tap-doanh-nghiep-giam-sat-he-thong-bang-prom... (MATCH),7.97,MATCH (1),MATCH (1),True Positive (TP),15008.2,Nội dung đạt yêu cầu.,0.083,1
+Ca 52,Ca 52 - 32-bao-cao-tieu-luan-mon-dien-toan-dam-may-nhom-16-ung-dung-... (MATCH),7.93,MATCH (1),MATCH (1),True Positive (TP),14957.6,Nội dung đạt yêu cầu.,0.089,0
+Ca 53,Ca 53 - 33-do-an-tot-nghiep-k63-nghien-cuu-kien-truc-microservice-vo... (MATCH),7.49,MATCH (1),MATCH (1),True Positive (TP),11298.5,Nội dung đạt yêu cầu.,0.279,2
+Ca 54,Ca 54 - 34-de-tai-do-an-tot-nghiep-he-thong-phat-hien-xam-nhap-mang-... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),6231.0,Nội dung đạt yêu cầu.,0,0
+Ca 55,Ca 55 - 35-btl-n3-tim-hieu-10-lo-hong-owasp-cho-bai-tap-lon-co-so-an... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),10481.0,Nội dung đạt yêu cầu.,0.026,0
+Ca 56,Ca 56 - 36-bao-cao-chuyen-de-co-so-ve-phat-hien-ma-doc-dua-tren-sieu... (MATCH),6.8,MATCH (1),MATCH (1),True Positive (TP),13461.2,Nội dung đạt yêu cầu.,0.069,0
+Ca 57,Ca 57 - 37-do-an-tot-nghiep-he-thong-nhan-dien-va-dem-phuong-tien-gi... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),8357.6,Nội dung đạt yêu cầu.,0.006,1
+Ca 58,Ca 58 - 38-bao-cao-cuoi-ky-impr432446-nhan-dien-cu-chi-tay-va-ung-du... (MATCH),8.9,MATCH (1),MATCH (1),True Positive (TP),14001.4,Nội dung đạt yêu cầu.,0.088,0
+Ca 59,Ca 59 - 39-thiet-ke-game-rpg-2d-bang-unity-tieu-luan-mon-lap-trinh-g... (MATCH),9.0,MATCH (1),MATCH (1),True Positive (TP),11560.8,Nội dung đạt yêu cầu.,0.04,0
+Ca 60,Ca 60 - 40-khoa-luan-tot-nghiep-thiet-ke-va-xay-dung-game-2d-1121091... (MATCH),8.92,MATCH (1),MATCH (1),True Positive (TP),11031.9,Nội dung đạt yêu cầu.,0.054,0
+Ca 61,Ca 61 - 41-nghien-cuu-du-doan-khach-hang-roi-bo-dich-vu-vien-thong-k... (MATCH),7.67,MATCH (1),MATCH (1),True Positive (TP),11149.7,Nội dung đạt yêu cầu.,0.016,0
+Ca 62,Ca 62 - 42-bao-cao-de-tai-nghien-cuu-phat-hien-tin-gia-fake-news-det... (MATCH),8.9,MATCH (1),MATCH (1),True Positive (TP),11815.4,Nội dung đạt yêu cầu.,0,1
+Ca 63,Ca 63 - 43-bao-cao-do-an-i-phan-loai-dong-tac-tap-gym-su-dung-mediap... (MATCH),9.0,MATCH (1),MATCH (1),True Positive (TP),12167.1,Nội dung đạt yêu cầu.,0.063,1
+Ca 64,Ca 64 - 44-b2012144-xay-dung-website-thuong-mai-dien-tu-tich-hop-ai-... (MATCH),9.0,MATCH (1),MATCH (1),True Positive (TP),11779.3,Nội dung đạt yêu cầu.,0.049,0
+Ca 65,Ca 65 - 45-crm-ht-bai-toan-phan-nhom-khach-hang-tai-sieu-thi-coopext... (MISMATCH),5.0,MISMATCH (0),MISMATCH (0),True Negative (TN),20187.0,Cần cải thiện: Báo cáo thiếu các kiến thức chuyên môn cốt lõi của đề tài.,0.025,1
+Ca 66,Ca 66 - 46-de-tai-xay-dung-he-thong-tro-ly-ao-tu-van-phap-luat-viet-... (MATCH),8.98,MATCH (1),MATCH (1),True Positive (TP),14139.2,Nội dung đạt yêu cầu.,0,0
+Ca 67,Ca 67 - 47-bao-cao-do-an-thiet-ke-mo-hinh-cnn-nhan-dien-tai-xe-ngu-g... (MATCH),8.97,MATCH (1),MATCH (1),True Positive (TP),12380.7,Nội dung đạt yêu cầu.,0.037,1
+Ca 68,Ca 68 - 48-tieu-luan-giua-ky-243to3501-phan-tich-chuoi-thoi-gian-du-... (MISMATCH),7.85,MISMATCH (0),MATCH (1),False Positive (FP),11555.3,Nội dung đạt yêu cầu.,0.042,0
+Ca 69,Ca 69 - 49-bao-cao-bai-tap-lon-mo-hinh-dich-may-anh-viet-cse703014.p... (MATCH),8.0,MATCH (1),MATCH (1),True Positive (TP),11410.3,Nội dung đạt yêu cầu.,0.013,0
+Ca 70,Ca 70 - 50-tieu-luan-dat723-241-1-d-ung-dung-hop-dong-thong-minh-tro... (MISMATCH),7.64,MISMATCH (0),MATCH (1),False Positive (FP),11063.8,Nội dung đạt yêu cầu.,0.072,1
+Ca 71,Ca 71 - 51-do-an-tot-nghiep-xay-dung-mang-xa-hoi-chia-se-kien-thuc-s... (MATCH),8.76,MATCH (1),MATCH (1),True Positive (TP),13704.5,Nội dung đạt yêu cầu.,0.057,0
+Ca 72,Ca 72 - 52-bao-cao-nckh-ung-dung-blockchain-trong-luu-tru-benh-an-di... (MATCH),7.0,MATCH (1),MATCH (1),True Positive (TP),11293.1,Nội dung đạt yêu cầu.,0.005,0
+Ca 73,Ca 73 - 53-quan-ly-du-an-phat-trien-he-thong-nghe-nhac-truc-tuyen-mo... (MISMATCH),6.21,MISMATCH (0),MATCH (1),False Positive (FP),11164.3,Nội dung đạt yêu cầu.,0.033,1
+Ca 74,Ca 74 - 54-de-tai-do-an-nt547-nghien-cuu-va-phat-trien-blockchain.pd... (MATCH),6.91,MATCH (1),MATCH (1),True Positive (TP),12185.5,Nội dung đạt yêu cầu.,0.013,1
+Ca 75,Ca 75 - 55-khoa-luan-tot-nghiep-thiet-ke-he-thong-tuoi-tu-dong-trong... (MATCH),7.0,MATCH (1),MATCH (1),True Positive (TP),12964.2,Nội dung đạt yêu cầu.,0,0
+Ca 76,Ca 76 - 56-do-an-tot-nghiep-he-thong-khoa-cua-thong-minh-ung-dung-ai... (MATCH),7.0,MATCH (1),MATCH (1),True Positive (TP),13701.5,Nội dung đạt yêu cầu.,0.028,0
+Ca 77,Ca 77 - 57-do-an-tot-nghiep-thiet-ke-he-thong-giam-sat-nhip-tim-va-o... (MATCH),6.89,MATCH (1),MATCH (1),True Positive (TP),18214.9,Nội dung đạt yêu cầu.,0.047,1
+Ca 78,Ca 78 - 58-19375691-final-exam-mang-cam-bien-khong-day-ung-dung.pdf... (MISMATCH),7.94,MISMATCH (0),MATCH (1),False Positive (FP),16364.4,Nội dung đạt yêu cầu.,0.065,1
+Ca 79,Ca 79 - 59-tong-quan-ve-iot-trong-logistics-truong-dh-giao-thong-van... (MISMATCH),6.3,MISMATCH (0),MATCH (1),False Positive (FP),10344.2,Nội dung đạt yêu cầu.,0.034,1
+Ca 80,Ca 80 - 60-nghien-cuu-he-thong-chieu-sang-thong-minh-tiet-kiem-nang-... (MISMATCH),7.64,MISMATCH (0),MATCH (1),False Positive (FP),11458.8,Nội dung đạt yêu cầu.,0,0
+Ca 81,Ca 81 - 61-nghien-cuu-thiet-bi-da-nang-ho-tro-nguoi-khiem-thi-144897... (MISMATCH),6.33,MISMATCH (0),MATCH (1),False Positive (FP),7353.1,Nội dung đạt yêu cầu.,0.035,1
+Ca 82,Ca 82 - 62-bao-cao-do-an-mon-phan-mem-quan-ly-gara-o-to-22521595.pdf... (MATCH),8.97,MATCH (1),MATCH (1),True Positive (TP),13457.2,Nội dung đạt yêu cầu.,0,1
+Ca 83,Ca 83 - 63-khoa-luan-tot-nghiep-nang-cao-hieu-qua-su-dung-lao-dong-6... (MISMATCH),6.33,MISMATCH (0),MATCH (1),False Positive (FP),16350.7,Nội dung đạt yêu cầu.,0.087,1
+Ca 84,Ca 84 - 64-bao-cao-do-an-csdl-21-he-thong-quan-ly-dat-tiec-cuoi-nha-... (MISMATCH),7.63,MISMATCH (0),MATCH (1),False Positive (FP),12836.6,Nội dung đạt yêu cầu.,0.132,1
+Ca 85,Ca 85 - 65-do-an-1-quan-ly-tour-du-lich-bai-luan-chi-tiet-nghien-cuu... (MISMATCH),9.0,MISMATCH (0),MATCH (1),False Positive (FP),11605.0,Nội dung đạt yêu cầu.,0.008,1
+Ca 86,Ca 86 - 66-du-an-kinh-doanh-quan-ao-secondhand-tai-thu-duc-lap-du-an... (MISMATCH),8.97,MISMATCH (0),MATCH (1),False Positive (FP),11750.7,Nội dung đạt yêu cầu.,0.067,0
+Ca 87,Ca 87 - 67-do-an-cs-4-xay-dung-ung-dung-tro-choi-co-vua.pdf... (MATCH),7.96,MATCH (1),MATCH (1),True Positive (TP),9581.4,Nội dung đạt yêu cầu.,0.075,0
+Ca 88,Ca 88 - 68-do-an-cs353-phan-tich-thiet-ke-he-thong-quan-ly-nha-tro.p... (MATCH),7.56,MATCH (1),MATCH (1),True Positive (TP),12036.6,Nội dung đạt yêu cầu.,0.121,0
+Ca 89,Ca 89 - 69-do-an-nhom-he-thong-quan-ly-thanh-vien-phong-gym-tich-hop... (MISMATCH),6.26,MISMATCH (0),MATCH (1),False Positive (FP),10922.2,Nội dung đạt yêu cầu.,0.056,0
+Ca 90,Ca 90 - 70-ke-hoach-phuc-hoi-sau-tham-hoa-drp-cho-he-thong-thong-tin... (MISMATCH),6.33,MISMATCH (0),MATCH (1),False Positive (FP),11211.0,Nội dung đạt yêu cầu.,0,1
+Ca 91,Ca 91 - 71-do-an-tot-nghiep-xay-dung-nen-tang-data-lakehouse-cho-tin... (MATCH),9.0,MATCH (1),MATCH (1),True Positive (TP),20470.9,Nội dung đạt yêu cầu.,0.005,1
+Ca 92,Ca 92 - 72-do-an-mon-hoc-22it-nghien-cuu-mo-hinh-private-cloud-voi-o... (MISMATCH),8.94,MISMATCH (0),MATCH (1),False Positive (FP),12000.4,Nội dung đạt yêu cầu.,0.167,0
+Ca 93,Ca 93 - 73-nt533q13-do-an-mon-hoc-trien-khai-cicd-pipeline-va-iac.pd... (MISMATCH),6.29,MISMATCH (0),MATCH (1),False Positive (FP),11562.1,Nội dung đạt yêu cầu.,0,1
+Ca 94,Ca 94 - 74-do-an-ca-nhan-mon-mang-may-tinh-tim-hieu-ve-ky-thuat-giau... (MISMATCH),7.52,MISMATCH (0),MATCH (1),False Positive (FP),12545.3,Nội dung đạt yêu cầu.,0.077,1
+Ca 95,Ca 95 - 75-nghien-cuu-ky-thuat-honeypot-xay-dung-he-thong-bay-tan-co... (MATCH),9.0,MATCH (1),MATCH (1),True Positive (TP),12678.1,Nội dung đạt yêu cầu.,0.007,0
+Ca 96,Ca 96 - 76-he-thong-chat-bao-mat-ma-hoa-khoa-luan-tot-nghiep-2025.pd... (MISMATCH),6.33,MISMATCH (0),MATCH (1),False Positive (FP),18539.7,Nội dung đạt yêu cầu.,0.022,1
+Ca 97,Ca 97 - 77-bao-cao-nhap-mon-ky-nang-mem-he-thong-danh-gia-do-manh-ma... (MISMATCH),8.94,MISMATCH (0),MATCH (1),False Positive (FP),11796.7,Nội dung đạt yêu cầu.,0.152,0
+Ca 98,Ca 98 - 78-giai-phap-nang-cao-hieu-qua-day-hoc-cau-truc-tuan-tu-tron... (MISMATCH),6.33,MISMATCH (0),MATCH (1),False Positive (FP),8634.3,Nội dung đạt yêu cầu.,0.005,1
+Ca 99,Ca 99 - 79-htttql-nhom-4-tieu-luan-cuoi-ky-ve-ung-dung-vr-va-ar-tai-... (MISMATCH),7.67,MISMATCH (0),MATCH (1),False Positive (FP),13279.6,Nội dung đạt yêu cầu.,0.051,0
+Ca 100,Ca 100 - 80-do-an-tot-nghiep-nghien-cuu-cong-nghe-thuc-te-ao-va-ung-d... (MISMATCH),7.67,MISMATCH (0),MATCH (1),False Positive (FP),13666.8,Nội dung đạt yêu cầu.,0.044,0
+
+=== TONG KET ===
+Total Cases,100
+MATCH cases,59
+MISMATCH cases,41
+TP,58
+TN,4
+FP,37
+FN,1
+Accuracy,0.6200,62.00%
+Precision,0.6105,61.05%
+Recall,0.9831,98.31%
+F1-Score,0.7532,75.32%
+Avg Response (ms),12020.9
+Min Response (ms),5923.9
+Max Response (ms),20470.9
+P50 Response (ms),11796.7
+P95 Response (ms),16364.4
+Errors,0

@@ -1,0 +1,163 @@
+﻿STT,Nganh that (job),Nganh dem so khop,Nhan,match_score (domain that),Du doan (>=0.75)
+1,Quản lý điều hành,Quản lý điều hành,MATCH,0.6729,MISMATCH
+2,Quản lý điều hành,Xây dựng,MISMATCH,0.6492,MISMATCH
+3,Điện - Điện tử,Thiết kế - Sáng tạo nghệ thuật,MISMATCH,0.6124,MISMATCH
+4,IT Phần cứng - Mạng - Viễn Thông,IT Phần cứng - Mạng - Viễn Thông,MATCH,0.6460,MISMATCH
+5,Kiểm toán,Kế toán,MISMATCH,0.6880,MISMATCH
+6,Cơ khí,Cơ khí,MATCH,0.5994,MISMATCH
+7,IT Phần mềm,IT Phần mềm,MATCH,0.7048,MISMATCH
+8,Điện - Điện tử,Quản lý điều hành,MISMATCH,0.6547,MISMATCH
+9,Chăm sóc khách hàng,Chăm sóc khách hàng,MATCH,0.7226,MISMATCH
+10,Cơ khí,Cơ khí,MATCH,0.7397,MISMATCH
+11,Kinh doanh,Điện - Điện tử,MISMATCH,0.6415,MISMATCH
+12,Nhân sự,Quản lý điều hành,MISMATCH,0.6612,MISMATCH
+13,Kinh doanh,Kế toán,MISMATCH,0.6477,MISMATCH
+14,IT Phần cứng - Mạng - Viễn Thông,IT Phần mềm,MISMATCH,0.6127,MISMATCH
+15,IT Phần cứng - Mạng - Viễn Thông,Kế toán,MISMATCH,0.6540,MISMATCH
+16,Kiểm toán,Giáo dục - Đào tạo,MISMATCH,0.6666,MISMATCH
+17,Nhân sự,Nhân sự,MATCH,0.6482,MISMATCH
+18,Ngân hàng,Ngân hàng,MATCH,0.6660,MISMATCH
+19,Kinh doanh,Kinh doanh,MATCH,0.6545,MISMATCH
+20,Giáo dục - Đào tạo,Giáo dục - Đào tạo,MATCH,0.7490,MISMATCH
+21,Kiểm toán,Kiểm toán,MATCH,0.6952,MISMATCH
+22,IT Phần cứng - Mạng - Viễn Thông,IT Phần cứng - Mạng - Viễn Thông,MATCH,0.7464,MISMATCH
+23,Kế toán,Cơ khí,MISMATCH,0.6426,MISMATCH
+24,IT Phần mềm,Điện - Điện tử,MISMATCH,0.6193,MISMATCH
+25,Quản lý điều hành,Quản lý điều hành,MATCH,0.6177,MISMATCH
+26,Điện - Điện tử,Quản lý điều hành,MISMATCH,0.7531,MATCH
+27,Quản lý điều hành,Marketing,MISMATCH,0.6923,MISMATCH
+28,Chăm sóc khách hàng,Chăm sóc khách hàng,MATCH,0.5832,MISMATCH
+29,Điện - Điện tử,Điện - Điện tử,MATCH,0.6809,MISMATCH
+30,Xây dựng,Xây dựng,MATCH,0.7135,MISMATCH
+31,Nhân sự,Marketing,MISMATCH,0.6649,MISMATCH
+32,Marketing,Thiết kế - Sáng tạo nghệ thuật,MISMATCH,0.7092,MISMATCH
+33,Giáo dục - Đào tạo,Giáo dục - Đào tạo,MATCH,0.7509,MATCH
+34,Ngân hàng,Kinh doanh,MISMATCH,0.6715,MISMATCH
+35,Giáo dục - Đào tạo,Điện - Điện tử,MISMATCH,0.6460,MISMATCH
+36,Kinh doanh,Kinh doanh,MATCH,0.7542,MATCH
+37,Marketing,IT Phần cứng - Mạng - Viễn Thông,MISMATCH,0.6390,MISMATCH
+38,Ngân hàng,Giáo dục - Đào tạo,MISMATCH,0.6868,MISMATCH
+39,Thiết kế - Sáng tạo nghệ thuật,Thiết kế - Sáng tạo nghệ thuật,MATCH,0.6912,MISMATCH
+40,Giáo dục - Đào tạo,Kinh doanh,MISMATCH,0.6491,MISMATCH
+41,Nhân sự,Nhân sự,MATCH,0.7161,MISMATCH
+42,IT Phần cứng - Mạng - Viễn Thông,IT Phần cứng - Mạng - Viễn Thông,MATCH,0.6704,MISMATCH
+43,Xây dựng,Xây dựng,MATCH,0.6153,MISMATCH
+44,Kế toán,Kiểm toán,MISMATCH,0.6716,MISMATCH
+45,IT Phần mềm,IT Phần mềm,MATCH,0.6511,MISMATCH
+46,Quản lý điều hành,Quản lý điều hành,MATCH,0.5880,MISMATCH
+47,Giáo dục - Đào tạo,Giáo dục - Đào tạo,MATCH,0.7303,MISMATCH
+48,IT Phần mềm,Xây dựng,MISMATCH,0.7339,MISMATCH
+49,Kinh doanh,Kinh doanh,MATCH,0.7001,MISMATCH
+50,IT Phần cứng - Mạng - Viễn Thông,Chăm sóc khách hàng,MISMATCH,0.6442,MISMATCH
+51,Kế toán,Kế toán,MATCH,0.7081,MISMATCH
+52,Quản lý điều hành,Quản lý điều hành,MATCH,0.7414,MISMATCH
+53,Marketing,Marketing,MATCH,0.6850,MISMATCH
+54,Quản lý điều hành,Điện - Điện tử,MISMATCH,0.6294,MISMATCH
+55,Xây dựng,Xây dựng,MATCH,0.6554,MISMATCH
+56,Thiết kế - Sáng tạo nghệ thuật,Kế toán,MISMATCH,0.6691,MISMATCH
+57,Nhân sự,Kinh doanh,MISMATCH,0.6912,MISMATCH
+58,Chăm sóc khách hàng,Kinh doanh,MISMATCH,0.6876,MISMATCH
+59,Cơ khí,Cơ khí,MATCH,0.7386,MISMATCH
+60,Ngân hàng,Ngân hàng,MATCH,0.6824,MISMATCH
+61,Xây dựng,IT Phần cứng - Mạng - Viễn Thông,MISMATCH,0.6103,MISMATCH
+62,Marketing,Marketing,MATCH,0.6764,MISMATCH
+63,Kế toán,Kinh doanh,MISMATCH,0.6719,MISMATCH
+64,Xây dựng,Ngân hàng,MISMATCH,0.5831,MISMATCH
+65,Nhân sự,Nhân sự,MATCH,0.6872,MISMATCH
+66,Cơ khí,Cơ khí,MATCH,0.6844,MISMATCH
+67,Giáo dục - Đào tạo,Giáo dục - Đào tạo,MATCH,0.7368,MISMATCH
+68,Thiết kế - Sáng tạo nghệ thuật,Thiết kế - Sáng tạo nghệ thuật,MATCH,0.6935,MISMATCH
+69,Quản lý điều hành,Quản lý điều hành,MATCH,0.6948,MISMATCH
+70,Giáo dục - Đào tạo,IT Phần cứng - Mạng - Viễn Thông,MISMATCH,0.6257,MISMATCH
+71,Điện - Điện tử,Điện - Điện tử,MATCH,0.7543,MATCH
+72,Ngân hàng,Ngân hàng,MATCH,0.6961,MISMATCH
+73,IT Phần cứng - Mạng - Viễn Thông,IT Phần cứng - Mạng - Viễn Thông,MATCH,0.7382,MISMATCH
+74,Cơ khí,Quản lý điều hành,MISMATCH,0.6252,MISMATCH
+75,Kiểm toán,IT Phần cứng - Mạng - Viễn Thông,MISMATCH,0.5771,MISMATCH
+76,Điện - Điện tử,Điện - Điện tử,MATCH,0.8012,MATCH
+77,Giáo dục - Đào tạo,Kinh doanh,MISMATCH,0.6023,MISMATCH
+78,Kế toán,Kế toán,MATCH,0.7168,MISMATCH
+79,Kinh doanh,IT Phần mềm,MISMATCH,0.6572,MISMATCH
+80,Kinh doanh,Kinh doanh,MATCH,0.7631,MATCH
+81,Chăm sóc khách hàng,Chăm sóc khách hàng,MATCH,0.6288,MISMATCH
+82,Thiết kế - Sáng tạo nghệ thuật,Điện - Điện tử,MISMATCH,0.6634,MISMATCH
+83,Kế toán,Nhân sự,MISMATCH,0.6420,MISMATCH
+84,Marketing,Nhân sự,MISMATCH,0.7128,MISMATCH
+85,Ngân hàng,Ngân hàng,MATCH,0.7464,MISMATCH
+86,Điện - Điện tử,Nhân sự,MISMATCH,0.6831,MISMATCH
+87,Xây dựng,IT Phần cứng - Mạng - Viễn Thông,MISMATCH,0.7081,MISMATCH
+88,Chăm sóc khách hàng,Kiểm toán,MISMATCH,0.6419,MISMATCH
+89,Quản lý điều hành,Ngân hàng,MISMATCH,0.7184,MISMATCH
+90,Marketing,Cơ khí,MISMATCH,0.6804,MISMATCH
+91,Kinh doanh,Xây dựng,MISMATCH,0.6658,MISMATCH
+92,Cơ khí,Quản lý điều hành,MISMATCH,0.7770,MATCH
+93,Marketing,Marketing,MATCH,0.7355,MISMATCH
+94,Kế toán,Kế toán,MATCH,0.7359,MISMATCH
+95,IT Phần cứng - Mạng - Viễn Thông,Điện - Điện tử,MISMATCH,0.5280,MISMATCH
+96,Ngân hàng,Ngân hàng,MATCH,0.7364,MISMATCH
+97,Cơ khí,Chăm sóc khách hàng,MISMATCH,0.6607,MISMATCH
+98,IT Phần mềm,IT Phần mềm,MATCH,0.6516,MISMATCH
+99,Marketing,Điện - Điện tử,MISMATCH,0.5894,MISMATCH
+100,Kế toán,Kế toán,MATCH,0.6988,MISMATCH
+101,Chăm sóc khách hàng,Kiểm toán,MISMATCH,0.5771,MISMATCH
+102,Ngân hàng,Nhân sự,MISMATCH,0.6172,MISMATCH
+103,Kinh doanh,Chăm sóc khách hàng,MISMATCH,0.6833,MISMATCH
+104,Nhân sự,Cơ khí,MISMATCH,0.5836,MISMATCH
+105,Nhân sự,Nhân sự,MATCH,0.6778,MISMATCH
+106,Thiết kế - Sáng tạo nghệ thuật,Thiết kế - Sáng tạo nghệ thuật,MATCH,0.6753,MISMATCH
+107,IT Phần mềm,IT Phần mềm,MATCH,0.7516,MATCH
+108,Kế toán,Ngân hàng,MISMATCH,0.6640,MISMATCH
+109,IT Phần mềm,Ngân hàng,MISMATCH,0.6677,MISMATCH
+110,Giáo dục - Đào tạo,Giáo dục - Đào tạo,MATCH,0.6817,MISMATCH
+111,IT Phần mềm,IT Phần mềm,MATCH,0.6585,MISMATCH
+112,Thiết kế - Sáng tạo nghệ thuật,Thiết kế - Sáng tạo nghệ thuật,MATCH,0.7156,MISMATCH
+113,Xây dựng,Cơ khí,MISMATCH,0.5974,MISMATCH
+114,Kiểm toán,Kinh doanh,MISMATCH,0.6483,MISMATCH
+115,Nhân sự,Ngân hàng,MISMATCH,0.6853,MISMATCH
+116,Marketing,Marketing,MATCH,0.6926,MISMATCH
+117,Điện - Điện tử,Điện - Điện tử,MATCH,0.6657,MISMATCH
+118,Thiết kế - Sáng tạo nghệ thuật,Ngân hàng,MISMATCH,0.6489,MISMATCH
+119,Kinh doanh,Kinh doanh,MATCH,0.7479,MISMATCH
+120,Chăm sóc khách hàng,Ngân hàng,MISMATCH,0.6518,MISMATCH
+121,Thiết kế - Sáng tạo nghệ thuật,Thiết kế - Sáng tạo nghệ thuật,MATCH,0.6358,MISMATCH
+122,Chăm sóc khách hàng,Chăm sóc khách hàng,MATCH,0.6104,MISMATCH
+123,Ngân hàng,IT Phần mềm,MISMATCH,0.5888,MISMATCH
+124,Thiết kế - Sáng tạo nghệ thuật,Kiểm toán,MISMATCH,0.7358,MISMATCH
+125,IT Phần cứng - Mạng - Viễn Thông,IT Phần cứng - Mạng - Viễn Thông,MATCH,0.5529,MISMATCH
+126,Kiểm toán,Xây dựng,MISMATCH,0.5837,MISMATCH
+127,IT Phần mềm,Điện - Điện tử,MISMATCH,0.6606,MISMATCH
+128,Quản lý điều hành,Giáo dục - Đào tạo,MISMATCH,0.6717,MISMATCH
+129,Ngân hàng,IT Phần mềm,MISMATCH,0.6220,MISMATCH
+130,Xây dựng,Xây dựng,MATCH,0.6078,MISMATCH
+131,Điện - Điện tử,Điện - Điện tử,MATCH,0.6210,MISMATCH
+132,Cơ khí,IT Phần mềm,MISMATCH,0.5881,MISMATCH
+133,Chăm sóc khách hàng,Chăm sóc khách hàng,MATCH,0.6534,MISMATCH
+134,Kiểm toán,Kiểm toán,MATCH,0.7170,MISMATCH
+135,IT Phần mềm,Thiết kế - Sáng tạo nghệ thuật,MISMATCH,0.6320,MISMATCH
+136,Kiểm toán,Kiểm toán,MATCH,0.6798,MISMATCH
+137,Kiểm toán,Kiểm toán,MATCH,0.6820,MISMATCH
+138,Xây dựng,Xây dựng,MATCH,0.7086,MISMATCH
+139,Xây dựng,Marketing,MISMATCH,0.6487,MISMATCH
+140,Nhân sự,Nhân sự,MATCH,0.7270,MISMATCH
+141,Cơ khí,Ngân hàng,MISMATCH,0.6492,MISMATCH
+142,Kế toán,Kế toán,MATCH,0.6745,MISMATCH
+143,Giáo dục - Đào tạo,Điện - Điện tử,MISMATCH,0.6678,MISMATCH
+144,IT Phần cứng - Mạng - Viễn Thông,Giáo dục - Đào tạo,MISMATCH,0.7278,MISMATCH
+145,Thiết kế - Sáng tạo nghệ thuật,Ngân hàng,MISMATCH,0.6560,MISMATCH
+146,Cơ khí,Cơ khí,MATCH,0.6629,MISMATCH
+147,Chăm sóc khách hàng,Nhân sự,MISMATCH,0.7442,MISMATCH
+148,Marketing,Marketing,MATCH,0.7031,MISMATCH
+149,Điện - Điện tử,Kinh doanh,MISMATCH,0.7764,MATCH
+150,Kiểm toán,Kiểm toán,MATCH,0.6814,MISMATCH
+
+=== TONG KET (nguong 0.75) ===
+Total,150
+TP,6
+TN,72
+FP,3
+FN,69
+Accuracy,52.00%
+Precision,66.67%
+Recall,8.00%
+F1-Score,14.29%
+Nguong toi uu,0.65 (F1=70.1%)

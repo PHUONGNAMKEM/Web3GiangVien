@@ -1,0 +1,117 @@
+﻿Test Case,Report (Postman item),AI Score,Expected,Predicted,Result,Latency (ms)
+Ca 1,Ca 1 - 1-nghien-cuu-li-luan-ve-he-thong-quan-li-hoc-tap-truc-tuyen-... (MATCH),6.0,MATCH,MATCH,TP,10937.5
+Ca 2,Ca 2 - 2-do-an-2-he-thong-diem-danh-nhan-dien-khuon-mat-voi-rfid.pd... (MATCH),7.89,MATCH,MATCH,TP,11411.5
+Ca 3,Ca 3 - 3-do-an-mon-nhap-mon-ung-dung-di-dong-quan-ly-chi-tieu-ca-nh... (MATCH),7.67,MATCH,MATCH,TP,11561.0
+Ca 4,Ca 4 - 4-khoa-luan-tot-nghiep-xay-dung-phan-mem-quan-ly-nhan-su-sua... (MATCH),8.96,MATCH,MATCH,TP,8740.1
+Ca 5,Ca 5 - 5-de-tai-nhap-mon-khoa-hoc-du-lieu-2024-phan-tich-du-lieu-ma... (MATCH),5.0,MATCH,MISMATCH,FN,4158.5
+Ca 6,Ca 6 - 6-tong-hop-de-tai-khoa-luan-tot-nghiep-ve-an-toan-thong-tin-... (MATCH),5.35,MATCH,MISMATCH,FN,7930.3
+Ca 7,Ca 7 - 7-luan-van-tot-nghiep-he-thong-giam-sat-nha-kinh-thong-minh-... (MATCH),7.52,MATCH,MATCH,TP,9433.4
+Ca 8,Ca 8 - 8-do-an-tot-nghiep-k63-nghien-cuu-kien-truc-microservice-voi... (MATCH),7.49,MATCH,MATCH,TP,5881.8
+Ca 9,Ca 9 - 9-bao-cao-chuyen-de-lap-trinh-blockchain-he-thong-dau-gia-we... (MATCH),9.0,MATCH,MATCH,TP,7364.6
+Ca 10,Ca 10 - 10-ap-dung-ai-trong-du-doan-gia-co-phieu-hpg-k23ktb-2022-202... (MATCH),6.95,MATCH,MATCH,TP,5834.0
+Ca 11,Ca 11 - 11-xay-dung-ung-dung-di-dong-doc-sach-de-tai-d17ht.pdf... (MISMATCH),7.67,MISMATCH,MATCH,FP,5020.6
+Ca 12,Ca 12 - 12-tieu-luan-big-data-va-ung-dung-trong-phan-tich-hanh-vi-ng... (MISMATCH),7.64,MISMATCH,MATCH,FP,7789.0
+Ca 13,Ca 13 - 13-tieu-luan-mon-khoa-hoc-du-lieu-hop-dong-thong-minh-ethere... (MISMATCH),6.33,MISMATCH,MATCH,FP,6139.0
+Ca 14,Ca 14 - 14-do-an-cuoi-ky-mon-thuong-mai-dien-tu-website-ban-my-pham-... (MISMATCH),7.44,MISMATCH,MATCH,FP,8324.6
+Ca 15,Ca 15 - 15-k44-khoa-luan-tot-nghiep-ke-toan-doanh-thu-va-chi-phi-tai... (MISMATCH),8.66,MISMATCH,MATCH,FP,11753.9
+Ca 16,Ca 16 - 16-do-an-tot-nghiep-nhan-dang-bien-so-xe-nghien-cuu-he-thong... (MISMATCH),9.0,MISMATCH,MATCH,FP,18465.0
+Ca 17,Ca 17 - 17-khoa-luan-tot-nghiep-thiet-ke-va-xay-dung-game-2d-1121091... (MISMATCH),8.92,MISMATCH,MATCH,FP,5560.8
+Ca 18,Ca 18 - 18-de-tai-nen-tang-dat-va-giao-do-an-truc-tuyen-food-deliver... (MISMATCH),6.33,MISMATCH,MATCH,FP,3963.3
+Ca 19,Ca 19 - 19-dinh-huong-va-dieu-khien-robot-di-dong-tren-co-so-gps-va-... (MISMATCH),5.0,MISMATCH,MISMATCH,TN,5806.0
+Ca 20,Ca 20 - 10-du-doan-gia-co-phieu-bang-machine-learning-va-deep-learni... (MISMATCH),6.33,MISMATCH,MATCH,FP,3088.4
+Ca 21,Ca 21 - 1-nghien-cuu-ve-phan-loai-viem-phoi-trong-hinh-anh-x-quang-n... (MATCH),8.0,MATCH,MATCH,TP,3396.0
+Ca 22,Ca 22 - 2-nghien-cuu-ve-phan-loai-viem-phoi-trong-hinh-anh-x-quang-n... (MATCH),8.0,MATCH,MATCH,TP,5110.9
+Ca 23,Ca 23 - 3-de-tai-bai-tap-lon-khai-pha-du-lieu-web-phan-tich-cam-xuc.... (MATCH),7.72,MATCH,MATCH,TP,4488.8
+Ca 24,Ca 24 - 4-do-an-iii-ung-dung-he-thong-goi-y-trong-thuong-mai-dien-tu... (MATCH),8.91,MATCH,MATCH,TP,4927.5
+Ca 25,Ca 25 - 5-do-an-iii-ung-dung-he-thong-goi-y-trong-thuong-mai-dien-tu... (MATCH),7.62,MATCH,MATCH,TP,2407.7
+Ca 26,Ca 26 - 6-danh-gia-hieu-nang-he-thong-ai-chuyen-van-ban-thanh-giong-... (MATCH),8.97,MATCH,MATCH,TP,4126.1
+Ca 27,Ca 27 - 7-do-an-cuoi-ky-tong-quan-ve-du-doan-luu-luong-giao-thong-th... (MISMATCH),5.0,MISMATCH,MISMATCH,TN,5391.8
+Ca 28,Ca 28 - 8-do-an-tot-nghiep-ky-su-cntt-nhan-dang-sau-benh-cay-san-tre... (MATCH),7.97,MATCH,MATCH,TP,7225.9
+Ca 29,Ca 29 - 9-do-an-tot-nghiep-phat-trien-he-thong-tom-tat-van-ban-tu-do... (MATCH),7.97,MATCH,MATCH,TP,15206.0
+Ca 30,Ca 30 - 10-tieu-luan-nghien-cuu-khoa-hoc-ung-dung-mo-hinh-transforme... (MATCH),8.91,MATCH,MATCH,TP,11659.2
+Ca 31,Ca 31 - 11-de-cuong-khoa-luan-tot-nghiep-xay-dung-website-quan-ly-ch... (MATCH),8.0,MATCH,MATCH,TP,9949.0
+Ca 32,Ca 32 - 12-nghien-cuu-ung-dung-smart-contract-trong-giao-dich-dex-ta... (MATCH),8.0,MATCH,MATCH,TP,7717.3
+Ca 33,Ca 33 - 13-thuc-tap-tot-nghiep-xay-dung-website-gay-quy-cong-dong-tr... (MATCH),7.94,MATCH,MATCH,TP,5109.0
+Ca 34,Ca 34 - 14-nhan-thuc-ve-ung-dung-blockchain-trong-quan-ly-chuoi-cung... (MISMATCH),6.33,MISMATCH,MATCH,FP,4360.7
+Ca 35,Ca 35 - 15-do-an-tot-nghiep-ct050119-ung-dung-vi-dien-tu-quan-ly-tai... (MATCH),7.89,MATCH,MATCH,TP,7203.6
+Ca 36,Ca 36 - 16-bai-tap-nhom-1-tiem-nang-phat-trien-nft-tai-viet-nam-elc3... (MISMATCH),9.0,MISMATCH,MATCH,FP,4837.3
+Ca 37,Ca 37 - 17-tieu-luan-phat-trien-ung-dung-iot-cho-bai-do-xe-thong-min... (MATCH),7.91,MATCH,MATCH,TP,5042.4
+Ca 38,Ca 38 - 18-bao-cao-bai-tap-lon-mon-iot-he-thong-thung-rac-tu-dong-su... (MATCH),8.0,MATCH,MATCH,TP,7008.1
+Ca 39,Ca 39 - 19-he-thong-aiot-quan-trac-va-du-bao-chat-luong-khong-khi-th... (MATCH),7.0,MATCH,MATCH,TP,3774.0
+Ca 40,Ca 40 - 20-do-an-tot-nghiep-thiet-ke-he-thong-nha-thong-minh-dieu-kh... (MATCH),7.0,MATCH,MATCH,TP,4755.6
+Ca 41,Ca 41 - 21-mgt496-n4-tieu-luan-nhom-vong-tay-du-bao-dong-kinh-cap-cu... (MISMATCH),9.0,MISMATCH,MATCH,FP,4234.1
+Ca 42,Ca 42 - 22-de-tai-tieu-luan-mon-y-tuong-khoi-nghiep-ung-dung-gia-su-... (MISMATCH),7.67,MISMATCH,MATCH,FP,4269.8
+Ca 43,Ca 43 - 23-do-an-tot-nghiep-xay-dung-website-chia-se-cong-thuc-nau-a... (MATCH),9.0,MATCH,MATCH,TP,6258.8
+Ca 44,Ca 44 - 24-do-an-quan-ly-phong-kham-da-khoa-22dthqb03.pdf... (MATCH),9.0,MATCH,MATCH,TP,5170.3
+Ca 45,Ca 45 - 25-bai-tap-nhom-nghien-cuu-thi-truong-phan-mem-quan-ly-kho-w... (MISMATCH),6.33,MISMATCH,MATCH,FP,4278.1
+Ca 46,Ca 46 - 26-do-an-mon-hoc-lap-trinh-thiet-bi-di-dong-ung-dung-hoc-tie... (MATCH),8.0,MATCH,MATCH,TP,4212.1
+Ca 47,Ca 47 - 27-bao-cao-quan-tri-du-an-cntt-he-thong-thu-vien-dien-tu.pdf... (MISMATCH),7.62,MISMATCH,MATCH,FP,7420.1
+Ca 48,Ca 48 - 28-nghien-cuu-ve-giam-sat-thi-truc-tuyen-tac-dong-den-quyen-... (MISMATCH),5.0,MISMATCH,MISMATCH,TN,5351.4
+Ca 49,Ca 49 - 29-bao-cao-du-an-to-chuc-su-kien-nho-nhom-sinh-vien.pdf... (MISMATCH),7.61,MISMATCH,MATCH,FP,3846.8
+Ca 50,Ca 50 - 30-tieu-luan-nhom-31-nghien-cuu-cicd-cho-trien-khai-dich-vu-... (MATCH),8.0,MATCH,MATCH,TP,3811.2
+Ca 51,Ca 51 - 31-bao-cao-thuc-tap-doanh-nghiep-giam-sat-he-thong-bang-prom... (MATCH),7.97,MATCH,MATCH,TP,6058.0
+Ca 52,Ca 52 - 32-bao-cao-tieu-luan-mon-dien-toan-dam-may-nhom-16-ung-dung-... (MATCH),7.93,MATCH,MATCH,TP,6894.9
+Ca 53,Ca 53 - 33-do-an-tot-nghiep-k63-nghien-cuu-kien-truc-microservice-vo... (MATCH),7.49,MATCH,MATCH,TP,4627.0
+Ca 54,Ca 54 - 34-de-tai-do-an-tot-nghiep-he-thong-phat-hien-xam-nhap-mang-... (MATCH),8.0,MATCH,MATCH,TP,2443.6
+Ca 55,Ca 55 - 35-btl-n3-tim-hieu-10-lo-hong-owasp-cho-bai-tap-lon-co-so-an... (MATCH),8.0,MATCH,MATCH,TP,3309.5
+Ca 56,Ca 56 - 36-bao-cao-chuyen-de-co-so-ve-phat-hien-ma-doc-dua-tren-sieu... (MATCH),6.8,MATCH,MATCH,TP,5704.5
+Ca 57,Ca 57 - 37-do-an-tot-nghiep-he-thong-nhan-dien-va-dem-phuong-tien-gi... (MATCH),8.0,MATCH,MATCH,TP,3091.5
+Ca 58,Ca 58 - 38-bao-cao-cuoi-ky-impr432446-nhan-dien-cu-chi-tay-va-ung-du... (MATCH),8.9,MATCH,MATCH,TP,6299.1
+Ca 59,Ca 59 - 39-thiet-ke-game-rpg-2d-bang-unity-tieu-luan-mon-lap-trinh-g... (MATCH),9.0,MATCH,MATCH,TP,7361.0
+Ca 60,Ca 60 - 40-khoa-luan-tot-nghiep-thiet-ke-va-xay-dung-game-2d-1121091... (MATCH),8.92,MATCH,MATCH,TP,5435.2
+Ca 61,Ca 61 - 41-nghien-cuu-du-doan-khach-hang-roi-bo-dich-vu-vien-thong-k... (MATCH),7.67,MATCH,MATCH,TP,4122.3
+Ca 62,Ca 62 - 42-bao-cao-de-tai-nghien-cuu-phat-hien-tin-gia-fake-news-det... (MATCH),8.9,MATCH,MATCH,TP,4764.5
+Ca 63,Ca 63 - 43-bao-cao-do-an-i-phan-loai-dong-tac-tap-gym-su-dung-mediap... (MATCH),9.0,MATCH,MATCH,TP,5011.8
+Ca 64,Ca 64 - 44-b2012144-xay-dung-website-thuong-mai-dien-tu-tich-hop-ai-... (MATCH),9.0,MATCH,MATCH,TP,5901.1
+Ca 65,Ca 65 - 45-crm-ht-bai-toan-phan-nhom-khach-hang-tai-sieu-thi-coopext... (MISMATCH),5.0,MISMATCH,MISMATCH,TN,6460.8
+Ca 66,Ca 66 - 46-de-tai-xay-dung-he-thong-tro-ly-ao-tu-van-phap-luat-viet-... (MATCH),8.98,MATCH,MATCH,TP,5314.5
+Ca 67,Ca 67 - 47-bao-cao-do-an-thiet-ke-mo-hinh-cnn-nhan-dien-tai-xe-ngu-g... (MATCH),8.97,MATCH,MATCH,TP,5168.4
+Ca 68,Ca 68 - 48-tieu-luan-giua-ky-243to3501-phan-tich-chuoi-thoi-gian-du-... (MISMATCH),7.85,MISMATCH,MATCH,FP,5381.9
+Ca 69,Ca 69 - 49-bao-cao-bai-tap-lon-mo-hinh-dich-may-anh-viet-cse703014.p... (MATCH),8.0,MATCH,MATCH,TP,5346.6
+Ca 70,Ca 70 - 50-tieu-luan-dat723-241-1-d-ung-dung-hop-dong-thong-minh-tro... (MISMATCH),7.64,MISMATCH,MATCH,FP,5231.8
+Ca 71,Ca 71 - 51-do-an-tot-nghiep-xay-dung-mang-xa-hoi-chia-se-kien-thuc-s... (MATCH),8.76,MATCH,MATCH,TP,6413.3
+Ca 72,Ca 72 - 52-bao-cao-nckh-ung-dung-blockchain-trong-luu-tru-benh-an-di... (MATCH),7.0,MATCH,MATCH,TP,3922.2
+Ca 73,Ca 73 - 53-quan-ly-du-an-phat-trien-he-thong-nghe-nhac-truc-tuyen-mo... (MISMATCH),6.21,MISMATCH,MATCH,FP,3830.1
+Ca 74,Ca 74 - 54-de-tai-do-an-nt547-nghien-cuu-va-phat-trien-blockchain.pd... (MATCH),6.91,MATCH,MATCH,TP,3943.4
+Ca 75,Ca 75 - 55-khoa-luan-tot-nghiep-thiet-ke-he-thong-tuoi-tu-dong-trong... (MATCH),7.0,MATCH,MATCH,TP,5447.4
+Ca 76,Ca 76 - 56-do-an-tot-nghiep-he-thong-khoa-cua-thong-minh-ung-dung-ai... (MATCH),7.0,MATCH,MATCH,TP,6349.2
+Ca 77,Ca 77 - 57-do-an-tot-nghiep-thiet-ke-he-thong-giam-sat-nhip-tim-va-o... (MATCH),6.89,MATCH,MATCH,TP,6932.1
+Ca 78,Ca 78 - 58-19375691-final-exam-mang-cam-bien-khong-day-ung-dung.pdf... (MISMATCH),7.94,MISMATCH,MATCH,FP,11951.6
+Ca 79,Ca 79 - 59-tong-quan-ve-iot-trong-logistics-truong-dh-giao-thong-van... (MISMATCH),6.3,MISMATCH,MATCH,FP,9456.9
+Ca 80,Ca 80 - 60-nghien-cuu-he-thong-chieu-sang-thong-minh-tiet-kiem-nang-... (MISMATCH),7.64,MISMATCH,MATCH,FP,4960.9
+Ca 81,Ca 81 - 61-nghien-cuu-thiet-bi-da-nang-ho-tro-nguoi-khiem-thi-144897... (MISMATCH),6.33,MISMATCH,MATCH,FP,2954.4
+Ca 82,Ca 82 - 62-bao-cao-do-an-mon-phan-mem-quan-ly-gara-o-to-22521595.pdf... (MATCH),8.97,MATCH,MATCH,TP,8813.0
+Ca 83,Ca 83 - 63-khoa-luan-tot-nghiep-nang-cao-hieu-qua-su-dung-lao-dong-6... (MISMATCH),6.33,MISMATCH,MATCH,FP,7994.7
+Ca 84,Ca 84 - 64-bao-cao-do-an-csdl-21-he-thong-quan-ly-dat-tiec-cuoi-nha-... (MISMATCH),7.63,MISMATCH,MATCH,FP,5516.9
+Ca 85,Ca 85 - 65-do-an-1-quan-ly-tour-du-lich-bai-luan-chi-tiet-nghien-cuu... (MISMATCH),9.0,MISMATCH,MATCH,FP,4118.7
+Ca 86,Ca 86 - 66-du-an-kinh-doanh-quan-ao-secondhand-tai-thu-duc-lap-du-an... (MISMATCH),8.97,MISMATCH,MATCH,FP,6379.9
+Ca 87,Ca 87 - 67-do-an-cs-4-xay-dung-ung-dung-tro-choi-co-vua.pdf... (MATCH),7.96,MATCH,MATCH,TP,4052.7
+Ca 88,Ca 88 - 68-do-an-cs353-phan-tich-thiet-ke-he-thong-quan-ly-nha-tro.p... (MATCH),7.56,MATCH,MATCH,TP,6498.5
+Ca 89,Ca 89 - 69-do-an-nhom-he-thong-quan-ly-thanh-vien-phong-gym-tich-hop... (MISMATCH),6.26,MISMATCH,MATCH,FP,4496.3
+Ca 90,Ca 90 - 70-ke-hoach-phuc-hoi-sau-tham-hoa-drp-cho-he-thong-thong-tin... (MISMATCH),6.33,MISMATCH,MATCH,FP,3404.0
+Ca 91,Ca 91 - 71-do-an-tot-nghiep-xay-dung-nen-tang-data-lakehouse-cho-tin... (MATCH),9.0,MATCH,MATCH,TP,9725.9
+Ca 92,Ca 92 - 72-do-an-mon-hoc-22it-nghien-cuu-mo-hinh-private-cloud-voi-o... (MISMATCH),8.94,MISMATCH,MATCH,FP,4721.7
+Ca 93,Ca 93 - 73-nt533q13-do-an-mon-hoc-trien-khai-cicd-pipeline-va-iac.pd... (MISMATCH),6.29,MISMATCH,MATCH,FP,4168.1
+Ca 94,Ca 94 - 74-do-an-ca-nhan-mon-mang-may-tinh-tim-hieu-ve-ky-thuat-giau... (MISMATCH),7.52,MISMATCH,MATCH,FP,4869.9
+Ca 95,Ca 95 - 75-nghien-cuu-ky-thuat-honeypot-xay-dung-he-thong-bay-tan-co... (MATCH),9.0,MATCH,MATCH,TP,4995.4
+Ca 96,Ca 96 - 76-he-thong-chat-bao-mat-ma-hoa-khoa-luan-tot-nghiep-2025.pd... (MISMATCH),6.33,MISMATCH,MATCH,FP,6725.2
+Ca 97,Ca 97 - 77-bao-cao-nhap-mon-ky-nang-mem-he-thong-danh-gia-do-manh-ma... (MISMATCH),8.94,MISMATCH,MATCH,FP,4734.4
+Ca 98,Ca 98 - 78-giai-phap-nang-cao-hieu-qua-day-hoc-cau-truc-tuan-tu-tron... (MISMATCH),6.33,MISMATCH,MATCH,FP,2634.6
+Ca 99,Ca 99 - 79-htttql-nhom-4-tieu-luan-cuoi-ky-ve-ung-dung-vr-va-ar-tai-... (MISMATCH),7.67,MISMATCH,MATCH,FP,5096.1
+Ca 100,Ca 100 - 80-do-an-tot-nghiep-nghien-cuu-cong-nghe-thuc-te-ao-va-ung-d... (MISMATCH),7.67,MISMATCH,MATCH,FP,8271.8
+
+=== TONG KET (mo hinh hien tai) ===
+Model,vinai/phobert-base
+Device,cpu
+Total Cases,100
+TP,57
+TN,4
+FP,37
+FN,2
+Accuracy,0.6100,61.00%
+Precision,0.6064,60.64%
+Recall,0.9661,96.61%
+F1-Score,0.7451,74.51%
+Throughput (reports/min),9.9
+Latency mean (ms),6090.2
+Latency p95 (ms),11561.0

@@ -1,0 +1,113 @@
+﻿STT,Linh vuc SV,Linh vuc de tai,GPA,Ky nang (mon),Yeu cau de tai,Nhan thuc te,match_score (domain that),Du doan (>=0.75),Loai ca
+1,DevOps / Cloud,Web Fullstack,8.5,"Linux=7.9, Lập trình mã nguồn mở=9.9, Docker=7.6","NodeJS, Web, React, Express",MISMATCH,0.6359,MISMATCH,Mismatch-Hard
+2,AI / Computer Vision,AI / Computer Vision,7.9,"Python=8.9, Học máy=8.2, Deep learning=8.3","OpenCV, AI, CNN",MATCH,0.6632,MISMATCH,Match
+3,Mobile Android,Mobile Android,8.7,"Java=8.9, Android=8.7, Firebase=9.5, Kotlin=9.0","Java, Kotlin, Android",MATCH,0.8650,MATCH,Match
+4,Data Science / Big Data,Blockchain / Web3,7.9,"Nhập môn Big Data=9.3, Python=9.7, Hadoop=8.0, Khai phá dữ liệu=9.8","Solidity, Web3, Smart Contract, DApp",MISMATCH,0.6453,MISMATCH,Mismatch-Easy
+5,Data Science / Big Data,Data Science / Big Data,9.3,"Spark=8.8, Khai phá dữ liệu=9.7, Nhập môn Big Data=9.1, Python=7.5","Big Data, Hadoop, Data Mining, ETL",MATCH,0.7533,MATCH,Match
+6,NLP,Data Science / Big Data,9.2,"Học máy=8.0, Python=8.0, Deep learning=9.4, Xử lý ngôn ngữ tự nhiên=8.4","Big Data, Data Mining, ETL",MISMATCH,0.6243,MISMATCH,Mismatch-Hard
+7,Mobile Android,iOS Mobile,9.0,"Android=8.9, Kotlin=9.9, Lập trình di động=8.6, Firebase=9.0","Mobile, iOS, Swift",MISMATCH,0.7255,MISMATCH,Mismatch-Hard
+8,DevOps / Cloud,DevOps / Cloud,8.6,"DevOps=9.9, Linux=9.7, Kubernetes=8.8","Cloud, Kubernetes, Docker",MATCH,0.7029,MISMATCH,Match
+9,IoT / Embedded,IoT / Embedded,8.5,"Mạch điện=8.9, C++=8.0, Internet of Things=8.2, Vi điều khiển=8.2","IoT, Embedded, Sensor",MATCH,0.7148,MISMATCH,Match
+10,Mobile Android,NLP,9.0,"Kotlin=7.8, Lập trình di động=7.6, Android=8.7, Java=9.7","Text Classification, Sentiment Analysis, NLP",MISMATCH,0.5957,MISMATCH,Mismatch-Easy
+11,Blockchain / Web3,Blockchain / Web3,9.0,"Solidity=9.3, Blockchain=8.0, Web3=9.1, Hợp đồng thông minh=8.8","DApp, Blockchain, Solidity, Web3",MATCH,0.8696,MATCH,Match
+12,AI / Computer Vision,AI / Computer Vision,8.5,"Học máy=7.6, Deep learning=9.1, Python=7.9, Trí tuệ nhân tạo=9.1","Computer Vision, Deep Learning, Image Classification",MATCH,0.7390,MISMATCH,Match
+13,iOS Mobile,.NET Enterprise,8.6,"Swift=8.3, Lập trình di động=8.3, iOS=9.8","SQL Server, WinForms, Enterprise",MISMATCH,0.5786,MISMATCH,Mismatch-Easy
+14,DevOps / Cloud,DevOps / Cloud,8.9,"Docker=9.4, DevOps=9.8, Linux=8.2","CI/CD, Docker, DevOps, Kubernetes",MATCH,0.7586,MATCH,Match
+15,Blockchain / Web3,Blockchain / Web3,8.9,"Web3=9.2, Ethereum=8.0, Solidity=9.7, Blockchain=8.2","Web3, Solidity, Smart Contract, Blockchain",MATCH,0.8524,MATCH,Match
+16,NLP,NLP,8.3,"Python=9.9, Xử lý ngôn ngữ tự nhiên=9.2, Học máy=9.7, Deep learning=9.8","BERT, Transformer, Sentiment Analysis, Text Classification",MATCH,0.6073,MISMATCH,Match
+17,IoT / Embedded,Data Science / Big Data,8.6,"Internet of Things=8.7, Arduino=9.2, Vi điều khiển=9.2","Hadoop, ETL, Big Data",MISMATCH,0.6920,MISMATCH,Mismatch-Easy
+18,Data Science / Big Data,iOS Mobile,8.3,"Hadoop=9.8, Nhập môn Big Data=7.6, Python=9.0, Spark=8.7","SwiftUI, Swift, iOS, Mobile",MISMATCH,0.6640,MISMATCH,Mismatch-Easy
+19,Blockchain / Web3,Blockchain / Web3,7.9,"Ethereum=8.5, Solidity=8.0, Blockchain=9.3, Web3=10.0","Web3, DApp, Solidity, Smart Contract",MATCH,0.7535,MATCH,Match
+20,IoT / Embedded,IoT / Embedded,8.5,"Mạch điện=9.9, Internet of Things=9.5, C++=9.2, Arduino=9.9","IoT, Arduino, Embedded",MATCH,0.8026,MATCH,Match
+21,IoT / Embedded,DevOps / Cloud,7.6,"Mạch điện=7.8, Internet of Things=7.7, Vi điều khiển=8.8, C++=8.1","Docker, DevOps, CI/CD",MISMATCH,0.6454,MISMATCH,Mismatch-Hard
+22,NLP,NLP,9.0,"Deep learning=8.8, Python=9.9, Xử lý ngôn ngữ tự nhiên=7.9","Text Classification, BERT, Transformer",MATCH,0.6243,MISMATCH,Match
+23,AI / Computer Vision,NLP,8.3,"Deep learning=9.5, Trí tuệ nhân tạo=9.5, Python=9.5, Thị giác máy tính=8.5","Transformer, Sentiment Analysis, NLP",MISMATCH,0.5754,MISMATCH,Mismatch-Hard
+24,iOS Mobile,AI / Computer Vision,7.9,"Objective-C=8.0, Lập trình di động=9.9, iOS=7.5","Image Classification, OpenCV, Computer Vision",MISMATCH,0.6142,MISMATCH,Mismatch-Easy
+25,AI / Computer Vision,Blockchain / Web3,9.0,"Trí tuệ nhân tạo=7.7, Học máy=9.0, Thị giác máy tính=9.3","Blockchain, Solidity, Smart Contract, DApp",MISMATCH,0.6890,MISMATCH,Mismatch-Easy
+26,Web Fullstack,.NET Enterprise,8.4,"JavaScript=7.6, MongoDB=8.4, React=8.8","C#, .NET, Enterprise, SQL Server",MISMATCH,0.5891,MISMATCH,Mismatch-Hard
+27,iOS Mobile,Blockchain / Web3,8.0,"Objective-C=8.2, Lập trình di động=9.8, iOS=8.8, Swift=9.0","Blockchain, Smart Contract, Web3",MISMATCH,0.6081,MISMATCH,Mismatch-Easy
+28,AI / Computer Vision,NLP,8.6,"Trí tuệ nhân tạo=9.3, Học máy=9.5, Thị giác máy tính=8.1, Deep learning=9.4","Sentiment Analysis, Transformer, NLP",MISMATCH,0.6420,MISMATCH,Mismatch-Hard
+29,An toan thong tin,An toan thong tin,7.3,"Linux=9.7, An toàn mạng máy tính=9.8, Bảo mật máy tính=8.1","Security, Bảo mật, OWASP",MATCH,0.7296,MISMATCH,Match
+30,Blockchain / Web3,AI / Computer Vision,9.5,"Solidity=8.0, Blockchain=9.1, Hợp đồng thông minh=8.3","Computer Vision, OpenCV, Image Classification, CNN",MISMATCH,0.5719,MISMATCH,Mismatch-Easy
+31,Web Fullstack,Web Fullstack,9.0,"Hệ cơ sở dữ liệu=9.2, MongoDB=9.4, JavaScript=8.0, Lập trình Web=7.6","Database, NodeJS, MongoDB, React",MATCH,0.8006,MATCH,Match
+32,Web Fullstack,Web Fullstack,9.3,"MongoDB=8.7, NodeJS=8.7, Hệ cơ sở dữ liệu=9.0, React=7.9","Web, MongoDB, Database",MATCH,0.8374,MATCH,Match
+33,AI / Computer Vision,Mobile Android,8.2,"Deep learning=10.0, Thị giác máy tính=7.9, Python=8.8","Android, Firebase, Kotlin, Mobile App",MISMATCH,0.5860,MISMATCH,Mismatch-Easy
+34,An toan thong tin,.NET Enterprise,8.2,"Bảo mật máy tính=7.7, Kiểm thử xâm nhập=9.3, An toàn mạng máy tính=8.8, Linux=8.6",".NET, C#, WinForms, Enterprise",MISMATCH,0.5782,MISMATCH,Mismatch-Easy
+35,Blockchain / Web3,Blockchain / Web3,7.4,"Web3=9.1, Ethereum=9.0, Blockchain=8.6","Web3, Solidity, Smart Contract, DApp",MATCH,0.7431,MISMATCH,Match
+36,NLP,NLP,7.3,"Học máy=9.3, Python=9.2, Deep learning=8.3, Xử lý ngôn ngữ tự nhiên=9.2","Sentiment Analysis, Transformer, Text Classification, BERT",MATCH,0.6071,MISMATCH,Match
+37,DevOps / Cloud,DevOps / Cloud,9.2,"Linux=7.8, Kubernetes=8.0, Docker=9.7","Kubernetes, CI/CD, DevOps, Cloud",MATCH,0.7589,MATCH,Match
+38,Blockchain / Web3,Game Development,9.4,"Ethereum=9.7, Hợp đồng thông minh=10.0, Web3=9.4, Blockchain=8.6","3D, 2D, C#, Unity",MISMATCH,0.5989,MISMATCH,Mismatch-Easy
+39,.NET Enterprise,Data Science / Big Data,8.0,"C#=9.7, Phân tích thiết kế hệ thống=9.2, SQL Server=8.5, Công nghệ .NET=8.8","Spark, Big Data, Data Mining, ETL",MISMATCH,0.7007,MISMATCH,Mismatch-Hard
+40,Game Development,Game Development,7.7,"C#=10.0, Thiết kế game=9.7, Unity=7.9, Lập trình game=8.1","Unity, C#, 3D, 2D",MATCH,0.7858,MATCH,Match
+41,IoT / Embedded,NLP,7.7,"C++=9.4, Mạch điện=8.2, Arduino=9.6, Vi điều khiển=8.9","NLP, Text Classification, Transformer",MISMATCH,0.7062,MISMATCH,Mismatch-Easy
+42,An toan thong tin,NLP,8.3,"An toàn mạng máy tính=8.6, Kiểm thử xâm nhập=9.9, Linux=9.6","NLP, Sentiment Analysis, Transformer, BERT",MISMATCH,0.5814,MISMATCH,Mismatch-Easy
+43,Data Science / Big Data,Data Science / Big Data,8.8,"Python=8.9, Nhập môn Big Data=9.8, Hadoop=8.4","ETL, Big Data, Data Mining, Hadoop",MATCH,0.7530,MATCH,Match
+44,iOS Mobile,Blockchain / Web3,8.2,"Swift=9.1, Objective-C=8.9, Lập trình di động=9.0","Smart Contract, Web3, Blockchain, DApp",MISMATCH,0.6360,MISMATCH,Mismatch-Easy
+45,NLP,NLP,7.5,"Học máy=8.8, Python=8.2, Xử lý ngôn ngữ tự nhiên=7.9, Deep learning=9.1","NLP, BERT, Transformer, Text Classification",MATCH,0.6274,MISMATCH,Match
+46,Mobile Android,Blockchain / Web3,8.4,"Kotlin=9.7, Android=7.7, Firebase=8.1","Blockchain, DApp, Smart Contract, Solidity",MISMATCH,0.6146,MISMATCH,Mismatch-Easy
+47,Mobile Android,Mobile Android,9.2,"Lập trình di động=8.6, Kotlin=9.5, Android=9.7, Java=9.7","Firebase, Mobile App, Java, Kotlin",MATCH,0.8229,MATCH,Match
+48,iOS Mobile,iOS Mobile,9.4,"Swift=8.8, Lập trình di động=9.2, iOS=9.3","SwiftUI, Swift, iOS, Mobile",MATCH,0.8969,MATCH,Match
+49,AI / Computer Vision,Data Science / Big Data,7.8,"Thị giác máy tính=9.9, Deep learning=8.0, Trí tuệ nhân tạo=7.9, Python=10.0","Spark, ETL, Data Mining, Big Data",MISMATCH,0.6775,MISMATCH,Mismatch-Hard
+50,DevOps / Cloud,Game Development,7.4,"DevOps=8.9, Docker=9.6, Kubernetes=8.1","2D, Unity, C#, 3D",MISMATCH,0.5838,MISMATCH,Mismatch-Easy
+51,.NET Enterprise,.NET Enterprise,8.9,"C#=7.8, SQL Server=9.5, Công nghệ .NET=9.1","C#, SQL Server, .NET",MATCH,0.8969,MATCH,Match
+52,An toan thong tin,iOS Mobile,7.8,"An toàn mạng máy tính=9.2, Bảo mật máy tính=9.3, Linux=9.4, Kiểm thử xâm nhập=8.5","iOS, Swift, Mobile, SwiftUI",MISMATCH,0.5807,MISMATCH,Mismatch-Easy
+53,Data Science / Big Data,Data Science / Big Data,8.9,"Khai phá dữ liệu=9.1, Nhập môn Big Data=8.8, Spark=8.8, Hadoop=9.6","ETL, Big Data, Hadoop, Data Mining",MATCH,0.8151,MATCH,Match
+54,Blockchain / Web3,An toan thong tin,8.3,"Blockchain=7.7, Solidity=8.5, Hợp đồng thông minh=8.2","Penetration Testing, Bảo mật, Network, OWASP",MISMATCH,0.6865,MISMATCH,Mismatch-Hard
+55,Web Fullstack,Web Fullstack,7.6,"React=7.9, NodeJS=9.2, JavaScript=9.4","Web, MongoDB, Express",MATCH,0.6438,MISMATCH,Match
+56,Blockchain / Web3,An toan thong tin,8.0,"Web3=9.4, Solidity=9.7, Ethereum=9.0","Bảo mật, Network, Penetration Testing, Security",MISMATCH,0.6915,MISMATCH,Mismatch-Hard
+57,.NET Enterprise,.NET Enterprise,7.7,"Công nghệ .NET=7.8, SQL Server=7.6, Phân tích thiết kế hệ thống=8.8","C#, WinForms, SQL Server, Enterprise",MATCH,0.8202,MATCH,Match
+58,Mobile Android,Mobile Android,7.3,"Lập trình di động=8.9, Kotlin=8.1, Android=8.3, Firebase=9.1","Kotlin, Firebase, Java, Android",MATCH,0.8565,MATCH,Match
+59,IoT / Embedded,IoT / Embedded,9.3,"Vi điều khiển=10.0, Mạch điện=8.9, Arduino=8.9","Sensor, ESP32, Arduino, Embedded",MATCH,0.7283,MISMATCH,Match
+60,NLP,Data Science / Big Data,7.9,"Xử lý ngôn ngữ tự nhiên=7.9, Học máy=7.7, Deep learning=8.0, Python=8.2","Spark, Hadoop, Big Data",MISMATCH,0.6398,MISMATCH,Mismatch-Hard
+61,NLP,.NET Enterprise,8.2,"Python=9.0, Học máy=8.7, Xử lý ngôn ngữ tự nhiên=8.0","SQL Server, WinForms, C#",MISMATCH,0.5909,MISMATCH,Mismatch-Easy
+62,Web Fullstack,Web Fullstack,9.2,"NodeJS=9.7, JavaScript=9.1, Lập trình Web=8.6","MongoDB, Web, NodeJS, React",MATCH,0.7634,MATCH,Match
+63,AI / Computer Vision,AI / Computer Vision,7.9,"Python=8.3, Thị giác máy tính=9.9, Deep learning=9.0","OpenCV, AI, CNN",MATCH,0.6638,MISMATCH,Match
+64,Mobile Android,iOS Mobile,7.7,"Kotlin=7.9, Lập trình di động=8.0, Java=9.4, Firebase=8.5","SwiftUI, Swift, Mobile",MISMATCH,0.6656,MISMATCH,Mismatch-Hard
+65,DevOps / Cloud,NLP,9.1,"Kubernetes=8.0, Lập trình mã nguồn mở=9.5, Docker=9.6, DevOps=8.4","NLP, Sentiment Analysis, Transformer",MISMATCH,0.5601,MISMATCH,Mismatch-Easy
+66,IoT / Embedded,Blockchain / Web3,8.2,"Arduino=7.6, Vi điều khiển=7.6, Internet of Things=9.3, C++=8.9","Blockchain, Web3, Solidity",MISMATCH,0.6751,MISMATCH,Mismatch-Easy
+67,Game Development,Game Development,8.7,"Unity=9.4, Lập trình game=9.9, C#=9.2","C#, Unity, 3D, Game Design",MATCH,0.8458,MATCH,Match
+68,iOS Mobile,Blockchain / Web3,7.4,"iOS=8.1, Lập trình di động=7.6, Objective-C=8.4, Swift=9.7","Blockchain, DApp, Solidity, Smart Contract",MISMATCH,0.6304,MISMATCH,Mismatch-Easy
+69,DevOps / Cloud,Web Fullstack,8.6,"Kubernetes=9.0, Linux=8.7, Lập trình mã nguồn mở=7.5","Web, React, Express",MISMATCH,0.6268,MISMATCH,Mismatch-Hard
+70,NLP,Game Development,8.8,"Học máy=8.4, Xử lý ngôn ngữ tự nhiên=9.8, Deep learning=8.1, Python=8.8","3D, C#, 2D",MISMATCH,0.6354,MISMATCH,Mismatch-Easy
+71,AI / Computer Vision,Data Science / Big Data,7.9,"Deep learning=9.8, Python=7.6, Học máy=9.3, Trí tuệ nhân tạo=9.1","Spark, Big Data, Data Mining",MISMATCH,0.7126,MISMATCH,Mismatch-Hard
+72,.NET Enterprise,iOS Mobile,8.1,"Công nghệ .NET=8.4, Phân tích thiết kế hệ thống=9.9, C#=9.6","Mobile, SwiftUI, Swift",MISMATCH,0.7111,MISMATCH,Mismatch-Easy
+73,NLP,Blockchain / Web3,8.8,"Học máy=9.0, Deep learning=9.3, Python=9.5","DApp, Web3, Solidity, Blockchain",MISMATCH,0.6160,MISMATCH,Mismatch-Easy
+74,Game Development,Game Development,8.8,"Thiết kế game=9.7, Unity=9.2, Lập trình game=9.8","Game Design, 3D, Unity, C#",MATCH,0.8400,MATCH,Match
+75,Web Fullstack,Web Fullstack,9.1,"React=9.0, NodeJS=8.0, JavaScript=8.6, MongoDB=8.9","Web, Database, MongoDB",MATCH,0.7442,MISMATCH,Match
+76,AI / Computer Vision,AI / Computer Vision,8.3,"Trí tuệ nhân tạo=9.5, Python=9.2, Học máy=9.2","Computer Vision, CNN, OpenCV",MATCH,0.6912,MISMATCH,Match
+77,DevOps / Cloud,DevOps / Cloud,9.1,"Kubernetes=9.2, DevOps=8.6, Lập trình mã nguồn mở=9.0, Docker=7.7","Cloud, CI/CD, Kubernetes",MATCH,0.7150,MISMATCH,Match
+78,Game Development,Game Development,9.5,"Unity=8.7, Lập trình game=9.7, C#=9.3","Game Design, 3D, 2D, Unity",MATCH,0.7705,MATCH,Match
+79,iOS Mobile,iOS Mobile,8.7,"Lập trình di động=7.7, Swift=8.4, iOS=9.3, Objective-C=7.8","Swift, Mobile, SwiftUI",MATCH,0.8507,MATCH,Match
+80,iOS Mobile,An toan thong tin,7.9,"Lập trình di động=9.2, Objective-C=8.5, Swift=8.7, iOS=8.2","Security, Bảo mật, Network",MISMATCH,0.6354,MISMATCH,Mismatch-Easy
+81,.NET Enterprise,DevOps / Cloud,7.3,"SQL Server=8.8, C#=8.5, Phân tích thiết kế hệ thống=9.7, Công nghệ .NET=8.4","DevOps, Cloud, Kubernetes",MISMATCH,0.6544,MISMATCH,Mismatch-Easy
+82,IoT / Embedded,IoT / Embedded,7.6,"Mạch điện=9.9, Internet of Things=9.9, Vi điều khiển=8.0","Embedded, IoT, Sensor",MATCH,0.7357,MISMATCH,Match
+83,An toan thong tin,An toan thong tin,9.1,"Kiểm thử xâm nhập=9.8, An toàn mạng máy tính=9.9, Linux=10.0","Bảo mật, Security, OWASP",MATCH,0.7337,MISMATCH,Match
+84,iOS Mobile,iOS Mobile,9.2,"Lập trình di động=8.1, iOS=9.9, Swift=9.7, Objective-C=9.1","iOS, Swift, SwiftUI, Mobile",MATCH,0.8765,MATCH,Match
+85,IoT / Embedded,DevOps / Cloud,7.5,"Vi điều khiển=9.2, Arduino=7.6, Mạch điện=8.1, C++=7.8","CI/CD, Kubernetes, Cloud",MISMATCH,0.6457,MISMATCH,Mismatch-Hard
+86,An toan thong tin,An toan thong tin,8.0,"Kiểm thử xâm nhập=9.8, An toàn mạng máy tính=7.7, Bảo mật máy tính=9.2, Linux=9.5","OWASP, Network, Bảo mật, Penetration Testing",MATCH,0.7957,MATCH,Match
+87,IoT / Embedded,Mobile Android,8.9,"Arduino=9.5, Mạch điện=9.6, Vi điều khiển=8.3, Internet of Things=7.7","Mobile App, Java, Android",MISMATCH,0.6320,MISMATCH,Mismatch-Easy
+88,.NET Enterprise,.NET Enterprise,8.4,"C#=8.3, Phân tích thiết kế hệ thống=9.8, SQL Server=9.3","WinForms, SQL Server, C#, Enterprise",MATCH,0.8439,MATCH,Match
+89,An toan thong tin,DevOps / Cloud,9.1,"Bảo mật máy tính=8.6, An toàn mạng máy tính=8.2, Kiểm thử xâm nhập=9.4","Kubernetes, CI/CD, Docker",MISMATCH,0.5781,MISMATCH,Mismatch-Easy
+90,Mobile Android,Mobile Android,8.1,"Lập trình di động=8.2, Kotlin=8.7, Java=9.5, Firebase=8.5","Java, Mobile App, Kotlin, Firebase",MATCH,0.8936,MATCH,Match
+91,.NET Enterprise,.NET Enterprise,8.1,"Phân tích thiết kế hệ thống=9.9, C#=8.5, Công nghệ .NET=7.7, SQL Server=9.6","C#, Enterprise, SQL Server, .NET",MATCH,0.8752,MATCH,Match
+92,Web Fullstack,.NET Enterprise,9.4,"React=9.1, Hệ cơ sở dữ liệu=9.8, Lập trình Web=9.5, NodeJS=8.2","WinForms, C#, .NET, SQL Server",MISMATCH,0.7129,MISMATCH,Mismatch-Hard
+93,iOS Mobile,iOS Mobile,8.8,"Swift=9.9, iOS=8.3, Lập trình di động=9.4","Mobile, SwiftUI, iOS, Swift",MATCH,0.8964,MATCH,Match
+94,Web Fullstack,Blockchain / Web3,8.0,"Hệ cơ sở dữ liệu=7.7, NodeJS=7.6, Lập trình Web=8.8, React=8.6","Smart Contract, DApp, Web3",MISMATCH,0.6620,MISMATCH,Mismatch-Hard
+95,Web Fullstack,Blockchain / Web3,9.2,"Lập trình Web=7.9, React=9.5, JavaScript=7.9, Hệ cơ sở dữ liệu=8.9","Blockchain, Smart Contract, DApp",MISMATCH,0.6182,MISMATCH,Mismatch-Hard
+96,.NET Enterprise,Data Science / Big Data,8.9,"Công nghệ .NET=9.0, C#=8.1, Phân tích thiết kế hệ thống=8.7","ETL, Spark, Big Data",MISMATCH,0.6894,MISMATCH,Mismatch-Hard
+97,AI / Computer Vision,AI / Computer Vision,8.1,"Python=8.9, Deep learning=8.7, Học máy=9.4","CNN, Deep Learning, AI",MATCH,0.7370,MISMATCH,Match
+98,Data Science / Big Data,Data Science / Big Data,7.5,"Python=9.4, Hadoop=8.5, Khai phá dữ liệu=8.6","Big Data, ETL, Data Mining",MATCH,0.6882,MISMATCH,Match
+99,iOS Mobile,Data Science / Big Data,7.5,"Swift=8.8, Objective-C=7.8, iOS=8.9","Spark, Hadoop, Big Data",MISMATCH,0.6677,MISMATCH,Mismatch-Easy
+100,An toan thong tin,An toan thong tin,7.4,"Linux=8.7, An toàn mạng máy tính=7.6, Kiểm thử xâm nhập=9.5, Bảo mật máy tính=8.1","Network, Penetration Testing, Bảo mật, OWASP",MATCH,0.7613,MATCH,Match
+
+=== TONG KET (nguong 0.75) ===
+Total,100
+TP,30
+TN,50
+FP,0
+FN,20
+Accuracy,80.00%
+Precision,100.00%
+Recall,60.00%
+F1-Score,75.00%
+Nguong toi uu,0.72 (F1=85.4%)

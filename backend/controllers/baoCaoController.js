@@ -452,8 +452,11 @@ exports.saveAiCache = async (req, res) => {
             return res.status(404).json({ error: 'Bao cao khong ton tai', code: 'BAOCAO_KHONG_TON_TAI' });
         }
 
+        // Cho phép GV phụ trách HOẶC chính sinh viên chủ báo cáo lưu cache
         const userId = req.user?.id;
-        if (!userId || String(bc.DeTai?.GiangVienHuongDan) !== String(userId)) {
+        const isLecturer = userId && String(bc.DeTai?.GiangVienHuongDan) === String(userId);
+        const isOwner = userId && String(bc.SinhVien) === String(userId);
+        if (!isLecturer && !isOwner) {
             return res.status(403).json({ error: 'Khong co quyen', code: 'KHONG_CO_QUYEN' });
         }
 

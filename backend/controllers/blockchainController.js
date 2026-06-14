@@ -384,3 +384,178 @@ exports.backfillTxHashes = async (req, res) => {
         res.status(500).json({ error: getErrorMessage(error) });
     }
 };
+
+// SV xem lich su blockchain CUA CHINH MINH (lay studentId tu JWT, khong tu query -> bao mat).
+// Tai dung logic doi chieu cua getThesisDbRecords nhung GIOI HAN o bao cao cua SV (+ ban ghi cung nhom de doi chieu).
+exports.getMyThesisRecords = async (req, res) => {
+    try {
+        const studentId = req.user?.id;
+        if (!studentId) {
+            return res.status(401).json({ error: 'Chua dang nhap', code: 'CHUA_DANG_NHAP' });
+        }
+
+        const { provider, contract, address, version } = await getThesisContract();
+        const network = await provider.getNetwork();
+
+        // 1) Bao cao cua chinh sinh vien
+        const myReports = await BaoCao.find({ SinhVien: studentId })
+            .populate('SinhVien', 'HoTen MaSV WalletAddress')
+            .populate('DeTai', 'TenDeTai MaDeTai')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        if (myReports.length === 0) {
+            return res.json({
+                contract: { address, version },
+                network: { name: network.name, chainId: Number(network.chainId) },
+                count: 0,
+                records: []
+            });
+        }
+
+        // 2) Bao cao cung nhom (cung de tai + cung file IPFS) -> co bang chung on-chain/diem theo nhom
+        const topicIds = [...new Set(myReports.map((r) => String(r.DeTai?._id || r.DeTai)))];
+        const cids = [...new Set(myReports.map((r) => r.IPFS_CID).filter(Boolean))];
+        const siblingReports = cids.length > 0 ? await BaoCao.find({
+            DeTai: { $in: topicIds },
+            IPFS_CID: { $in: cids },
+            SinhVien: { $ne: studentId }
+        })
+            .populate('SinhVien', 'HoTen MaSV WalletAddress')
+            .populate('DeTai', 'TenDeTai MaDeTai')
+            .lean() : [];
+
+        const allReports = [...myReports, ...siblingReports];
+
+        // 3) Diem cua cac bao cao nay
+        const grades = await DiemSo.find({ BaoCao: { $in: allReports.map((r) => r._id) } })
+            .populate('DeTai', 'TenDeTai MaDeTai')
+            .lean();
+        const gradeMap = new Map();
+        grades.forEach((grade) => gradeMap.set(String(grade.BaoCao), grade));
+
+        const baseRecords = allReports.map((report) => ({
+            report,
+            grade: gradeMap.get(String(report._id)) || null,
+            studentId: String(report.SinhVien?._id || report.SinhVien),
+            topicId: String(report.DeTai?._id || report.DeTai)
+        }));
+
+        const groupKeyOf = (item) => `${item.topicId}::${item.report.IPFS_CID || ''}`;
+
+        // Goi on-chain theo cap (studentId, topicId) duy nhat, gioi han song song chong rate-limit
+        const uniquePairs = new Map();
+        for (const item of baseRecords) {
+            const pairKey = `${item.studentId}::${item.topicId}`;
+            if (!uniquePairs.has(pairKey)) {
+                uniquePairs.set(pairKey, { studentId: item.studentId, topicId: item.topicId });
+            }
+        }
+        const CONCURRENCY = 5;
+        const historyByKey = new Map();
+        const pairList = Array.from(uniquePairs.entries());
+        for (let i = 0; i < pairList.length; i += CONCURRENCY) {
+            const batch = pairList.slice(i, i + CONCURRENCY);
+            await Promise.all(batch.map(async ([pairKey, { studentId: sId, topicId: tId }]) => {
+                try {
+                    const history = await readOnChainHistory(contract, version, sId, tId);
+                    historyByKey.set(pairKey, { data: history, error: null });
+                } catch (error) {
+                    historyByKey.set(pairKey, { data: null, error: getErrorMessage(error) });
+                }
+            }));
+        }
+
+        const buildChain = (result, via, ipfsCID) => {
+            if (!result || result.error) {
+                return { status: 'error', count: 0, matchedByCid: false, matchedVia: via, data: [], error: result?.error || 'not_checked' };
+            }
+            const history = result.data || [];
+            return {
+                status: history.length > 0 ? 'found' : 'empty',
+                count: history.length,
+                matchedByCid: history.some((sub) => sub.ipfsCID === ipfsCID),
+                matchedVia: via,
+                data: history,
+                error: null
+            };
+        };
+
+        const myReportIds = new Set(myReports.map((r) => String(r._id)));
+        const records = baseRecords
+            .filter(({ report }) => myReportIds.has(String(report._id)))
+            .map(({ report, grade, studentId: sId, topicId }) => {
+                const selfKey = `${sId}::${topicId}`;
+                let chain = buildChain(historyByKey.get(selfKey), 'self', report.IPFS_CID);
+
+                // Neu ID cua minh khong khop -> tim bang chung tu thanh vien cung nhom (nguoi da nop on-chain)
+                if (!chain.matchedByCid && report.IPFS_CID) {
+                    for (const other of baseRecords) {
+                        if (other.studentId === sId || groupKeyOf(other) !== groupKeyOf({ report, topicId })) continue;
+                        const otherResult = historyByKey.get(`${other.studentId}::${other.topicId}`);
+                        if (otherResult && !otherResult.error && (otherResult.data || []).some((sub) => sub.ipfsCID === report.IPFS_CID)) {
+                            chain = buildChain(otherResult, 'group', report.IPFS_CID);
+                            break;
+                        }
+                    }
+                }
+
+                // Bao cao nhom: chi nguoi dai dien co DiemSo -> muon diem chung cho thanh vien con lai
+                let effectiveGrade = grade;
+                let gradeFromGroup = false;
+                if (!effectiveGrade) {
+                    const sibling = baseRecords.find((other) =>
+                        other.grade &&
+                        other.studentId !== sId &&
+                        groupKeyOf(other) === groupKeyOf({ report, topicId })
+                    );
+                    if (sibling) {
+                        effectiveGrade = sibling.grade;
+                        gradeFromGroup = true;
+                    }
+                }
+
+                return {
+                    report: {
+                        id: String(report._id),
+                        title: report.TieuDe,
+                        ipfsCID: report.IPFS_CID,
+                        submitTxHash: report.SubmitTxHash || null,
+                        submittedAt: report.NgayNop || report.createdAt
+                    },
+                    student: {
+                        id: sId,
+                        name: report.SinhVien?.HoTen || '',
+                        code: report.SinhVien?.MaSV || '',
+                        walletAddress: report.SinhVien?.WalletAddress || ''
+                    },
+                    topic: {
+                        id: topicId,
+                        code: report.DeTai?.MaDeTai || '',
+                        title: report.DeTai?.TenDeTai || ''
+                    },
+                    grade: effectiveGrade ? {
+                        id: String(effectiveGrade._id),
+                        score: effectiveGrade.Diem,
+                        aiScore: effectiveGrade.AI_Score,
+                        feedback: effectiveGrade.NhanXet || '',
+                        txHash: effectiveGrade.TxHash || null,
+                        blockchainStatus: effectiveGrade.TrangThaiBlockchain,
+                        submissionIndex: effectiveGrade.SubmissionIndex || 0,
+                        error: effectiveGrade.LoiBlockchain || null,
+                        fromGroup: gradeFromGroup
+                    } : null,
+                    chain
+                };
+            });
+
+        res.json({
+            contract: { address, version },
+            network: { name: network.name, chainId: Number(network.chainId) },
+            count: records.length,
+            records
+        });
+    } catch (error) {
+        res.status(500).json({ error: getErrorMessage(error) });
+    }
+};
