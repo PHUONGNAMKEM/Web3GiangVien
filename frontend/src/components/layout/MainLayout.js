@@ -135,8 +135,7 @@ const MainLayout = () => {
     { key: '/student/register', icon: <Award size={18} />, label: 'Đăng Ký Đề Tài' },
     { key: '/student/upload', icon: <FileText size={18} />, label: 'Nộp Báo Cáo' },
     { key: '/student/progress-log', icon: <CheckCircle size={18} />, label: 'Nhật Ký Tiến Độ' },
-    { key: '/student/progress', icon: <UserIcon size={18} />, label: 'Kết Quả & Điểm' },
-    { key: '/student/blockchain', icon: <ShieldCheck size={18} />, label: 'Blockchain' }
+    { key: '/student/progress', icon: <UserIcon size={18} />, label: 'Kết Quả & Điểm' }
   ];
 
   const lecturerMenuItems = [

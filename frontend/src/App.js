@@ -19,7 +19,6 @@ import ProgressTracking from './components/student/ProgressTracking';
 import ProgressLog from './components/student/ProgressLog';
 import EntranceTest from './components/student/EntranceTest';
 import BlockchainDebugPage from './components/debug/BlockchainDebugPage';
-import StudentBlockchain from './components/student/StudentBlockchain';
 import GroupManagement from './components/student/GroupManagement';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRequests from './components/admin/AdminRequests';
@@ -124,7 +123,6 @@ function App() {
           <Route path="upload" element={<ReportUpload />} />
           <Route path="progress-log" element={<ProgressLog />} />
           <Route path="progress" element={<ProgressTracking />} />
-          <Route path="blockchain" element={<StudentBlockchain />} />
           <Route path="group" element={<GroupManagement />} />
           <Route path="entrance-test/:deTaiId" element={<EntranceTest />} />
         </Route>
