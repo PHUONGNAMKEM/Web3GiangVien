@@ -395,7 +395,12 @@ exports.getMyThesisRecords = async (req, res) => {
         }
 
         const { provider, contract, address, version } = await getThesisContract();
-        const network = await provider.getNetwork();
+        // Thong tin mang KHONG bat buoc -> loi RPC khong duoc lam hong toan bo API
+        let network = null;
+        try {
+            const net = await provider.getNetwork();
+            network = { name: net.name, chainId: Number(net.chainId) };
+        } catch (netErr) { /* bo qua */ }
 
         // 1) Bao cao cua chinh sinh vien
         const myReports = await BaoCao.find({ SinhVien: studentId })
@@ -407,7 +412,7 @@ exports.getMyThesisRecords = async (req, res) => {
         if (myReports.length === 0) {
             return res.json({
                 contract: { address, version },
-                network: { name: network.name, chainId: Number(network.chainId) },
+                network,
                 count: 0,
                 records: []
             });
@@ -551,7 +556,7 @@ exports.getMyThesisRecords = async (req, res) => {
 
         res.json({
             contract: { address, version },
-            network: { name: network.name, chainId: Number(network.chainId) },
+            network,
             count: records.length,
             records
         });

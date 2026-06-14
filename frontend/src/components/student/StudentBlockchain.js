@@ -56,7 +56,8 @@ const StudentBlockchain = () => {
       const response = await apiService.get('/blockchain/my-records');
       setData(response.data);
     } catch (err) {
-      setError(err.response?.data?.error || err.message);
+      const raw = err.response?.data?.error ?? err.message;
+      setError(typeof raw === 'string' ? raw : (JSON.stringify(raw) || 'Lỗi không xác định'));
     } finally {
       setLoading(false);
     }
