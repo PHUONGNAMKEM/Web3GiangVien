@@ -1,12 +1,12 @@
 ﻿Function,Mo ta,Gas (mean),Gas (min),Gas (max),Fee ETH @10gwei,Fee USD,Fee VND,Tx/block,Tx/s on-chain
-registerTopic,"GV đăng ký đề tài",262666,261794,278906,0.00262666,7.8800,200151,114,9.52
-submitReport,"SV nộp báo cáo (IPFS CID)",192125,192115,192127,0.00192125,5.7638,146399,156,13.01
-submitTestResult,"Ghi điểm bài test cạnh tranh",137839,137829,137841,0.00137839,4.1352,105033,217,18.14
-submitProgress,"Ghi đánh giá tiến độ tuần",138231,138221,138233,0.00138231,4.1469,105332,217,18.09
-finalizeGrade,"GV chốt điểm + feedback",145451,145441,145453,0.00145451,4.3635,110834,206,17.19
+registerTopic,"GV đăng ký đề tài",262666,261794,278906,0.00262666,4.3786,115158,114,9.52
+submitReport,"SV nộp báo cáo (IPFS CID)",192125,192115,192127,0.00192125,3.2027,84232,156,13.01
+submitTestResult,"Ghi điểm bài test cạnh tranh",137839,137829,137841,0.00137839,2.2978,60432,217,18.14
+submitProgress,"Ghi đánh giá tiến độ tuần",138231,138221,138233,0.00138231,2.3043,60603,217,18.09
+finalizeGrade,"GV chốt điểm + feedback",145451,145441,145453,0.00145451,2.4247,63769,206,17.19
 
 Deploy contract,(1 lan),,1386725,,,,,,
-FULL FLOW (5 ham),(1 quy trinh),876312,,,0.00876312,26.2894,667750,,
+FULL FLOW (5 ham),(1 quy trinh),876312,,,0.00876312,14.6081,384194,,
 
-Gia dinh:,1 ETH=3000 USD; 1 USD=25400 VND; gas price=10 gwei
+Gia dinh:,1 ETH=1667 USD; 1 USD=26300 VND; gas price=10 gwei
 Throughput on-chain gia dinh:,block gas limit=30000000; block time=12s

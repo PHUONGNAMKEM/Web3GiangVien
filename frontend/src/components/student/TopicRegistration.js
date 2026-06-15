@@ -116,7 +116,8 @@ const TopicRegistration = () => {
             return {
               ...t,
               ai_score: (score * 10).toFixed(1),
-              isRecommended: score > 0.3
+              // Chỉ gắn nhãn "AI Gợi ý" khi điểm khớp đủ cao (> 0.72 — đồng bộ ngưỡng tối ưu trong báo cáo đánh giá)
+              isRecommended: score > 0.72
             };
           });
         }

@@ -16,8 +16,8 @@ const fs = require("fs");
 const path = require("path");
 
 // ===== GIẢ ĐỊNH QUY ĐỔI (nêu rõ trong báo cáo) =====
-const ETH_USD = 3000;            // 1 ETH ≈ 3,000 USD (giả định, chỉnh theo thời điểm)
-const USD_VND = 25400;           // 1 USD ≈ 25,400 VND (giả định)
+const ETH_USD = 1667;            // 1 ETH ≈ 1,667 USD (giá thực tế 14/06/2026)
+const USD_VND = 26300;           // 1 USD ≈ 26,300 VND (giá thực tế 14/06/2026)
 const GAS_PRICE_SCENARIOS_GWEI = [1, 10, 30]; // Sepolia-thấp / trung bình / mainnet-bận
 const HEADLINE_GWEI = 10;        // mốc dùng cho cột chi phí "đại diện"
 

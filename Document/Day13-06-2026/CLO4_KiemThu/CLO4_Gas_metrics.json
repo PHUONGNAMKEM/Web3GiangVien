@@ -3,8 +3,8 @@
   "network": "hardhat",
   "iterations_per_fn": 20,
   "assumptions": {
-    "eth_usd": 3000,
-    "usd_vnd": 25400,
+    "eth_usd": 1667,
+    "usd_vnd": 26300,
     "headline_gas_price_gwei": 10,
     "gas_price_scenarios_gwei": [
       1,
@@ -24,8 +24,8 @@
       "gas_max": 278906,
       "gas_p50": 261818,
       "fee_eth_at_headline": 0.0026266600000000003,
-      "fee_usd_at_headline": 7.879980000000001,
-      "fee_vnd_at_headline": 200151.49200000003,
+      "fee_usd_at_headline": 4.378642220000001,
+      "fee_vnd_at_headline": 115158.29038600002,
       "tx_per_block": 114,
       "tx_per_sec_onchain": 9.52
     },
@@ -37,8 +37,8 @@
       "gas_max": 192127,
       "gas_p50": 192127,
       "fee_eth_at_headline": 0.0019212500000000002,
-      "fee_usd_at_headline": 5.763750000000001,
-      "fee_vnd_at_headline": 146399.25000000003,
+      "fee_usd_at_headline": 3.2027237500000005,
+      "fee_vnd_at_headline": 84231.63462500002,
       "tx_per_block": 156,
       "tx_per_sec_onchain": 13.01
     },
@@ -50,8 +50,8 @@
       "gas_max": 137841,
       "gas_p50": 137841,
       "fee_eth_at_headline": 0.0013783900000000002,
-      "fee_usd_at_headline": 4.1351700000000005,
-      "fee_vnd_at_headline": 105033.31800000001,
+      "fee_usd_at_headline": 2.2977761300000004,
+      "fee_vnd_at_headline": 60431.51221900001,
       "tx_per_block": 217,
       "tx_per_sec_onchain": 18.14
     },
@@ -63,8 +63,8 @@
       "gas_max": 138233,
       "gas_p50": 138233,
       "fee_eth_at_headline": 0.00138231,
-      "fee_usd_at_headline": 4.14693,
-      "fee_vnd_at_headline": 105332.02200000001,
+      "fee_usd_at_headline": 2.3043107700000003,
+      "fee_vnd_at_headline": 60603.373251000005,
       "tx_per_block": 217,
       "tx_per_sec_onchain": 18.09
     },
@@ -76,8 +76,8 @@
       "gas_max": 145453,
       "gas_p50": 145453,
       "fee_eth_at_headline": 0.00145451,
-      "fee_usd_at_headline": 4.36353,
-      "fee_vnd_at_headline": 110833.662,
+      "fee_usd_at_headline": 2.42466817,
+      "fee_vnd_at_headline": 63768.772870999994,
       "tx_per_block": 206,
       "tx_per_sec_onchain": 17.19
     }
@@ -85,13 +85,13 @@
   "full_flow": {
     "gas": 876312,
     "fee_eth_at_headline": 0.008763120000000001,
-    "fee_usd_at_headline": 26.289360000000002,
-    "fee_vnd_at_headline": 667749.7440000001
+    "fee_usd_at_headline": 14.608121040000002,
+    "fee_vnd_at_headline": 384193.58335200005
   },
   "scenarios_full_flow_vnd": {
-    "1gwei": 66775,
-    "10gwei": 667750,
-    "30gwei": 2003249
+    "1gwei": 38419,
+    "10gwei": 384194,
+    "30gwei": 1152581
   },
   "local_write_throughput": {
     "tx_sent": 100,

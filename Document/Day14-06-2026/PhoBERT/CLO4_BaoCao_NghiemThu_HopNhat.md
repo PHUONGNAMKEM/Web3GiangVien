@@ -13,10 +13,10 @@
 |---|---|---|
 | **Accuracy** | **61.0%** (như đang triển khai) · **74.0%** (ngưỡng hiệu chỉnh 6.34) | Mô hình AI PhoBERT, 100 báo cáo gán nhãn |
 | **F1‑Score** | **74.5%** (triển khai) · **81.2%** (hiệu chỉnh) | Như trên |
-| **Gas Fee** | **876,312 gas / quy trình** (~667,750đ @10 gwei) | Smart contract `ThesisManagementV2`, 5 hàm × 20 lần |
-| **Throughput** | **AI: 9.9 báo cáo/phút** (logic thuần) · **5.0 req/phút** (end‑to‑end production) · **On‑chain: 9.5–18.1 tx/s** | AI đo trên CPU; on‑chain theo block 30M gas / 12s |
+| **Gas Fee** | **876,312 gas / quy trình** (~384,194đ @10 gwei) | Smart contract `ThesisManagementV2`, 5 hàm × 20 lần |
+| **Throughput** | **AI: 9.9 báo cáo/phút** (logic thuần) · **4.8 req/phút** (end‑to‑end production) · **On‑chain: 9.5–18.1 tx/s** | AI đo trên CPU; on‑chain theo block 30M gas / 12s |
 
-> Bổ trợ AI: **Precision 60.6%**, **Recall 96.6%**, **ROC‑AUC 0.697**. Blockchain: **Deploy contract 1,386,725 gas**. Latency AI (local) mean **6.1s** / p95 **11.6s**; latency end‑to‑end production mean **12.0s** / p95 **16.3s**.
+> Bổ trợ AI: **Precision 60.6%**, **Recall 96.6%**, **ROC‑AUC 0.697**. Blockchain: **Deploy contract 1,386,725 gas**. Latency AI (local) mean **6.1s** / p95 **11.6s**; latency end‑to‑end production mean **12.4s** / p95 **16.4s** (đo lại 14/06).
 
 **Hai chế độ đo (giải thích vênh số liệu):** báo cáo trình bày AI ở **2 điểm đo** khác nhau — (a) **gọi trực tiếp hàm `analyze()` ở local** để đo *năng lực thuần của mô hình* (loại nhiễu mạng), và (b) **gọi API production qua Internet** để đo *trải nghiệm end‑to‑end thực tế*. Vì vậy Accuracy 61% vs 62% và Throughput 6.1s vs 12s/req **không mâu thuẫn** mà là 2 góc nhìn bổ sung (chi tiết mục 3.1).
 
@@ -43,7 +43,7 @@ Thêm nữa, **logic chấm đã thay đổi** sau Day03: hàm `analyze()` trong
 |---|---|---|
 | **Accuracy** | **61.0%** (triển khai) · **74.0%** (hiệu chỉnh) | Mô hình AI PhoBERT, 100 báo cáo gán nhãn |
 | **F1‑Score** | **74.5%** (triển khai) · **81.2%** (hiệu chỉnh) | Như trên |
-| **Gas Fee** | **876,312 gas / quy trình** (~667,750đ @10 gwei) | Smart contract `ThesisManagementV2`, 5 hàm × 20 lần |
+| **Gas Fee** | **876,312 gas / quy trình** (~384,194đ @10 gwei) | Smart contract `ThesisManagementV2`, 5 hàm × 20 lần |
 | **Throughput** | **AI: 9.9 báo cáo/phút** · **On‑chain: 9.5–18.1 tx/s** | AI đo trên CPU; on‑chain theo block 30M gas / 12s |
 
 ---
@@ -60,7 +60,7 @@ Thêm nữa, **logic chấm đã thay đổi** sau Day03: hàm `analyze()` trong
 | Precision / Recall | 60.6% / 96.6% | 61.05% / 98.31% |
 | F1 | **74.5%** | 75.32% |
 | Confusion | TP 57 · FN 2 · FP 37 · TN 4 | TP 58 · FN 1 · FP 37 · TN 4 |
-| Latency / Throughput | mean **6.1s**, p95 11.6s → **9.9 báo cáo/phút** | mean **12.0s**, p95 16.3s → **~5.0 req/phút** |
+| Latency / Throughput | mean **6.1s**, p95 11.6s → **9.9 báo cáo/phút** | mean **12.4s**, p95 16.4s → **~4.8 req/phút** |
 
 **Vì sao lệch:** chênh **1 ca** (FN) là do khác môi trường (độ trễ mạng + việc truncate text khi truyền qua HTTP) làm 1 báo cáo biên đổi nhãn dự đoán; chênh **6.1s vs 12s** là do bản (b) cộng thêm round‑trip mạng + tải server production. Cả hai **đồng thuận về kết luận**: FP = 37, Recall ~97%, mô hình "dễ dãi" trên tác vụ nhị phân.
 
@@ -127,29 +127,35 @@ Quét ngưỡng điểm để tách MATCH/MISMATCH (thay cho quy tắc feedback 
 
 ## 4. Phân hệ Blockchain — Gas Fee (`ThesisManagementV2`)
 
-**Thiết lập:** deploy contract production, gọi mỗi hàm ghi state **20 lần** trên mạng Hardhat (auto‑mine), lấy `gasUsed` thật từ receipt → trung bình. Quy đổi giả định: **1 ETH = 3,000 USD**, **1 USD = 25,400 VND**.
+**Thiết lập:** deploy contract production, gọi mỗi hàm ghi state **20 lần** trên mạng Hardhat (auto‑mine), lấy `gasUsed` thật từ receipt → trung bình. Quy đổi giả định: **1 ETH = 1,667 USD** (giá thực tế 14/06/2026), **1 USD = 26,300 VND** → **1 ETH ≈ 43,842,100 VND**.
 
 ![Gas mỗi hàm](charts/clo4_gas.png)
 
 | Giao dịch on‑chain | Gas (mean) | Phí ETH @10 gwei | ~VND @10 gwei |
 |---|---|---|---|
-| `registerTopic` — GV đăng ký đề tài | 262,666 | 0.00262666 | ~200,151đ |
-| `submitReport` — SV nộp báo cáo (IPFS CID) | 192,125 | 0.00192125 | ~146,399đ |
-| `submitTestResult` — ghi điểm bài test cạnh tranh | 137,839 | 0.00137839 | ~105,033đ |
-| `submitProgress` — ghi đánh giá tiến độ tuần | 138,231 | 0.00138231 | ~105,332đ |
-| `finalizeGrade` — GV chốt điểm + feedback | 145,451 | 0.00145451 | ~110,834đ |
-| **Cả quy trình (5 hàm)** | **876,312** | **0.00876312** | **~667,750đ** |
-| *Deploy contract (1 lần)* | *1,386,725* | *0.01386725* | *~1,057,205đ* |
+| `registerTopic` — GV đăng ký đề tài | 262,666 | 0.00262666 | ~115,158đ |
+| `submitReport` — SV nộp báo cáo (IPFS CID) | 192,125 | 0.00192125 | ~84,232đ |
+| `submitTestResult` — ghi điểm bài test cạnh tranh | 137,839 | 0.00137839 | ~60,432đ |
+| `submitProgress` — ghi đánh giá tiến độ tuần | 138,231 | 0.00138231 | ~60,603đ |
+| `finalizeGrade` — GV chốt điểm + feedback | 145,451 | 0.00145451 | ~63,769đ |
+| **Cả quy trình (5 hàm)** | **876,312** | **0.00876312** | **~384,194đ** |
+| *Deploy contract (1 lần)* | *1,386,725* | *0.01386725* | *~607,969đ* |
 
 **Phí cả quy trình theo kịch bản gas price** (gas là số xác định, phí = gas × gas price):
 
 | Gas price | Phí ETH | ~VND |
 |---|---|---|
-| 1 gwei (Sepolia thấp) | 0.000876 | ~66,775đ |
-| 10 gwei (trung bình) | 0.008763 | ~667,750đ |
-| 30 gwei (mainnet bận) | 0.026289 | ~2,003,249đ |
+| 1 gwei (Sepolia thấp) | 0.000876 | ~38,419đ |
+| 10 gwei (trung bình) | 0.008763 | ~384,194đ |
+| 30 gwei (mainnet bận) | 0.026289 | ~1,152,581đ |
 
 > Hệ thống chạy testnet **Sepolia** (ETH test miễn phí) → chi phí thực tế khi vận hành = 0đ; bảng trên quy đổi mang tính minh hoạ chi phí tương đương nếu lên mainnet. Contract V2 đã tối ưu (`bytes32` key thay `string`) nên gas thấp (tiết kiệm > 35% so với V1).
+
+**Phí gas thực tế trên Sepolia testnet (mạng hệ thống đang chạy):**
+
+![Gas Fee trên Sepolia Testnet](charts/clo4_gas_sepolia.png)
+
+> Lượng **gas giống hệt** bảng/biểu đồ phía trên (gas độc lập với mạng), nhưng trên Sepolia ETH là **test-ETH lấy miễn phí từ faucet** → **chi phí thực = 0đ**. Biểu đồ quy phí theo **test-ETH @ 1 gwei** (mức gas price điển hình của Sepolia). Bảng VND `@10 gwei` ở phía trên chỉ là **quy đổi minh hoạ** chi phí tương đương *nếu* triển khai lên Ethereum mainnet với giá ETH thực tế — không phải chi phí mà hệ thống đang trả.
 
 ---
 
@@ -165,10 +171,10 @@ Quét ngưỡng điểm để tách MATCH/MISMATCH (thay cho quy tắc feedback 
 
 | Chỉ số | Giá trị |
 |---|---|
-| Trung bình | **12.0 giây / request** |
-| Min / Max | 5.9s / 20.4s |
-| P50 / P95 | 11.7s / 16.3s |
-| Throughput | **~5.0 request / phút** (tuần tự, không parallel) |
+| Trung bình | **12.4 giây / request** |
+| Min / Max | 6.2s / 22.3s |
+| P50 / P95 | 12.1s / 16.4s |
+| Throughput | **~4.8 request / phút** (tuần tự, không parallel) |
 
 Tốc độ này chấp nhận được trong ngữ cảnh ứng dụng giảng dạy (NLP đọc lượng lớn chữ trên CPU server). **Server xử lý trót lọt 100/100 file PDF kích thước lớn, không gặp bất kỳ lỗi Timeout / HTTP Error nào** → chứng minh tính ổn định end‑to‑end.
 
@@ -185,6 +191,8 @@ Tốc độ này chấp nhận được trong ngữ cảnh ứng dụng giảng 
 > Tốc độ ghi local (Hardhat auto‑mine) đạt 139.5 tx/s — chỉ minh hoạ throughput tầng ứng dụng, **không** phải giới hạn blockchain thật.
 
 ---
+
+> **Đo lại 14/06/2026 (domain thật `ai.web3.giangvien.ifanit.io.vn`):** chạy lại đủ 100 case qua API production xác nhận **Accuracy/F1 tái lập y hệt** (TP=58, TN=4, FP=37, FN=1; Accuracy 62.0%, F1 75.32% — model chạy chế độ `eval()` nên deterministic). Throughput dao động nhẹ trong biên độ mạng: mean 12.0s -> **12.4s**, p95 16.3s -> **16.4s**, ~5.0 -> **~4.8 req/phút**, tổng **20.6 phút**, **0 lỗi / 100 request**.
 
 ## 6. Tính ổn định (tổng hợp)
 
@@ -215,4 +223,4 @@ Tốc độ này chấp nhận được trong ngữ cảnh ứng dụng giảng 
 **File minh chứng** (thư mục `data/` & `charts/` cạnh báo cáo này):
 `data/CLO4_AI_PhoBERT_Results.csv` · `data/CLO4_AI_metrics.json` · `data/CLO4_Gas_Results.csv` · `data/CLO4_Gas_metrics.json` · 7 biểu đồ `charts/clo4_*.png`.
 
-> **Giả định / giới hạn:** (1) AI đo trên CPU (torch cpu) — GPU sẽ cho throughput cao hơn. (2) Quy đổi tiền tệ theo ETH = 3,000 USD, USD = 25,400 VND (chỉnh trong đầu `benchmark_clo4_gas.js`). (3) Throughput on‑chain tính theo tham số block Ethereum/Sepolia chuẩn. (4) Gas là số **xác định**; Accuracy/F1 cố định vì model ở chế độ `eval()` deterministic. (5) Hai chế độ đo AI (local logic vs API production) chênh nhẹ do độ trễ mạng — xem mục 3.1.
+> **Giả định / giới hạn:** (1) AI đo trên CPU (torch cpu) — GPU sẽ cho throughput cao hơn. (2) Quy đổi tiền tệ theo ETH = 1,667 USD, USD = 26,300 VND — giá thực tế 14/06/2026 (chỉnh trong đầu `benchmark_clo4_gas.js`). (3) Throughput on‑chain tính theo tham số block Ethereum/Sepolia chuẩn. (4) Gas là số **xác định**; Accuracy/F1 cố định vì model ở chế độ `eval()` deterministic. (5) Hai chế độ đo AI (local logic vs API production) chênh nhẹ do độ trễ mạng — xem mục 3.1.
